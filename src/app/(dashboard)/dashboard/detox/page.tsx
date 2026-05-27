@@ -14,29 +14,35 @@ const COLORS = ['#EF4444', '#F97316', '#EAB308', '#10B981', '#3B82F6', '#7C3AED'
 
 function formatElapsed(startDate: string) {
   const ms = Date.now() - new Date(startDate).getTime()
-  if (ms < 0) return { primary: '0 min', secondary: 'Empezando...', totalDays: 0 }
+  if (ms < 0) return { primary: '0s', secondary: 'Recién iniciado', totalDays: 0 }
   const totalDays = Math.floor(ms / 86400000)
   const hours = Math.floor((ms % 86400000) / 3600000)
   const minutes = Math.floor((ms % 3600000) / 60000)
+  const seconds = Math.floor((ms % 60000) / 1000)
   const months = Math.floor(totalDays / 30)
   const days = totalDays % 30
 
   if (months >= 1) return {
     primary: `${months} ${months === 1 ? 'mes' : 'meses'}`,
-    secondary: `${days}d ${hours}h libres`,
+    secondary: `${days}d ${hours}h sin recaer`,
     totalDays,
   }
   if (totalDays >= 1) return {
     primary: `${totalDays} ${totalDays === 1 ? 'día' : 'días'}`,
-    secondary: `${hours}h ${minutes}m libres`,
+    secondary: `${hours}h ${minutes}m sin recaer`,
     totalDays,
   }
   if (hours >= 1) return {
-    primary: `${hours} ${hours === 1 ? 'hora' : 'horas'}`,
-    secondary: `${minutes}m libres`,
+    primary: `${hours}h ${minutes}m`,
+    secondary: `${hours} ${hours === 1 ? 'hora' : 'horas'} sin recaer`,
     totalDays,
   }
-  return { primary: `${minutes} min`, secondary: 'Empezando...', totalDays }
+  if (minutes >= 1) return {
+    primary: `${minutes} min`,
+    secondary: `${minutes} ${minutes === 1 ? 'minuto' : 'minutos'} sin recaer`,
+    totalDays,
+  }
+  return { primary: `${seconds}s`, secondary: 'Racha iniciada', totalDays }
 }
 
 function HabitCard({ habit }: { habit: DetoxHabit }) {
@@ -46,9 +52,9 @@ function HabitCard({ habit }: { habit: DetoxHabit }) {
   const [relapseNote, setRelapseNote] = useState('')
   const [showHistory, setShowHistory] = useState(false)
 
-  // Re-render every minute to keep timer live
+  // Re-render every second to keep timer live
   useEffect(() => {
-    const t = setInterval(() => setTick(n => n + 1), 60000)
+    const t = setInterval(() => setTick(n => n + 1), 1000)
     return () => clearInterval(t)
   }, [])
 
