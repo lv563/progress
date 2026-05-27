@@ -354,7 +354,7 @@ export default function DetoxPage() {
 
                   <div>
                     <label className="text-xs text-slate-400 mb-2 block">Ícono</label>
-                    <div className="grid grid-cols-9 gap-1.5">
+                    <div className="grid grid-cols-6 gap-1.5">
                       {ICONS.map(icon => (
                         <button
                           key={icon}

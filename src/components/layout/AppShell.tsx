@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Sidebar } from './Sidebar'
@@ -17,6 +17,14 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const { sidebarOpen, setCommandPaletteOpen, user } = useAppStore()
   const router = useRouter()
+  const [isMobile, setIsMobile] = useState(true)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     if (!user) router.replace('/login')
@@ -41,7 +49,7 @@ export function AppShell({ children }: AppShellProps) {
       <TopBar />
 
       <motion.main
-        animate={{ marginLeft: sidebarOpen ? 240 : 64 }}
+        animate={{ marginLeft: isMobile ? 0 : (sidebarOpen ? 240 : 64) }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="pt-16 pb-20 md:pb-0 min-h-screen"
       >

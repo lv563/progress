@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Bell, Settings, Zap, Flame } from 'lucide-react'
+import { Search, Settings, Zap, Flame, Crown } from 'lucide-react'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { useAppStore } from '@/stores/app.store'
@@ -19,32 +19,45 @@ export function TopBar() {
 
   return (
     <>
-      <header className="fixed top-0 right-0 left-0 h-16 z-20 flex items-center gap-4 px-4 border-b border-white/[0.06] bg-[#0A0A0F]/80 backdrop-blur-xl">
-        {/* spacer for sidebar */}
-        <div className="w-16 shrink-0" />
+      <header className="fixed top-0 right-0 left-0 h-16 z-20 flex items-center gap-3 px-4 border-b border-white/[0.06] bg-[#0A0A0F]/80 backdrop-blur-xl">
+        {/* Mobile: Kingdom OS logo — Desktop: sidebar spacer */}
+        <div className="flex items-center gap-2 md:hidden">
+          <div className="w-7 h-7 rounded-lg gradient-hero flex items-center justify-center shrink-0">
+            <Crown size={14} className="text-white" />
+          </div>
+          <span className="font-bold text-white text-sm">Kingdom OS</span>
+        </div>
+        <div className="hidden md:block w-16 shrink-0" />
 
-        {/* Date */}
+        {/* Date — desktop only */}
         <div className="hidden md:block">
           <p className="text-sm text-slate-400 capitalize">{today}</p>
         </div>
 
         <div className="flex-1" />
 
-        {/* Search bar — opens command palette */}
+        {/* Search — desktop */}
         <button
           onClick={() => setCommandPaletteOpen(true)}
           className={cn(
-            'flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 text-sm text-slate-500 hover:text-slate-300',
-            'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06] hover:border-white/10',
-            'hidden sm:flex'
+            'hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 text-sm text-slate-500 hover:text-slate-300',
+            'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06] hover:border-white/10'
           )}
         >
           <Search size={14} />
-          <span>Buscar o ejecutar...</span>
-          <kbd className="ml-6 text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-slate-500">⌘K</kbd>
+          <span className="hidden md:inline">Buscar o ejecutar...</span>
+          <kbd className="hidden md:inline ml-6 text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-slate-500">⌘K</kbd>
         </button>
 
-        {/* XP Bar */}
+        {/* Search icon — mobile only */}
+        <button
+          onClick={() => setCommandPaletteOpen(true)}
+          className="sm:hidden w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-white/[0.06] hover:text-slate-200 transition-colors"
+        >
+          <Search size={18} />
+        </button>
+
+        {/* XP Bar — desktop only */}
         {user && (
           <div className="hidden lg:flex items-center gap-2">
             <div className="flex items-center gap-1.5">
@@ -67,6 +80,14 @@ export function TopBar() {
               </div>
               <span className="text-xs text-amber-400 font-mono">{formatXP(user.xp)}</span>
             </div>
+          </div>
+        )}
+
+        {/* Mobile XP mini */}
+        {user && (
+          <div className="flex lg:hidden items-center gap-1.5">
+            <Flame size={13} className="text-orange-400" />
+            <span className="text-xs font-bold text-orange-400">{user.streak}d</span>
           </div>
         )}
 

@@ -26,7 +26,7 @@ export function Sidebar() {
     <motion.aside
       animate={{ width: sidebarOpen ? 240 : 64 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="fixed left-0 top-0 h-full z-30 flex flex-col border-r border-white/[0.06] bg-[#0D0D16] overflow-hidden"
+      className="hidden md:flex flex-col fixed left-0 top-0 h-full z-30 border-r border-white/[0.06] bg-[#0D0D16] overflow-hidden"
     >
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-white/[0.06] shrink-0">

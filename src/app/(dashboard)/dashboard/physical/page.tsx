@@ -234,7 +234,8 @@ export default function PhysicalPage() {
           <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
             <CalendarDays size={16} className="text-emerald-400" /> Plan Semanal
           </h3>
-          <div className="grid grid-cols-7 gap-2">
+          <div className="overflow-x-auto -mx-1 pb-1">
+          <div className="grid grid-cols-7 gap-2 min-w-[380px] px-1">
             {Array.from({ length: 7 }, (_, i) => {
               const plan    = weeklyPlan[i]
               const isToday = i === todayDow
@@ -312,6 +313,7 @@ export default function PhysicalPage() {
                 </div>
               )
             })}
+          </div>
           </div>
 
           {/* Today's plan callout */}
