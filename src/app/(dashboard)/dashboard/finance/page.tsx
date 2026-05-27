@@ -406,7 +406,7 @@ export default function FinancePage() {
                         <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip {...tooltipStyle} formatter={(v: number) => [formatCurrency(v), '']} />
+                    <Tooltip {...tooltipStyle} formatter={(v) => [formatCurrency(Number(v)), '']} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex-1 space-y-1.5">
@@ -437,7 +437,7 @@ export default function FinancePage() {
                 <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} width={50}
                   tickFormatter={v => `$${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
-                <Tooltip {...tooltipStyle} formatter={(v: number) => [formatCurrency(v), '']} />
+                <Tooltip {...tooltipStyle} formatter={(v) => [formatCurrency(Number(v)), '']} />
                 <Bar dataKey="ingresos" fill="#06B6D4" radius={[3,3,0,0]} opacity={0.85} name="Ingresos" />
                 <Bar dataKey="gastos"   fill="#EF4444" radius={[3,3,0,0]} opacity={0.75} name="Gastos" />
               </BarChart>
