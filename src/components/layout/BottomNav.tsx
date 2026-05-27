@@ -8,7 +8,7 @@ import { BOTTOM_TABS, NAV_ITEMS } from '@/config/navigation'
 import { cn } from '@/lib/utils/cn'
 import { MoreHorizontal, X } from 'lucide-react'
 
-const BOTTOM_IDS = BOTTOM_TABS.map(t => t.id)
+const BOTTOM_IDS = BOTTOM_TABS.map(t => t.id as string)
 const MORE_ITEMS = NAV_ITEMS.filter(item => !BOTTOM_IDS.includes(item.id as string))
 
 export function BottomNav() {
