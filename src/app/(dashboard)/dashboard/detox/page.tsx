@@ -64,10 +64,7 @@ function HabitCard({ habit }: { habit: DetoxHabit }) {
   }
 
   return (
-    <GlassCard
-      className="p-5 flex flex-col gap-4"
-      style={{ borderColor: `${habit.color}40` }}
-    >
+    <GlassCard className="p-5 flex flex-col gap-4" style={{ borderColor: `${habit.color}40` }}>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">

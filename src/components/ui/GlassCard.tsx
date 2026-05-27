@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils/cn'
 interface GlassCardProps {
   children: React.ReactNode
   className?: string
+  style?: React.CSSProperties
   variant?: 'default' | 'elevated' | 'glow' | 'violet' | 'cyan' | 'amber' | 'green'
   hoverable?: boolean
   onClick?: () => void
@@ -22,7 +23,7 @@ const variants = {
   green:    'bg-emerald-500/[0.06] border-emerald-500/20',
 }
 
-export function GlassCard({ children, className, variant = 'default', hoverable, onClick, animate = true }: GlassCardProps) {
+export function GlassCard({ children, className, style, variant = 'default', hoverable, onClick, animate = true }: GlassCardProps) {
   const base = cn(
     'backdrop-blur-xl border rounded-2xl',
     variants[variant],
@@ -30,7 +31,7 @@ export function GlassCard({ children, className, variant = 'default', hoverable,
     className
   )
 
-  if (!animate) return <div className={base} onClick={onClick}>{children}</div>
+  if (!animate) return <div className={base} style={style} onClick={onClick}>{children}</div>
 
   return (
     <motion.div
@@ -40,6 +41,7 @@ export function GlassCard({ children, className, variant = 'default', hoverable,
       whileHover={hoverable ? { scale: 1.01 } : undefined}
       whileTap={onClick ? { scale: 0.99 } : undefined}
       className={base}
+      style={style}
       onClick={onClick}
     >
       {children}
