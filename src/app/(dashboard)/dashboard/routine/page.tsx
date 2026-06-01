@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { stagger, fadeUp } from '@/lib/utils/motion'
 import { format, addDays, subDays } from 'date-fns'
@@ -42,10 +42,17 @@ export default function RoutinePage() {
 
   const [viewDate, setViewDate] = useState(new Date())
   const [addBlockModal, setAddBlockModal] = useState(false)
+  const [now, setNow] = useState(new Date())
   const [newBlock, setNewBlock] = useState({
     title: '', category: 'work' as RoutineBlock['category'],
     startTime: '08:00', endTime: '09:00', icon: '🧠',
   })
+
+  // Keep "now" reactive so the current-time indicator updates every minute
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(t)
+  }, [])
 
   const dateStr = format(viewDate, 'yyyy-MM-dd')
   const isToday = dateStr === format(new Date(), 'yyyy-MM-dd')
@@ -62,7 +69,6 @@ export default function RoutinePage() {
     return h * 60 + m
   }
 
-  const now = new Date()
   const currentMinutes = now.getHours() * 60 + now.getMinutes()
 
   const getBlockStatus = (block: RoutineBlock) => {
@@ -166,105 +172,155 @@ export default function RoutinePage() {
           </GlassCard>
         </motion.div>
       ) : (
-        <motion.div variants={fadeUp} className="relative">
-          <div className="relative">
-            {/* Time axis */}
-            <div className="absolute left-16 top-0 bottom-0 w-px bg-white/[0.06]" />
+        <motion.div variants={fadeUp} className="relative space-y-4">
 
-            <div className="space-y-2">
-              <AnimatePresence>
-                {currentRoutine.blocks
-                  .slice()
-                  .sort((a, b) => getTimeMinutes(a.startTime) - getTimeMinutes(b.startTime))
-                  .map((block, i) => {
+          {/* Day progress bar */}
+          {isToday && totalBlocks > 0 && (
+            <div>
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-slate-500">Progreso del día</span>
+                <span className="font-semibold text-violet-400">{completedBlocks}/{totalBlocks} bloques</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-violet-500"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${totalBlocks > 0 ? (completedBlocks / totalBlocks) * 100 : 0}%` }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Active block banner */}
+          {isToday && (() => {
+            const active = currentRoutine.blocks.find(b => {
+              const s = getTimeMinutes(b.startTime), e = getTimeMinutes(b.endTime)
+              return !b.completed && currentMinutes >= s && currentMinutes < e
+            })
+            if (!active) return null
+            const remaining = getTimeMinutes(active.endTime) - currentMinutes
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-violet-500/30"
+                style={{ background: `${CATEGORY_COLORS[active.category]}15` }}
+              >
+                <motion.div
+                  animate={{ scale: [1, 1.15, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                  className="w-2 h-2 rounded-full bg-violet-400 shrink-0"
+                />
+                <span className="text-base">{active.icon}</span>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-white">Ahora: {active.title}</p>
+                  <p className="text-xs text-slate-500">{remaining} min restantes · {active.startTime} — {active.endTime}</p>
+                </div>
+                <button
+                  onClick={() => { toggleBlock(currentRoutine.id, active.id); addXP(5, `Bloque: ${active.title}`) }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-500/20 text-violet-300 hover:bg-violet-500/30 transition-colors"
+                >
+                  Completar
+                </button>
+              </motion.div>
+            )
+          })()}
+
+          {(() => {
+            const sortedBlocks = [...currentRoutine.blocks]
+              .sort((a, b) => getTimeMinutes(a.startTime) - getTimeMinutes(b.startTime))
+            let nowIdx = sortedBlocks.length
+            if (isToday) {
+              for (let i = 0; i < sortedBlocks.length; i++) {
+                if (getTimeMinutes(sortedBlocks[i].startTime) > currentMinutes) { nowIdx = i; break }
+              }
+            }
+            const nowLabel = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
+            const NowMarker = () => (
+              <div className="flex items-center gap-3 pl-1 py-1 my-1">
+                <div className="w-14 shrink-0 text-right">
+                  <span className="text-[10px] font-bold text-red-400 font-mono">{nowLabel}</span>
+                </div>
+                <div className="w-3 flex justify-center">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400 shadow-[0_0_8px_rgba(239,68,68,0.7)]" />
+                </div>
+                <div className="flex-1 h-px bg-red-400/50" />
+                <span className="text-[10px] text-red-400 font-bold tracking-wider pr-2">AHORA</span>
+              </div>
+            )
+
+            return (
+              <div className="relative">
+                <div className="absolute left-16 top-0 bottom-0 w-px bg-white/[0.06]" />
+                <div className="space-y-1">
+                  {sortedBlocks.map((block, i) => {
                     const status = getBlockStatus(block)
                     const dur = getTimeMinutes(block.endTime) - getTimeMinutes(block.startTime)
-
                     return (
-                      <motion.div
-                        key={block.id}
-                        layout
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ delay: i * 0.03 }}
-                        className="flex items-start gap-3 pl-1"
-                      >
-                        {/* Time */}
-                        <div className="w-14 shrink-0 text-right pt-2">
-                          <span className="text-xs text-slate-600 font-mono">{block.startTime}</span>
-                        </div>
-
-                        {/* Dot on axis */}
-                        <div className="relative flex flex-col items-center">
-                          <div
-                            className={cn(
+                      <div key={block.id}>
+                        {isToday && i === nowIdx && <NowMarker />}
+                        <motion.div
+                          layout
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ delay: i * 0.03 }}
+                          className="flex items-start gap-3 pl-1"
+                        >
+                          <div className="w-14 shrink-0 text-right pt-2">
+                            <span className="text-xs text-slate-600 font-mono">{block.startTime}</span>
+                          </div>
+                          <div className="relative flex flex-col items-center">
+                            <div className={cn(
                               'w-3 h-3 rounded-full border-2 mt-2.5 z-10',
                               status === 'completed' ? 'bg-emerald-400 border-emerald-400' :
                               status === 'active'    ? 'bg-violet-400 border-violet-400 shadow-[0_0_8px_rgba(124,58,237,0.8)]' :
                               status === 'overdue'   ? 'bg-red-400/50 border-red-400/50' :
                               'bg-transparent border-white/20'
+                            )} />
+                          </div>
+                          <div
+                            className={cn(
+                              'flex-1 rounded-xl p-3 border transition-all cursor-pointer mb-1 group',
+                              status === 'completed' ? 'bg-emerald-500/[0.05] border-emerald-500/20' :
+                              status === 'active'    ? 'border-violet-500/40 shadow-[0_0_16px_rgba(124,58,237,0.15)]' :
+                              status === 'overdue'   ? 'bg-red-500/[0.03] border-red-500/10 opacity-60' :
+                              'glass border-transparent hover:bg-white/[0.04]'
                             )}
-                          />
-                        </div>
-
-                        {/* Block card */}
-                        <div
-                          className={cn(
-                            'flex-1 rounded-xl p-3 border transition-all cursor-pointer mb-1 group',
-                            status === 'completed' ? 'bg-emerald-500/[0.05] border-emerald-500/20' :
-                            status === 'active'    ? 'border-violet-500/40 shadow-[0_0_16px_rgba(124,58,237,0.15)]' :
-                            status === 'overdue'   ? 'bg-red-500/[0.03] border-red-500/10 opacity-60' :
-                            'glass border-transparent hover:bg-white/[0.04]'
-                          )}
-                          style={status === 'active' ? { background: `${CATEGORY_COLORS[block.category]}10` } : undefined}
-                          onClick={() => {
-                            toggleBlock(currentRoutine.id, block.id)
-                            if (!block.completed) addXP(5, `Bloque: ${block.title}`)
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-base">{block.icon}</span>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <p className={cn('text-sm font-semibold', status === 'completed' ? 'text-slate-400 line-through' : 'text-white')}>
-                                  {block.title}
-                                </p>
-                                {status === 'active' && (
-                                  <motion.div
-                                    animate={{ scale: [1, 1.2, 1] }}
-                                    transition={{ repeat: Infinity, duration: 1.5 }}
-                                    className="w-1.5 h-1.5 rounded-full bg-violet-400"
-                                  />
-                                )}
+                            style={status === 'active' ? { background: `${CATEGORY_COLORS[block.category]}10` } : undefined}
+                            onClick={() => { toggleBlock(currentRoutine.id, block.id); if (!block.completed) addXP(5, `Bloque: ${block.title}`) }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">{block.icon}</span>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className={cn('text-sm font-semibold', status === 'completed' ? 'text-slate-400 line-through' : 'text-white')}>
+                                    {block.title}
+                                  </p>
+                                  {status === 'active' && (
+                                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                                  )}
+                                </div>
+                                <p className="text-xs text-slate-600 font-mono">{block.startTime} — {block.endTime} · {dur}min</p>
                               </div>
-                              <p className="text-xs text-slate-600 font-mono">{block.startTime} — {block.endTime} · {dur}min</p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              {/* Delete button */}
-                              <button
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  removeBlock(currentRoutine.id, block.id)
-                                }}
-                                className="opacity-0 group-hover:opacity-100 p-1 text-slate-600 hover:text-red-400 transition-all"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                              {status === 'completed' ? (
-                                <CheckCircle2 size={18} className="text-emerald-400" />
-                              ) : (
-                                <Circle size={18} className="text-slate-700" />
-                              )}
+                              <div className="flex items-center gap-1">
+                                <button onClick={e => { e.stopPropagation(); removeBlock(currentRoutine.id, block.id) }} className="opacity-0 group-hover:opacity-100 p-1 text-slate-600 hover:text-red-400 transition-all">
+                                  <Trash2 size={13} />
+                                </button>
+                                {status === 'completed' ? <CheckCircle2 size={18} className="text-emerald-400" /> : <Circle size={18} className="text-slate-700" />}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </motion.div>
+                        </motion.div>
+                      </div>
                     )
                   })}
-              </AnimatePresence>
-            </div>
-          </div>
+                  {isToday && nowIdx === sortedBlocks.length && <NowMarker />}
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Add block inline button */}
           <div className="flex justify-center mt-4">
