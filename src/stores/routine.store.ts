@@ -31,6 +31,7 @@ interface RoutineStore {
   routines: DailyRoutine[]
   addTemplate: (tpl: Omit<RoutineTemplate, 'id'>) => void
   getTodayRoutine: () => DailyRoutine | undefined
+  createEmptyRoutine: (date?: string) => void
   applyTemplate: (templateId: string, date?: string) => void
   toggleBlock: (routineId: string, blockId: string) => void
   addBlock: (routineId: string, block: Omit<RoutineBlock, 'id'>) => void
@@ -53,6 +54,16 @@ export const useRoutineStore = create<RoutineStore>()(
       getTodayRoutine: () => {
         const today = format(new Date(), 'yyyy-MM-dd')
         return get().routines.find(r => r.date === today)
+      },
+
+      createEmptyRoutine: (date) => {
+        const d = date ?? format(new Date(), 'yyyy-MM-dd')
+        const routine: DailyRoutine = {
+          id: Math.random().toString(36).slice(2),
+          date: d,
+          blocks: [],
+        }
+        set(s => ({ routines: [...s.routines.filter(r => r.date !== d), routine] }))
       },
 
       applyTemplate: (templateId, date) => {
