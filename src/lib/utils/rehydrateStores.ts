@@ -7,6 +7,8 @@ import { useFinanceStore } from '@/stores/finance.store'
 import { useMinistryStore } from '@/stores/ministry.store'
 import { usePhysicalStore } from '@/stores/physical.store'
 import { useDetoxStore } from '@/stores/detox.store'
+import { useNotesStore } from '@/stores/notes.store'
+import { useDailyLogStore } from '@/stores/dailyLog.store'
 
 const userStores = [
   useHabitsStore,
@@ -18,6 +20,8 @@ const userStores = [
   useMinistryStore,
   usePhysicalStore,
   useDetoxStore,
+  useNotesStore,
+  useDailyLogStore,
 ] as const
 
 export const resetAllStores = () => {

@@ -44,6 +44,7 @@ interface PhysicalStore {
   setDayPlan: (day: number, plan: DayPlan) => void
   clearDayPlan: (day: number) => void
   getTodayWorkout: () => WorkoutSession | undefined
+  resetDaily: () => void
   _reset: () => void
   getWeekVolume: () => number
   getWeekSessions: () => WorkoutSession[]
@@ -97,6 +98,8 @@ export const usePhysicalStore = create<PhysicalStore>()(
         measurements: [...s.measurements, { ...m, id: Math.random().toString(36).slice(2) }]
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       })),
+
+      resetDaily: () => set({ waterToday: 0, mealsToday: 0 }),
 
       logWater: (glasses) => set({ waterToday: glasses }),
 

@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Target, Timer, CheckSquare, Calendar,
-  Dumbbell, Church, FolderLock, BarChart3, Wallet, Ban
+  Dumbbell, Church, FolderLock, BarChart3, Wallet, Ban, NotebookPen
 } from 'lucide-react'
 
 export const NAV_ITEMS = [
@@ -8,6 +8,7 @@ export const NAV_ITEMS = [
   { id: 'habits',     label: 'Hábitos',      href: '/dashboard/habits',    icon: Target,          shortcut: 'G H' },
   { id: 'pomodoro',   label: 'Pomodoro',     href: '/dashboard/pomodoro',  icon: Timer,           shortcut: 'G P' },
   { id: 'tasks',      label: 'Tareas',       href: '/dashboard/tasks',     icon: CheckSquare,     shortcut: 'G T' },
+  { id: 'notes',      label: 'Notas',        href: '/dashboard/notes',     icon: NotebookPen,     shortcut: 'G N' },
   { id: 'routine',    label: 'Rutina',       href: '/dashboard/routine',   icon: Calendar,        shortcut: 'G R' },
   { id: 'physical',   label: 'Físico',       href: '/dashboard/physical',  icon: Dumbbell,        shortcut: 'G F' },
   { id: 'detox',      label: 'Detox',        href: '/dashboard/detox',     icon: Ban,             shortcut: 'G X' },

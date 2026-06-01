@@ -7,6 +7,11 @@ import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { BottomNav } from './BottomNav'
 import { useAppStore } from '@/stores/app.store'
+import { useHabitsStore } from '@/stores/habits.store'
+import { usePomodoroStore } from '@/stores/pomodoro.store'
+import { useTasksStore } from '@/stores/tasks.store'
+import { usePhysicalStore } from '@/stores/physical.store'
+import { useDailyLogStore } from '@/stores/dailyLog.store'
 import { XPToast } from '@/domains/gamification/components/XPToast'
 import { LevelUpModal } from '@/domains/gamification/components/LevelUpModal'
 
@@ -16,6 +21,11 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const { sidebarOpen, setCommandPaletteOpen, user } = useAppStore()
+  const { habits, getTodayLogs } = useHabitsStore()
+  const { getTodaySessions } = usePomodoroStore()
+  const { tasks } = useTasksStore()
+  const { waterToday, mealsToday, mealsTarget, resetDaily } = usePhysicalStore()
+  const { saveLog, lastResetDate, setLastResetDate } = useDailyLogStore()
   const router = useRouter()
   const [isMobile, setIsMobile] = useState(true)
 
@@ -29,6 +39,44 @@ export function AppShell({ children }: AppShellProps) {
   useEffect(() => {
     if (!user) router.replace('/login')
   }, [user, router])
+
+  // Daily reset: runs once per day on app load
+  useEffect(() => {
+    if (!user) return
+    const today = new Date().toISOString().slice(0, 10)
+    if (lastResetDate && lastResetDate !== today) {
+      // Save yesterday's performance log before resetting
+      const todayLogs = getTodayLogs()
+      const completedHabits = habits.filter(h => todayLogs[h.id]?.completed).length
+      const sessions = getTodaySessions()
+      const completedTasks = tasks.filter(t =>
+        t.status === 'done' && t.completedAt?.startsWith(lastResetDate)
+      ).length
+      const score = Math.round(
+        (habits.length > 0 ? (completedHabits / habits.length) * 30 : 0) +
+        (Math.min(sessions.length, 4) / 4) * 25 +
+        (Math.min(waterToday, 8) / 8) * 20 +
+        (mealsTarget > 0 ? (Math.min(mealsToday, mealsTarget) / mealsTarget) * 15 : 0) +
+        (completedTasks > 0 ? 10 : 0)
+      )
+      saveLog({
+        date: lastResetDate,
+        habitsCompleted: completedHabits,
+        habitTotal: habits.length,
+        pomodoroSessions: sessions.length,
+        focusMinutes: sessions.reduce((a, s) => a + s.duration, 0),
+        tasksCompleted: completedTasks,
+        waterGlasses: waterToday,
+        mealsEaten: mealsToday,
+        mealsTarget,
+        gymDone: false,
+        score,
+      })
+      resetDaily()
+    }
+    setLastResetDate(today)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

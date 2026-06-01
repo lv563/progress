@@ -50,13 +50,18 @@ export default function PomodoroPage() {
 
   useEffect(() => {
     if (isRunning) {
-      intervalRef.current = setInterval(() => {
-        tickTimer()
-      }, 1000)
+      intervalRef.current = setInterval(() => tickTimer(), 1000)
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [isRunning, tickTimer])
+
+  // When tab regains focus, force a tick so the timer corrects itself instantly
+  useEffect(() => {
+    const onVisible = () => { if (!document.hidden && isRunning) tickTimer() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [isRunning, tickTimer])
 
   const prevSessionCount = useRef(sessionCount)

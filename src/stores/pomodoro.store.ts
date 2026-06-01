@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { userStorage } from '@/lib/utils/userStorage'
-import type { PomodoroSession, PomodoroConfig, PomodoroMode, AmbientSound } from '@/types'
+import type { PomodoroSession, PomodoroConfig, PomodoroMode } from '@/types'
 
 const DEFAULT_CONFIG: PomodoroConfig = {
   focusDuration: 25,
@@ -14,6 +14,12 @@ const DEFAULT_CONFIG: PomodoroConfig = {
   volume: 70,
 }
 
+const modeDur = (mode: PomodoroMode, cfg: PomodoroConfig) =>
+  mode === 'focus' ? cfg.focusDuration
+  : mode === 'deep-work' ? 90
+  : mode === 'short-break' ? cfg.shortBreak
+  : cfg.longBreak
+
 interface PomodoroStore {
   config: PomodoroConfig
   sessions: PomodoroSession[]
@@ -23,6 +29,7 @@ interface PomodoroStore {
   secondsLeft: number
   sessionCount: number
   currentTaskTitle: string
+  timerEndAt: number | null  // ms timestamp — keeps timer accurate in background tabs
 
   setConfig: (config: Partial<PomodoroConfig>) => void
   startTimer: (mode?: PomodoroMode) => void
@@ -48,43 +55,51 @@ export const usePomodoroStore = create<PomodoroStore>()(
       secondsLeft: DEFAULT_CONFIG.focusDuration * 60,
       sessionCount: 0,
       currentTaskTitle: '',
+      timerEndAt: null,
 
       setConfig: (config) => set(s => ({ config: { ...s.config, ...config } })),
 
       startTimer: (mode = 'focus') => {
         const cfg = get().config
-        const dur = mode === 'focus' ? cfg.focusDuration
-          : mode === 'deep-work' ? 90
-          : mode === 'short-break' ? cfg.shortBreak
-          : cfg.longBreak
-        set({ currentMode: mode, isRunning: true, isPaused: false, secondsLeft: dur * 60 })
+        const dur = modeDur(mode, cfg)
+        set({
+          currentMode: mode,
+          isRunning: true,
+          isPaused: false,
+          secondsLeft: dur * 60,
+          timerEndAt: Date.now() + dur * 60 * 1000,
+        })
       },
 
-      pauseTimer: () => set({ isPaused: true, isRunning: false }),
-      resumeTimer: () => set({ isPaused: false, isRunning: true }),
+      pauseTimer: () => set({ isPaused: true, isRunning: false, timerEndAt: null }),
+
+      resumeTimer: () => {
+        const { secondsLeft } = get()
+        set({ isPaused: false, isRunning: true, timerEndAt: Date.now() + secondsLeft * 1000 })
+      },
 
       stopTimer: () => {
         const cfg = get().config
-        set({ isRunning: false, isPaused: false, secondsLeft: cfg.focusDuration * 60, currentMode: 'focus' })
+        set({ isRunning: false, isPaused: false, secondsLeft: cfg.focusDuration * 60, currentMode: 'focus', timerEndAt: null })
       },
 
+      // Timestamp-based: accurate even when browser throttles the interval in background
       tickTimer: () => {
-        const { secondsLeft, isRunning } = get()
-        if (!isRunning || secondsLeft <= 0) return
-        if (secondsLeft === 1) {
+        const { isRunning, timerEndAt } = get()
+        if (!isRunning || !timerEndAt) return
+        const remaining = Math.ceil((timerEndAt - Date.now()) / 1000)
+        if (remaining <= 0) {
+          set({ secondsLeft: 0 })
           get().completeSession()
         } else {
-          set({ secondsLeft: secondsLeft - 1 })
+          set({ secondsLeft: remaining })
         }
       },
 
       completeSession: () => {
         const { currentMode, sessionCount, config, currentTaskTitle } = get()
         const isBreak = currentMode !== 'focus' && currentMode !== 'deep-work'
-        const dur = currentMode === 'focus' ? config.focusDuration
-          : currentMode === 'deep-work' ? 90
-          : currentMode === 'short-break' ? config.shortBreak
-          : config.longBreak
+        const dur = modeDur(currentMode, config)
 
         if (!isBreak) {
           const newCount = sessionCount + 1
@@ -99,6 +114,7 @@ export const usePomodoroStore = create<PomodoroStore>()(
           }
           const nextMode = newCount % config.sessionsBeforeLong === 0 ? 'long-break' : 'short-break'
           const nextDur = nextMode === 'long-break' ? config.longBreak : config.shortBreak
+          const autoEnd = config.autoStartBreaks ? Date.now() + nextDur * 60 * 1000 : null
           set(s => ({
             sessions: [...s.sessions, session],
             sessionCount: newCount,
@@ -106,20 +122,28 @@ export const usePomodoroStore = create<PomodoroStore>()(
             isPaused: !config.autoStartBreaks,
             currentMode: nextMode,
             secondsLeft: nextDur * 60,
+            timerEndAt: autoEnd,
           }))
         } else {
+          const nextDur = config.focusDuration
+          const autoEnd = config.autoStartFocus ? Date.now() + nextDur * 60 * 1000 : null
           set({
             isRunning: config.autoStartFocus,
             isPaused: !config.autoStartFocus,
             currentMode: 'focus',
-            secondsLeft: config.focusDuration * 60,
+            secondsLeft: nextDur * 60,
+            timerEndAt: autoEnd,
           })
         }
       },
 
       setCurrentTask: (title) => set({ currentTaskTitle: title }),
 
-      _reset: () => set({ sessions: [], sessionCount: 0, isRunning: false, isPaused: false, currentMode: 'focus', secondsLeft: DEFAULT_CONFIG.focusDuration * 60, currentTaskTitle: '' }),
+      _reset: () => set({
+        sessions: [], sessionCount: 0, isRunning: false, isPaused: false,
+        currentMode: 'focus', secondsLeft: DEFAULT_CONFIG.focusDuration * 60,
+        currentTaskTitle: '', timerEndAt: null,
+      }),
 
       getTodaySessions: () => {
         const today = new Date().toDateString()
