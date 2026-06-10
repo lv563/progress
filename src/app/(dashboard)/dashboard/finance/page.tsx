@@ -68,6 +68,7 @@ export default function FinancePage() {
     addCreditCard, updateCreditCard, removeCreditCard,
     addDebt, updateDebt, removeDebt, payDebt,
     updateConfig,
+    addFixedCharge, removeFixedCharge, isFixedChargePaid, payFixedCharge, unpayFixedCharge, getCardFixedCharges,
     isBudgetPaid, markBudgetPaid, unmarkBudgetPaid,
     addSavingsGoal, removeSavingsGoal,
     addSavingsTransaction, removeSavingsTransaction, getGoalTransactions,
@@ -94,6 +95,8 @@ export default function FinancePage() {
   const [activeGoal, setActiveGoal]         = useState<string | null>(null)
   const [editingBudget, setEditingBudget]   = useState<string | null>(null)
   const [editValue, setEditValue]           = useState('')
+  const [chargeModal, setChargeModal]       = useState<string | null>(null) // cardId
+  const [expandedCard, setExpandedCard]     = useState<string | null>(null)
 
   // forms
   const [newTx, setNewTx] = useState({
@@ -109,6 +112,8 @@ export default function FinancePage() {
   const [payAmount, setPayAmount]         = useState('')
   const [newGoal, setNewGoal]   = useState({ name: '', target: '', current: '0', icon: '🎯', color: '#7C3AED', deadline: '' })
   const [newBudget, setNewBudget] = useState({ category: '', icon: '💰', limit: '', color: '#7C3AED' })
+  const [newCharge, setNewCharge] = useState({ name: '', amount: '', icon: '🔄', billingDay: '' })
+
   const [newSavingsTx, setNewSavingsTx] = useState({
     type: 'deposit' as SavingsTxType, amount: '', description: '', date: format(new Date(), 'yyyy-MM-dd'),
   })
@@ -284,6 +289,13 @@ export default function FinancePage() {
   const openConfig = () => {
     setCfgForm({ monthlyIncome: String(config.monthlyIncome), fixedExpenses: String(config.fixedExpenses), autoSavings: String(config.autoSavings), safetyZone: String(config.safetyZone) })
     setConfigModal(true)
+  }
+
+  const handleAddCharge = (cardId: string) => {
+    if (!newCharge.name || !newCharge.amount) return
+    addFixedCharge({ creditCardId: cardId, name: newCharge.name, amount: Number(newCharge.amount), icon: newCharge.icon, billingDay: newCharge.billingDay ? Number(newCharge.billingDay) : undefined })
+    setChargeModal(null)
+    setNewCharge({ name: '', amount: '', icon: '🔄', billingDay: '' })
   }
 
   const riskLevel = projectedBalance < 0 ? 'CRÍTICO' : projectedBalance < config.safetyZone ? 'ALTO' : projectedBalance < config.safetyZone * 2 ? 'MEDIO' : 'BAJO'
@@ -482,6 +494,78 @@ export default function FinancePage() {
                             {pct >= 90 ? 'Tarjeta al límite. Paga de inmediato.' : pct >= 70 ? `Reducir ${fmt(card.balance - card.limit * 0.5)} te llevaría a zona saludable.` : 'Considera reducir el uso de crédito.'}
                           </p>
                         )}
+
+                        {/* Fixed Charges Section */}
+                        {(() => {
+                          const charges = getCardFixedCharges(card.id)
+                          const totalFixed = charges.reduce((a, c) => a + c.amount, 0)
+                          const paidCount = charges.filter(c => isFixedChargePaid(c.id)).length
+                          const isExpanded = expandedCard === card.id
+                          return (
+                            <div className="mt-3 pt-3 border-t border-white/[0.06]">
+                              <div className="flex items-center justify-between mb-2">
+                                <button onClick={() => setExpandedCard(isExpanded ? null : card.id)}
+                                  className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
+                                  <span>📅 Gastos Fijos</span>
+                                  {charges.length > 0 && (
+                                    <span className="px-1.5 py-0.5 rounded-full bg-white/[0.06] text-[10px]">
+                                      {paidCount}/{charges.length}
+                                    </span>
+                                  )}
+                                  {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                                </button>
+                                <div className="flex items-center gap-2">
+                                  {charges.length > 0 && (
+                                    <span className="text-[10px] text-slate-500 tabular-nums">{fmt(totalFixed)}/mes</span>
+                                  )}
+                                  <button onClick={() => { setNewCharge({ name: '', amount: '', icon: '🔄', billingDay: '' }); setChargeModal(card.id) }}
+                                    className="flex items-center gap-1 text-[10px] text-violet-400 hover:text-violet-300 px-1.5 py-0.5 rounded bg-violet-500/10 hover:bg-violet-500/20 transition-all">
+                                    <Plus size={9} /> Agregar
+                                  </button>
+                                </div>
+                              </div>
+                              <AnimatePresence>
+                                {isExpanded && (
+                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
+                                    {charges.length === 0 ? (
+                                      <p className="text-[10px] text-slate-600 text-center py-2">Sin gastos fijos — agrega suscripciones, servicios...</p>
+                                    ) : (
+                                      <div className="space-y-1">
+                                        {charges.map(charge => {
+                                          const paid = isFixedChargePaid(charge.id)
+                                          return (
+                                            <div key={charge.id} className="flex items-center gap-2 group">
+                                              <button onClick={() => paid ? unpayFixedCharge(charge.id) : payFixedCharge(charge.id)}
+                                                className="shrink-0 transition-transform active:scale-90">
+                                                {paid
+                                                  ? <CheckCircle2 size={16} className="text-emerald-400" />
+                                                  : <Circle size={16} className="text-slate-600 hover:text-emerald-400 transition-colors" />}
+                                              </button>
+                                              <span className="text-sm leading-none">{charge.icon}</span>
+                                              <div className="flex-1 min-w-0">
+                                                <p className={cn('text-xs font-medium truncate', paid ? 'text-slate-500 line-through' : 'text-slate-200')}>{charge.name}</p>
+                                                {charge.billingDay && <p className="text-[10px] text-slate-600">Día {charge.billingDay} de cada mes</p>}
+                                              </div>
+                                              <span className={cn('text-xs font-bold tabular-nums shrink-0', paid ? 'text-emerald-400' : 'text-slate-300')}>{fmt(charge.amount)}</span>
+                                              <button onClick={() => removeFixedCharge(charge.id)}
+                                                className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 transition-all shrink-0">
+                                                <Trash2 size={11} />
+                                              </button>
+                                            </div>
+                                          )
+                                        })}
+                                        <div className="flex justify-between items-center pt-1.5 mt-1 border-t border-white/[0.04]">
+                                          <span className="text-[10px] text-slate-600">{paidCount === charges.length ? '✅ Todos registrados este mes' : `${charges.length - paidCount} pendiente${charges.length - paidCount > 1 ? 's' : ''} de registrar`}</span>
+                                          <span className="text-[10px] font-semibold text-slate-400 tabular-nums">{fmt(totalFixed)}/mes</span>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          )
+                        })()}
                       </GlassCard>
                     )
                   })}
@@ -1121,6 +1205,24 @@ export default function FinancePage() {
           <div className="flex gap-3 justify-end pt-1">
             <Button variant="ghost" onClick={() => setGoalModal(false)}>Cancelar</Button>
             <Button variant="glow" onClick={handleAddGoal}>Crear meta</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Nuevo gasto fijo de tarjeta */}
+      <Modal open={!!chargeModal} onClose={() => setChargeModal(null)} title={`📅 Gasto Fijo — ${creditCards.find(c => c.id === chargeModal)?.name ?? ''}`}>
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">Define un gasto recurrente mensual cargado a esta tarjeta (suscripciones, servicios, etc.).</p>
+          <div className="flex gap-3">
+            <Input label="Emoji" value={newCharge.icon} onChange={e => setNewCharge(c => ({ ...c, icon: e.target.value }))} className="w-20" />
+            <div className="flex-1"><Input label="Nombre" placeholder="Netflix, Spotify, Internet..." value={newCharge.name} onChange={e => setNewCharge(c => ({ ...c, name: e.target.value }))} /></div>
+          </div>
+          <Input label="Monto mensual (RD$)" type="number" min={1} placeholder="0" value={newCharge.amount} onChange={e => setNewCharge(c => ({ ...c, amount: e.target.value }))} icon={<DollarSign size={14} />} />
+          <Input label="Día de cobro (opcional)" type="number" min={1} max={31} placeholder="15" value={newCharge.billingDay} onChange={e => setNewCharge(c => ({ ...c, billingDay: e.target.value }))} />
+          <p className="text-xs text-slate-500">Al marcarlo como registrado cada mes, se creará la transacción y se sumará al balance de la tarjeta automáticamente.</p>
+          <div className="flex gap-3 justify-end pt-1">
+            <Button variant="ghost" onClick={() => setChargeModal(null)}>Cancelar</Button>
+            <Button variant="glow" onClick={() => handleAddCharge(chargeModal!)}>Agregar cargo</Button>
           </div>
         </div>
       </Modal>

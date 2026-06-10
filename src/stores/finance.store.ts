@@ -17,6 +17,7 @@ export interface Transaction {
   paymentMethod?: PaymentMethod
   creditCardId?: string
   budgetPaymentKey?: string
+  fixedChargeKey?: string
 }
 
 export interface SavingsTransaction {
@@ -64,6 +65,15 @@ export interface Debt {
   dueDay?: number
 }
 
+export interface FixedCharge {
+  id: string
+  creditCardId: string
+  name: string
+  amount: number
+  icon: string
+  billingDay?: number
+}
+
 export interface FinancialConfig {
   monthlyIncome: number
   fixedExpenses: number
@@ -95,6 +105,7 @@ interface FinanceStore {
   creditCards: CreditCard[]
   debts: Debt[]
   config: FinancialConfig
+  fixedCharges: FixedCharge[]
 
   addTransaction: (t: Omit<Transaction, 'id'>) => void
   removeTransaction: (id: string) => void
@@ -109,6 +120,14 @@ interface FinanceStore {
   payDebt: (id: string, amount: number) => void
 
   updateConfig: (updates: Partial<FinancialConfig>) => void
+
+  addFixedCharge: (c: Omit<FixedCharge, 'id'>) => void
+  removeFixedCharge: (id: string) => void
+  updateFixedCharge: (id: string, updates: Partial<FixedCharge>) => void
+  isFixedChargePaid: (id: string, month?: string) => boolean
+  payFixedCharge: (id: string) => void
+  unpayFixedCharge: (id: string) => void
+  getCardFixedCharges: (cardId: string) => FixedCharge[]
 
   isBudgetPaid: (category: string, month?: string) => boolean
   markBudgetPaid: (category: string, amount?: number) => void
@@ -155,10 +174,11 @@ export const useFinanceStore = create<FinanceStore>()(
       creditCards: [],
       debts: [],
       config: DEFAULT_CONFIG,
+      fixedCharges: [],
 
       _reset: () => set({
         transactions: [], savingsTransactions: [], budgets: DEFAULT_BUDGETS,
-        savingsGoals: [], creditCards: [], debts: [], config: DEFAULT_CONFIG,
+        savingsGoals: [], creditCards: [], debts: [], config: DEFAULT_CONFIG, fixedCharges: [],
       }),
 
       addTransaction: (t) => set(s => ({ transactions: [{ ...t, id: genId() }, ...s.transactions] })),
@@ -188,6 +208,49 @@ export const useFinanceStore = create<FinanceStore>()(
       },
 
       updateConfig: (updates) => set(s => ({ config: { ...s.config, ...updates } })),
+
+      addFixedCharge: (c) => set(s => ({ fixedCharges: [...s.fixedCharges, { ...c, id: genId() }] })),
+      removeFixedCharge: (id) => set(s => ({
+        fixedCharges: s.fixedCharges.filter(c => c.id !== id),
+        transactions: s.transactions.filter(t => !t.fixedChargeKey?.endsWith(`:${id}`)),
+      })),
+      updateFixedCharge: (id, updates) => set(s => ({
+        fixedCharges: s.fixedCharges.map(c => c.id === id ? { ...c, ...updates } : c),
+      })),
+      isFixedChargePaid: (id, month) => {
+        const key = `${month ?? currentMonth()}:${id}`
+        return get().transactions.some(t => t.fixedChargeKey === key)
+      },
+      payFixedCharge: (id) => {
+        const charge = get().fixedCharges.find(c => c.id === id)
+        if (!charge) return
+        const key = `${currentMonth()}:${id}`
+        if (get().transactions.some(t => t.fixedChargeKey === key)) return
+        set(s => ({
+          transactions: [{
+            id: genId(), type: 'expense', category: 'Fijo',
+            amount: charge.amount, description: `${charge.icon} ${charge.name}`,
+            date: today(), icon: charge.icon, paymentMethod: 'credit',
+            creditCardId: charge.creditCardId, fixedChargeKey: key,
+          }, ...s.transactions],
+          creditCards: s.creditCards.map(c =>
+            c.id === charge.creditCardId ? { ...c, balance: c.balance + charge.amount } : c
+          ),
+        }))
+      },
+      unpayFixedCharge: (id) => {
+        const key = `${currentMonth()}:${id}`
+        const tx = get().transactions.find(t => t.fixedChargeKey === key)
+        if (!tx) return
+        const charge = get().fixedCharges.find(c => c.id === id)
+        set(s => ({
+          transactions: s.transactions.filter(t => t.fixedChargeKey !== key),
+          creditCards: charge ? s.creditCards.map(c =>
+            c.id === charge.creditCardId ? { ...c, balance: Math.max(0, c.balance - tx.amount) } : c
+          ) : s.creditCards,
+        }))
+      },
+      getCardFixedCharges: (cardId) => get().fixedCharges.filter(c => c.creditCardId === cardId),
 
       isBudgetPaid: (category, month) => {
         const key = `${month ?? currentMonth()}:${category}`
