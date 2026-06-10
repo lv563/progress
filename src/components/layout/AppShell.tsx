@@ -24,7 +24,7 @@ export function AppShell({ children }: AppShellProps) {
   const { habits, getTodayLogs } = useHabitsStore()
   const { getTodaySessions } = usePomodoroStore()
   const { tasks } = useTasksStore()
-  const { waterToday, mealsToday, mealsTarget, resetDaily } = usePhysicalStore()
+  const { waterToday, getTodayMacros, getWaterTarget, resetDaily } = usePhysicalStore()
   const { saveLog, lastResetDate, setLastResetDate } = useDailyLogStore()
   const router = useRouter()
   const [isMobile, setIsMobile] = useState(true)
@@ -55,8 +55,8 @@ export function AppShell({ children }: AppShellProps) {
       const score = Math.round(
         (habits.length > 0 ? (completedHabits / habits.length) * 30 : 0) +
         (Math.min(sessions.length, 4) / 4) * 25 +
-        (Math.min(waterToday, 8) / 8) * 20 +
-        (mealsTarget > 0 ? (Math.min(mealsToday, mealsTarget) / mealsTarget) * 15 : 0) +
+        (Math.min(waterToday, getWaterTarget()) / getWaterTarget()) * 20 +
+        0 +  // meals metric removed
         (completedTasks > 0 ? 10 : 0)
       )
       saveLog({
@@ -67,8 +67,8 @@ export function AppShell({ children }: AppShellProps) {
         focusMinutes: sessions.reduce((a, s) => a + s.duration, 0),
         tasksCompleted: completedTasks,
         waterGlasses: waterToday,
-        mealsEaten: mealsToday,
-        mealsTarget,
+        mealsEaten: getTodayMacros().calories > 0 ? 3 : 0,
+        mealsTarget: 3,
         gymDone: false,
         score,
       })

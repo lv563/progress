@@ -1,22 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { stagger, fadeUp } from '@/lib/utils/motion'
-import { Dumbbell, Droplets, TrendingDown, Plus, Activity, Scale, CalendarDays, X, Pencil, UtensilsCrossed, Minus } from 'lucide-react'
+import {
+  Dumbbell, Droplets, TrendingDown, Plus, Scale, CalendarDays, X,
+  Flame, Zap, Target, ChevronDown, ChevronUp, Trash2, Settings,
+  Apple, Activity, Star, BarChart3, User, Search, Pencil,
+} from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
-import { usePhysicalStore } from '@/stores/physical.store'
+import { usePhysicalStore, FOOD_DB } from '@/stores/physical.store'
 import { useAppStore } from '@/stores/app.store'
-import { useHabitsStore } from '@/stores/habits.store'
-import { usePomodoroStore } from '@/stores/pomodoro.store'
-import { useRoutineStore } from '@/stores/routine.store'
 import { cn } from '@/lib/utils/cn'
-import type { DayPlan } from '@/stores/physical.store'
+import type { MealType, DayPlan, FoodDBEntry } from '@/stores/physical.store'
 
 const WORKOUT_TYPES = [
   { type: 'push',      name: 'Push',        desc: 'Pecho · Hombros · Tríceps', icon: '💪', color: '#7C3AED' },
@@ -27,729 +27,768 @@ const WORKOUT_TYPES = [
   { type: 'upper',     name: 'Upper',       desc: 'Tren superior',              icon: '👐', color: '#F97316' },
   { type: 'lower',     name: 'Lower',       desc: 'Tren inferior',              icon: '🦿', color: '#84CC16' },
   { type: 'hiit',      name: 'HIIT',        desc: 'Alta intensidad',            icon: '⚡', color: '#EF4444' },
-  { type: 'rest',      name: 'Descanso',    desc: 'Día libre',                  icon: '😴', color: '#475569' },
-  { type: 'custom',    name: 'Personalizado', desc: 'Escribir descripción',    icon: '✏️', color: '#8B5CF6' },
+  { type: 'rest',      name: 'Descanso',    desc: 'Día de recuperación',        icon: '😴', color: '#475569' },
+  { type: 'custom',    name: 'Personalizado', desc: 'Descripción libre',        icon: '✏️', color: '#8B5CF6' },
 ]
 
+const MEAL_LABELS: Record<MealType, { label: string; icon: string }> = {
+  breakfast: { label: 'Desayuno',  icon: '🌅' },
+  lunch:     { label: 'Almuerzo',  icon: '☀️' },
+  dinner:    { label: 'Cena',      icon: '🌙' },
+  snack:     { label: 'Snacks',    icon: '🍎' },
+}
+const MEAL_ORDER: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack']
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const DAY_FULL  = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
+const ACTIVITY_LABELS: Record<string, string> = {
+  sedentary: 'Sedentario (sin ejercicio)',
+  light: 'Ligero (1-3 días/sem)',
+  moderate: 'Moderado (3-5 días/sem)',
+  active: 'Activo (6-7 días/sem)',
+  very_active: 'Muy activo (atleta)',
+}
+
+type Tab = 'hoy' | 'nutricion' | 'entreno' | 'progreso' | 'perfil'
+
+function MacroBar({ label, value, target, color, unit = 'g' }: { label: string; value: number; target: number; color: string; unit?: string }) {
+  const pct = target > 0 ? Math.min(100, (value / target) * 100) : 0
+  const over = value > target
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-1">
+        <span className="text-xs font-medium text-slate-300">{label}</span>
+        <span className="text-xs tabular-nums" style={{ color: over ? '#EF4444' : pct >= 90 ? '#10B981' : '#94a3b8' }}>
+          {Math.round(value)}{unit} / {Math.round(target)}{unit}
+        </span>
+      </div>
+      <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+        <motion.div className="h-full rounded-full" style={{ background: over ? '#EF4444' : color }}
+          initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6 }} />
+      </div>
+    </div>
+  )
+}
+
 export default function PhysicalPage() {
   const {
-    exercises, workoutSessions, measurements, waterToday,
-    mealsToday, mealsTarget, completedDates,
-    weeklyPlan, setDayPlan, clearDayPlan,
-    logWater, logMeals, setMealsTarget, toggleCompletedDate,
-    addMeasurement, addWorkout,
-    getWeekSessions, getLatestMeasurement,
+    workoutSessions, measurements, completedDates, weeklyPlan,
+    userProfile, mealLogs, waterToday,
+    updateUserProfile, addWorkout, addMeasurement,
+    addWater, setWater, toggleCompletedDate,
+    setDayPlan, clearDayPlan,
+    addMealItem, removeMealItem,
+    getTodayMealLogs, getTodayMacros, getDailyTargets, getWaterTarget,
+    getDailyScore, getWeeklyStats, getWeekSessions, getLatestMeasurement,
   } = usePhysicalStore()
   const { addXP } = useAppStore()
-  const { habits, getTodayLogs }   = useHabitsStore()
-  const { getTodaySessions }       = usePomodoroStore()
-  const { getTodayRoutine }        = useRoutineStore()
 
-  const [addWorkoutModal, setAddWorkoutModal] = useState(false)
-  const [addMeasModal, setAddMeasModal]       = useState(false)
-  const [planModal, setPlanModal]             = useState<number | null>(null)
-  const [newWeight, setNewWeight]             = useState('')
-  const [customName, setCustomName]           = useState('')
-  const [selectedType, setSelectedType]       = useState(WORKOUT_TYPES[0])
+  const [activeTab, setActiveTab] = useState<Tab>('hoy')
 
-  const weekSessions = getWeekSessions()
-  const latest       = getLatestMeasurement()
-  const todayDow     = new Date().getDay() // 0=Sun
+  // modals
+  const [workoutModal, setWorkoutModal]   = useState(false)
+  const [measModal, setMeasModal]         = useState(false)
+  const [planModal, setPlanModal]         = useState<number | null>(null)
+  const [foodModal, setFoodModal]         = useState<MealType | null>(null)
+  const [profileModal, setProfileModal]   = useState(false)
+  const [waterModal, setWaterModal]       = useState(false)
 
-  // Returns the yyyy-MM-dd date string for a given day-of-week in the current week
+  // form states
+  const [newWeight, setNewWeight]         = useState('')
+  const [customName, setCustomName]       = useState('')
+  const [selectedType, setSelectedType]   = useState(WORKOUT_TYPES[0])
+  const [foodSearch, setFoodSearch]       = useState('')
+  const [selectedFood, setSelectedFood]   = useState<FoodDBEntry | null>(null)
+  const [foodQty, setFoodQty]             = useState('')
+  const [manualMode, setManualMode]       = useState(false)
+  const [manualEntry, setManualEntry]     = useState({ name: '', calories: '', protein: '', carbs: '', fats: '', fiber: '' })
+  const [waterInput, setWaterInput]       = useState('')
+  const [profileForm, setProfileForm]     = useState({
+    weight: String(userProfile.weight || ''), height: String(userProfile.height || ''),
+    age: String(userProfile.age || ''), sex: userProfile.sex,
+    activityLevel: userProfile.activityLevel, goal: userProfile.goal,
+  })
+
+  const todayDow    = new Date().getDay()
+  const todayStr    = new Date().toISOString().slice(0, 10)
+  const targets     = getDailyTargets()
+  const macros      = getTodayMacros()
+  const waterTarget = getWaterTarget()
+  const score       = getDailyScore()
+  const weekStats   = getWeeklyStats()
+  const weekSess    = getWeekSessions()
+  const latest      = getLatestMeasurement()
+  const todayLogs   = getTodayMealLogs()
+  const profileSet  = userProfile.weight > 0 && userProfile.height > 0
+
+  const todayDone = completedDates.includes(todayStr) ||
+    workoutSessions.some(s => new Date(s.date).toISOString().slice(0, 10) === todayStr && s.completed)
+
+  const dayStatus = score.total >= 95 ? { label: 'Día Perfecto 🏆', color: '#10B981', bg: 'bg-emerald-500/10 border-emerald-500/20' } :
+    score.total >= 80 ? { label: 'Día Bueno ✅', color: '#7C3AED', bg: 'bg-violet-500/10 border-violet-500/20' } :
+    score.total >= 60 ? { label: 'Día Regular ⚡', color: '#F59E0B', bg: 'bg-amber-500/10 border-amber-500/20' } :
+    { label: 'Día Perdido 😔', color: '#EF4444', bg: 'bg-red-500/10 border-red-500/20' }
+
+  const searchResults = useMemo(() => {
+    if (foodSearch.length < 2) return []
+    const q = foodSearch.toLowerCase()
+    return FOOD_DB.filter(f => f.name.toLowerCase().includes(q)).slice(0, 8)
+  }, [foodSearch])
+
+  const weightData = measurements.slice(0, 10).reverse().map((m, i) => ({ i: i + 1, peso: m.weight ?? 0 }))
+
   const getDayDate = (dow: number) => {
-    const d = new Date()
-    d.setDate(d.getDate() + (dow - todayDow))
-    return d.toISOString().slice(0, 10)
+    const d = new Date(); d.setDate(d.getDate() + (dow - todayDow)); return d.toISOString().slice(0, 10)
   }
-
-  // A day is done if manually marked OR a workout session was logged for that date
   const isDayDone = (dow: number) => {
-    const dateStr = getDayDate(dow)
-    if (completedDates.includes(dateStr)) return true
-    const target = new Date(dateStr + 'T12:00:00')
-    return workoutSessions.some(
-      s => new Date(s.date).toDateString() === target.toDateString() && s.completed
-    )
+    const ds = getDayDate(dow)
+    if (completedDates.includes(ds)) return true
+    const t = new Date(ds + 'T12:00:00')
+    return workoutSessions.some(s => new Date(s.date).toDateString() === t.toDateString() && s.completed)
   }
-  const todayDone = isDayDone(todayDow)
 
-  // ── Daily summary ────────────────────────────────────────────────
-  const todayLogs      = getTodayLogs()
-  const pomodoroToday  = getTodaySessions()
-  const todayRoutine   = getTodayRoutine()
+  // smart recommendations
+  const recommendations = useMemo(() => {
+    const recs: { icon: string; text: string; foods?: string[] }[] = []
+    const remaining = { protein: targets.protein - macros.protein, fiber: targets.fiber - macros.fiber, water: waterTarget - waterToday }
+    if (remaining.protein > 20) recs.push({ icon: '🥩', text: `Te faltan ${Math.round(remaining.protein)}g de proteína hoy.`, foods: ['Pechuga de pollo', 'Atún', 'Huevos', 'Yogurt griego'] })
+    if (remaining.fiber > 10) recs.push({ icon: '🥦', text: 'Necesitas más fibra hoy.', foods: ['Avena', 'Habichuelas', 'Brócoli', 'Aguacate'] })
+    if (remaining.water > 0.5) recs.push({ icon: '💧', text: `Te faltan ${remaining.water.toFixed(1)}L de agua para tu objetivo.` })
+    if (!todayDone) recs.push({ icon: '💪', text: `No has entrenado hoy. ${weeklyPlan[todayDow] ? `Te toca: ${weeklyPlan[todayDow].name}` : 'Agenda tu sesión.'}` })
+    return recs
+  }, [targets, macros, waterTarget, waterToday, todayDone, weeklyPlan, todayDow])
 
-  const habitsTotal    = habits.length
-  const habitsDone     = Object.keys(todayLogs).length
+  // testosterone insights
+  const tInsights = useMemo(() => {
+    const t: { icon: string; text: string; level: 'boost' | 'info' | 'warn' }[] = []
+    if (todayDone) t.push({ icon: '⚡', text: 'Los ejercicios compuestos (sentadillas, peso muerto) generaron un pico de testosterona. ¡Excelente!', level: 'boost' })
+    else t.push({ icon: '🏋️', text: 'El entrenamiento de fuerza incrementa la testosterona 15-25%. Haz tu sesión hoy.', level: 'warn' })
+    if (macros.fats < targets.fats * 0.6 && macros.calories > 0) t.push({ icon: '🥑', text: 'Tus grasas están bajas. Las grasas saludables son precursores directos de la testosterona (aguacate, huevos, nueces).', level: 'warn' })
+    else t.push({ icon: '🥚', text: 'Las grasas saludables y el colesterol alimentario son esenciales para sintetizar testosterona.', level: 'info' })
+    t.push({ icon: '🛌', text: 'El 70% de la producción de testosterona ocurre durante el sueño profundo. Duerme 7-9 horas.', level: 'info' })
+    t.push({ icon: '🦪', text: 'Zinc: come carnes rojas, mariscos o semillas de calabaza — cofactor clave para la producción de T.', level: 'info' })
+    if (macros.protein >= targets.protein * 0.85) t.push({ icon: '💪', text: 'Buena ingesta de proteína. Mantener masa muscular protege los niveles de testosterona a largo plazo.', level: 'boost' })
+    t.push({ icon: '☀️', text: 'Vitamina D (15-20 min de sol diario) se correlaciona directamente con niveles más altos de testosterona.', level: 'info' })
+    return t
+  }, [todayDone, macros, targets])
 
-  const routineTotal   = todayRoutine?.blocks.length ?? 0
-  const routineDone    = todayRoutine?.blocks.filter(b => b.completed).length ?? 0
+  const handleAddFood = () => {
+    if (!foodModal) return
+    if (manualMode) {
+      if (!manualEntry.name && !manualEntry.calories) return
+      addMealItem(foodModal, { name: manualEntry.name || 'Comida personalizada', quantity: 1, unit: 'porción', calories: Number(manualEntry.calories) || 0, protein: Number(manualEntry.protein) || 0, carbs: Number(manualEntry.carbs) || 0, fats: Number(manualEntry.fats) || 0, fiber: Number(manualEntry.fiber) || 0 })
+    } else {
+      if (!selectedFood || !foodQty) return
+      const qty = Number(foodQty)
+      const s = qty / selectedFood.per
+      addMealItem(foodModal, { name: `${selectedFood.name} (${qty} ${selectedFood.unit})`, quantity: qty, unit: selectedFood.unit, calories: Math.round(selectedFood.cal * s), protein: Math.round(selectedFood.pro * s * 10) / 10, carbs: Math.round(selectedFood.car * s * 10) / 10, fats: Math.round(selectedFood.fat * s * 10) / 10, fiber: Math.round(selectedFood.fib * s * 10) / 10 })
+    }
+    setFoodModal(null); setFoodSearch(''); setSelectedFood(null); setFoodQty(''); setManualMode(false)
+    setManualEntry({ name: '', calories: '', protein: '', carbs: '', fats: '', fiber: '' })
+  }
 
-  const POMODORO_TARGET = 4
-
-  const metrics = [
-    {
-      key: 'workout',
-      label: 'Entrenamiento',
-      icon: '💪',
-      score: todayDone ? 25 : 0,
-      max: 25,
-      detail: todayDone
-        ? `${weeklyPlan[todayDow]?.name ?? 'Entreno'} completado`
-        : weeklyPlan[todayDow]
-        ? `Pendiente: ${weeklyPlan[todayDow].name}`
-        : 'Sin entreno planificado',
-      ok: todayDone,
-    },
-    {
-      key: 'water',
-      label: 'Hidratación',
-      icon: '💧',
-      score: Math.round((Math.min(waterToday, 8) / 8) * 20),
-      max: 20,
-      detail: waterToday >= 8
-        ? '¡Meta alcanzada! 8 vasos'
-        : `${waterToday}/8 vasos — ${8 - waterToday} más para completar`,
-      ok: waterToday >= 8,
-    },
-    {
-      key: 'meals',
-      label: 'Comidas',
-      icon: '🍽️',
-      score: Math.round((Math.min(mealsToday, mealsTarget) / mealsTarget) * 20),
-      max: 20,
-      detail: mealsToday >= mealsTarget
-        ? `${mealsToday}/${mealsTarget} comidas completadas`
-        : `${mealsToday}/${mealsTarget} — te faltan ${mealsTarget - mealsToday}`,
-      ok: mealsToday >= mealsTarget,
-    },
-    {
-      key: 'habits',
-      label: 'Hábitos',
-      icon: '⭐',
-      score: habitsTotal > 0 ? Math.round((habitsDone / habitsTotal) * 20) : 0,
-      max: 20,
-      detail: habitsTotal === 0
-        ? 'Sin hábitos configurados'
-        : habitsDone >= habitsTotal
-        ? `¡Todos los hábitos! ${habitsDone}/${habitsTotal}`
-        : `${habitsDone}/${habitsTotal} hábitos — ${habitsTotal - habitsDone} pendientes`,
-      ok: habitsTotal > 0 && habitsDone >= habitsTotal,
-    },
-    {
-      key: 'focus',
-      label: 'Foco',
-      icon: '🧠',
-      score: Math.round((Math.min(pomodoroToday.length, POMODORO_TARGET) / POMODORO_TARGET) * 15),
-      max: 15,
-      detail: pomodoroToday.length === 0
-        ? 'Sin sesiones Pomodoro hoy'
-        : pomodoroToday.length >= POMODORO_TARGET
-        ? `${pomodoroToday.length} sesiones de foco — excelente`
-        : `${pomodoroToday.length}/${POMODORO_TARGET} sesiones de foco`,
-      ok: pomodoroToday.length >= POMODORO_TARGET,
-    },
-  ]
-
-  const totalScore = metrics.reduce((s, m) => s + m.score, 0)
-  const totalMax   = metrics.reduce((s, m) => s + m.max, 0)
-  const pctScore   = Math.round((totalScore / totalMax) * 100)
-
-  const overallMsg =
-    pctScore >= 90 ? { text: '¡Día épico!',                sub: 'Eres imparable. Sigue así.',                 color: '#10B981' } :
-    pctScore >= 75 ? { text: '¡Gran día!',                 sub: 'Casi perfecto — muy buen trabajo.',           color: '#7C3AED' } :
-    pctScore >= 55 ? { text: 'Buen esfuerzo',              sub: 'Quedaron cosas por hacer, pero avanzaste.',   color: '#F59E0B' } :
-    pctScore >= 35 ? { text: 'Día regular',                sub: 'Mañana tienes otra oportunidad.',             color: '#F97316' } :
-                     { text: 'Día difícil',                sub: 'No te rindas. Cada día es una nueva chance.', color: '#EF4444' }
-
-  const hour = new Date().getHours()
-  const isEvening = hour >= 18
-
-  const weightData = measurements.slice(-8).reverse().map((m, i) => ({
-    day: i + 1,
-    peso: m.weight ?? 0,
-  }))
-
-  const weightChange = measurements.length >= 2
-    ? ((measurements[0].weight ?? 0) - (measurements[1].weight ?? 0)).toFixed(1)
-    : null
-
-  const openPlanModal = (day: number) => {
-    const existing = weeklyPlan[day]
-    const found = WORKOUT_TYPES.find(t => t.type === existing?.type)
-    setSelectedType(found ?? WORKOUT_TYPES[0])
-    setCustomName(existing?.name ?? '')
-    setPlanModal(day)
+  const handleSaveProfile = () => {
+    updateUserProfile({ weight: Number(profileForm.weight) || 0, height: Number(profileForm.height) || 0, age: Number(profileForm.age) || 0, sex: profileForm.sex, activityLevel: profileForm.activityLevel, goal: profileForm.goal })
+    setProfileModal(false)
   }
 
   const saveDayPlan = () => {
     if (planModal === null) return
-    const plan: DayPlan = {
-      type: selectedType.type,
-      name: selectedType.type === 'custom' ? (customName || 'Personalizado') : selectedType.name,
-      icon: selectedType.icon,
-    }
-    setDayPlan(planModal, plan)
-    setPlanModal(null)
+    const plan: DayPlan = { type: selectedType.type, name: selectedType.type === 'custom' ? (customName || 'Personalizado') : selectedType.name, icon: selectedType.icon }
+    setDayPlan(planModal, plan); setPlanModal(null)
+  }
+
+  const openPlanModal = (day: number) => {
+    const ex = weeklyPlan[day]; const found = WORKOUT_TYPES.find(t => t.type === ex?.type)
+    setSelectedType(found ?? WORKOUT_TYPES[0]); setCustomName(ex?.name ?? ''); setPlanModal(day)
   }
 
   return (
     <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-5">
-      <motion.div variants={fadeUp} className="flex items-center justify-between">
-        <h1 className="text-2xl font-black text-white flex items-center gap-2">
-          <Dumbbell size={24} className="text-emerald-400" /> Físico
-        </h1>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setAddMeasModal(true)}>
-            <Scale size={14} /> Peso
-          </Button>
-          <Button variant="glow" size="sm" onClick={() => setAddWorkoutModal(true)}>
-            <Plus size={14} /> Entreno
-          </Button>
+      {/* Header */}
+      <motion.div variants={fadeUp} className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-black text-white flex items-center gap-2"><Dumbbell size={24} className="text-emerald-400" /> Físico</h1>
+          <p className="text-slate-400 text-sm mt-0.5">Sistema de salud y rendimiento</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button onClick={() => { setProfileForm({ weight: String(userProfile.weight||''), height: String(userProfile.height||''), age: String(userProfile.age||''), sex: userProfile.sex, activityLevel: userProfile.activityLevel, goal: userProfile.goal }); setProfileModal(true) }} variant="ghost" size="sm"><User size={14} /> Perfil</Button>
+          <Button onClick={() => setMeasModal(true)} variant="ghost" size="sm"><Scale size={14} /> Peso</Button>
+          <Button onClick={() => setWorkoutModal(true)} variant="glow" size="sm"><Plus size={14} /> Entreno</Button>
         </div>
       </motion.div>
 
-      {/* Quick stats */}
-      <motion.div variants={fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { icon: '💪', label: 'Sesiones esta semana', val: `${weekSessions.length}/5`,                          color: '#10B981' },
-          { icon: '⚖️', label: 'Peso actual',          val: latest?.weight ? `${latest.weight} kg` : '—',       color: '#7C3AED' },
-          { icon: '💧', label: 'Agua hoy',             val: `${waterToday}/8`,                                   color: '#06B6D4' },
-          { icon: '📉', label: 'Cambio de peso',       val: weightChange ? `${weightChange} kg` : '—',          color: '#F59E0B' },
-        ].map(s => (
-          <GlassCard key={s.label} className="p-4" animate={false}>
-            <p className="text-2xl mb-1">{s.icon}</p>
-            <p className="text-xl font-black text-white">{s.val}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
-          </GlassCard>
+      {/* Score + Day Status */}
+      <motion.div variants={fadeUp}>
+        <div className={cn('rounded-2xl px-5 py-4 border flex items-center gap-4', dayStatus.bg)}>
+          {/* Score ring */}
+          <div className="relative w-16 h-16 shrink-0">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 56 56">
+              <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
+              <circle cx="28" cy="28" r="23" fill="none" stroke={dayStatus.color} strokeWidth="5" strokeLinecap="round"
+                strokeDasharray={`${2 * Math.PI * 23}`} strokeDashoffset={`${2 * Math.PI * 23 * (1 - score.total / 100)}`}
+                style={{ transition: 'stroke-dashoffset 0.8s ease' }} />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-sm font-black text-white">{score.total}</span>
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-black text-white text-lg leading-tight">{dayStatus.label}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Score de Salud Físico</p>
+            <div className="flex gap-3 mt-2 flex-wrap text-[10px]">
+              <span style={{ color: score.workout === 30 ? '#10B981' : '#64748b' }}>💪 Entreno {score.workout}/30</span>
+              <span style={{ color: score.protein >= 25 ? '#10B981' : '#64748b' }}>🥩 Proteína {score.protein}/30</span>
+              <span style={{ color: score.water >= 18 ? '#10B981' : '#64748b' }}>💧 Agua {score.water}/20</span>
+              <span style={{ color: score.calories >= 8 ? '#10B981' : '#64748b' }}>🔥 Calorías {score.calories}/10</span>
+              <span style={{ color: score.fiber >= 8 ? '#10B981' : '#64748b' }}>🌿 Fibra {score.fiber}/10</span>
+            </div>
+          </div>
+          {!profileSet && (
+            <button onClick={() => setProfileModal(true)} className="shrink-0 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-semibold hover:bg-amber-500/25 transition-all">
+              Configurar perfil
+            </button>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Tabs */}
+      <motion.div variants={fadeUp} className="flex gap-1 bg-white/[0.03] rounded-xl p-1 border border-white/[0.05] overflow-x-auto">
+        {([['hoy','🏠 Hoy'],['nutricion','🥗 Nutrición'],['entreno','💪 Entreno'],['progreso','📈 Progreso'],['perfil','👤 Perfil']] as [Tab,string][]).map(([tab, label]) => (
+          <button key={tab} onClick={() => setActiveTab(tab)}
+            className={cn('flex-1 min-w-[60px] py-2 px-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap', activeTab === tab ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-500 hover:text-slate-300')}>
+            {label}
+          </button>
         ))}
       </motion.div>
 
-      {/* Weekly training plan */}
-      <motion.div variants={fadeUp}>
-        <GlassCard className="p-5" animate={false}>
-          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-            <CalendarDays size={16} className="text-emerald-400" /> Plan Semanal
-          </h3>
-          <div className="overflow-x-auto -mx-1 pb-1">
-          <div className="grid grid-cols-7 gap-2 min-w-[380px] px-1">
-            {Array.from({ length: 7 }, (_, i) => {
-              const plan    = weeklyPlan[i]
-              const isToday = i === todayDow
-              const done    = isDayDone(i)
-              const wt      = WORKOUT_TYPES.find(t => t.type === plan?.type)
-              const dateStr = getDayDate(i)
+      <AnimatePresence mode="wait">
 
-              return (
-                <div key={i} className="relative flex flex-col">
-                  {/* Main card — click to edit plan */}
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => openPlanModal(i)}
-                    className={cn(
-                      'flex flex-col items-center gap-1.5 p-2 rounded-xl border transition-all text-center group',
-                      done
-                        ? 'border-emerald-500/40 bg-emerald-500/[0.08]'
-                        : isToday
-                        ? 'border-emerald-500/50 bg-emerald-500/10'
-                        : plan
-                        ? 'border-white/10 bg-white/[0.04] hover:bg-white/[0.07]'
-                        : 'border-dashed border-white/[0.08] hover:border-white/20 hover:bg-white/[0.03]'
-                    )}
-                  >
-                    {/* Day label */}
-                    <span className={cn(
-                      'text-[10px] font-bold uppercase tracking-wider',
-                      done ? 'text-emerald-400' : isToday ? 'text-emerald-400' : 'text-slate-500'
-                    )}>
-                      {DAY_NAMES[i]}
-                    </span>
+        {/* ══ TAB: HOY ══ */}
+        {activeTab === 'hoy' && (
+          <motion.div key="hoy" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
 
-                    {/* Workout icon / add icon */}
-                    {plan ? (
-                      <>
-                        <span className="text-xl leading-none">{plan.icon}</span>
-                        <span
-                          className="text-[9px] font-semibold leading-tight"
-                          style={{ color: done ? '#10B981' : (wt?.color ?? '#94a3b8') }}
-                        >
-                          {plan.name}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-slate-700 text-lg leading-none group-hover:text-slate-500 transition-colors">+</span>
-                        <span className="text-[9px] text-slate-700 group-hover:text-slate-500 transition-colors">Agregar</span>
-                      </>
-                    )}
-                  </motion.button>
-
-                  {/* Toggle-done button — separate from plan edit */}
-                  <motion.button
-                    whileTap={{ scale: 0.85 }}
-                    onClick={() => toggleCompletedDate(dateStr)}
-                    className={cn(
-                      'mt-1 mx-auto w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all',
-                      done
-                        ? 'bg-emerald-500 border-emerald-500 shadow-md shadow-emerald-500/40'
-                        : 'bg-transparent border-white/20 hover:border-emerald-400/60'
-                    )}
-                    title={done ? 'Marcar como no completado' : 'Marcar como completado'}
-                  >
-                    {done && (
-                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </motion.button>
-
-                  {/* Today indicator dot */}
-                  {isToday && (
-                    <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 pointer-events-none" />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-          </div>
-
-          {/* Today's plan callout */}
-          {weeklyPlan[todayDow] && (
-            <motion.div
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={cn(
-                'mt-4 flex items-center gap-3 p-3 rounded-xl border',
-                todayDone
-                  ? 'bg-emerald-500/[0.12] border-emerald-500/30'
-                  : 'bg-emerald-500/[0.08] border-emerald-500/20'
-              )}
-            >
-              <span className="text-2xl">{weeklyPlan[todayDow].icon}</span>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-white">
-                  {todayDone ? '¡Completado! ' : 'Hoy toca: '}
-                  {weeklyPlan[todayDow].name}
-                </p>
-                <p className="text-xs text-slate-400">
-                  {todayDone ? 'Excelente trabajo hoy 🔥' : DAY_FULL[todayDow]}
-                </p>
-              </div>
-              {todayDone ? (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-semibold">
-                  <svg width="14" height="11" viewBox="0 0 14 11" fill="none">
-                    <path d="M1 5.5L5 9.5L13 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Listo
-                </div>
-              ) : (
-                <Button variant="glow" size="sm" onClick={() => setAddWorkoutModal(true)}>
-                  <Plus size={13} /> Registrar
-                </Button>
-              )}
-            </motion.div>
-          )}
-        </GlassCard>
-      </motion.div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Weight chart */}
-        <motion.div variants={fadeUp}>
-          <GlassCard className="p-5" animate={false}>
-            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-              <TrendingDown size={16} className="text-violet-400" /> Evolución de Peso
-            </h3>
-            {weightData.length > 1 ? (
-              <ResponsiveContainer width="100%" height={160}>
-                <LineChart data={weightData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} domain={['auto', 'auto']} />
-                  <Tooltip
-                    contentStyle={{ background: '#1A1A27', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', fontSize: '12px', color: '#F8FAFC' }}
-                    formatter={(v) => [`${v} kg`, 'Peso']}
-                  />
-                  <Line type="monotone" dataKey="peso" stroke="#7C3AED" strokeWidth={2} dot={{ fill: '#7C3AED', strokeWidth: 0, r: 3 }} activeDot={{ r: 5 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-40 flex items-center justify-center text-slate-600 text-sm">
-                Agrega mediciones para ver el gráfico
-              </div>
-            )}
-          </GlassCard>
-        </motion.div>
-
-        {/* Water tracker */}
-        <motion.div variants={fadeUp}>
-          <GlassCard className="p-5" animate={false}>
-            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-              <Droplets size={16} className="text-cyan-400" /> Hidratación
-            </h3>
-            <div className="grid grid-cols-4 gap-2 mb-4">
-              {Array.from({ length: 8 }, (_, i) => (
-                <motion.button
-                  key={i}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => { logWater(i + 1 <= waterToday ? i : i + 1); addXP(2, 'Vaso de agua') }}
-                  className={cn(
-                    'aspect-square rounded-xl flex flex-col items-center justify-center gap-1 transition-all text-base border',
-                    i < waterToday
-                      ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-400'
-                      : 'bg-white/[0.04] border-white/[0.06] text-slate-700 hover:border-white/10'
-                  )}
-                >
-                  💧
-                  <span className="text-[9px] font-mono">{i + 1}</span>
-                </motion.button>
-              ))}
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-400">{waterToday} de 8 vasos</p>
-              <div className="w-32 h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full bg-cyan-500"
-                  animate={{ width: `${(waterToday / 8) * 100}%` }}
-                  transition={{ duration: 0.4 }}
-                />
-              </div>
-            </div>
-          </GlassCard>
-        </motion.div>
-
-        {/* Meals tracker */}
-        <motion.div variants={fadeUp}>
-          <GlassCard className="p-5 h-full" animate={false}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-white flex items-center gap-2">
-                <UtensilsCrossed size={16} className="text-orange-400" /> Comidas
-              </h3>
-              {/* Target adjuster */}
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setMealsTarget(Math.max(1, mealsTarget - 1))}
-                  className="w-6 h-6 rounded-lg bg-white/[0.06] flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  <Minus size={10} />
-                </button>
-                <span className="text-xs text-slate-400 font-mono w-4 text-center">{mealsTarget}</span>
-                <button
-                  onClick={() => setMealsTarget(Math.min(8, mealsTarget + 1))}
-                  className="w-6 h-6 rounded-lg bg-white/[0.06] flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  <Plus size={10} />
-                </button>
-              </div>
-            </div>
-
-            {/* Meal slots */}
-            <div className="grid grid-cols-4 gap-2 mb-4">
-              {Array.from({ length: mealsTarget }, (_, i) => {
-                const eaten = i < mealsToday
-                return (
-                  <motion.button
-                    key={i}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => logMeals(i + 1 <= mealsToday ? i : i + 1)}
-                    className={cn(
-                      'aspect-square rounded-xl flex flex-col items-center justify-center gap-1 transition-all text-base border',
-                      eaten
-                        ? 'bg-orange-500/20 border-orange-500/40 text-orange-400'
-                        : 'bg-white/[0.04] border-white/[0.06] text-slate-700 hover:border-white/10'
-                    )}
-                  >
-                    {eaten ? '✅' : '🍽️'}
-                    <span className="text-[9px] font-mono">{i + 1}</span>
-                  </motion.button>
-                )
-              })}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-400">{mealsToday} de {mealsTarget} comidas</p>
-              <div className="w-24 h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                <motion.div
-                  className={cn('h-full rounded-full', mealsToday >= mealsTarget ? 'bg-emerald-500' : 'bg-orange-500')}
-                  animate={{ width: `${Math.min((mealsToday / mealsTarget) * 100, 100)}%` }}
-                  transition={{ duration: 0.4 }}
-                />
-              </div>
-            </div>
-
-            {mealsToday >= mealsTarget && (
-              <motion.p
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-xs text-emerald-400 mt-2 text-center font-semibold"
-              >
-                ¡Objetivo cumplido! 🎯
-              </motion.p>
-            )}
-          </GlassCard>
-        </motion.div>
-      </div>
-
-      {/* Recent workouts */}
-      <motion.div variants={fadeUp}>
-        <GlassCard className="p-5" animate={false}>
-          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-            <Activity size={16} className="text-emerald-400" /> Sesiones Recientes
-          </h3>
-          {workoutSessions.length === 0 ? (
-            <div className="text-center py-8 text-slate-600">
-              <Dumbbell size={32} className="mx-auto mb-2 opacity-40" />
-              <p className="text-sm">Sin sesiones registradas</p>
-              <Button variant="glow" size="sm" className="mt-4" onClick={() => setAddWorkoutModal(true)}>
-                <Plus size={14} /> Registrar entreno
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {workoutSessions.slice(-5).reverse().map(s => (
-                <div key={s.id} className="flex items-center gap-3 p-3 glass rounded-xl">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                    <Dumbbell size={14} className="text-emerald-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-white">{s.name}</p>
-                    <p className="text-xs text-slate-500">
-                      {new Date(s.date).toLocaleDateString('es-ES')} · {s.duration}min
-                    </p>
-                  </div>
-                  <Badge variant="green" size="sm">
-                    {s.volume > 0 ? `${s.volume}kg vol.` : s.type}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          )}
-        </GlassCard>
-      </motion.div>
-
-      {/* Daily summary */}
-      <motion.div variants={fadeUp}>
-        <GlassCard className="p-5" animate={false}>
-          {/* Header */}
-          <div className="flex items-start justify-between mb-5">
-            <div>
-              <h3 className="font-semibold text-white flex items-center gap-2">
-                <span className="text-lg">📊</span>
-                {isEvening ? 'Resumen del Día' : 'Progreso de Hoy'}
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {isEvening ? 'Así terminó tu día' : 'Va actualizándose durante el día'}
-              </p>
-            </div>
-
-            {/* Score ring */}
-            <div className="flex flex-col items-center">
-              <div className="relative w-16 h-16">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 56 56">
-                  <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
-                  <circle
-                    cx="28" cy="28" r="23" fill="none"
-                    stroke={overallMsg.color}
-                    strokeWidth="5"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 23}`}
-                    strokeDashoffset={`${2 * Math.PI * 23 * (1 - pctScore / 100)}`}
-                    style={{ transition: 'stroke-dashoffset 0.8s ease' }}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-sm font-black text-white">{pctScore}%</span>
-                </div>
-              </div>
-              <span className="text-[10px] font-semibold mt-1" style={{ color: overallMsg.color }}>
-                {overallMsg.text}
-              </span>
-            </div>
-          </div>
-
-          <p className="text-xs text-slate-400 mb-4 -mt-2">{overallMsg.sub}</p>
-
-          {/* Metric rows */}
-          <div className="space-y-2.5">
-            {metrics.map(m => {
-              const pct = Math.round((m.score / m.max) * 100)
-              return (
-                <div key={m.key} className="flex items-center gap-3">
-                  <span className="text-base w-6 text-center shrink-0">{m.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold text-white">{m.label}</span>
-                      <span className="text-xs font-mono text-slate-400">{m.score}/{m.max}</span>
+            {/* Pending actions */}
+            {recommendations.length > 0 && (
+              <GlassCard className="p-5" animate={false}>
+                <h3 className="font-semibold text-white flex items-center gap-2 mb-3"><Target size={16} className="text-amber-400" /> ¿Qué hacer hoy?</h3>
+                <div className="space-y-2">
+                  {recommendations.map((r, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                      <span className="text-lg leading-none mt-0.5">{r.icon}</span>
+                      <div className="flex-1">
+                        <p className="text-sm text-slate-200">{r.text}</p>
+                        {r.foods && <p className="text-xs text-slate-500 mt-1">Sugerencias: {r.foods.join(' · ')}</p>}
+                      </div>
                     </div>
-                    {/* Progress bar */}
-                    <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                      <motion.div
-                        className="h-full rounded-full"
-                        style={{ background: m.ok ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444' }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.6, delay: 0.1 }}
-                      />
-                    </div>
-                    <p className={cn('text-[10px] mt-0.5', m.ok ? 'text-emerald-400' : 'text-slate-500')}>
-                      {m.detail}
-                    </p>
-                  </div>
-                  {/* Status icon */}
-                  <div className="shrink-0">
-                    {m.ok ? (
-                      <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                          <path d="M1 4L3.5 6.5L9 1" stroke="#10B981" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    ) : m.score > 0 ? (
-                      <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center">
-                        <span className="text-[9px] text-amber-400 font-bold">~</span>
-                      </div>
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center">
-                        <span className="text-[9px] text-red-400 font-bold">✕</span>
-                      </div>
-                    )}
-                  </div>
+                  ))}
                 </div>
-              )
-            })}
-          </div>
+              </GlassCard>
+            )}
 
-          {/* What was missed */}
-          {metrics.filter(m => !m.ok).length > 0 && (
-            <div className="mt-4 pt-4 border-t border-white/[0.06]">
-              <p className="text-xs font-semibold text-slate-400 mb-2">Para mejorar mañana:</p>
-              <div className="flex flex-wrap gap-1.5">
-                {metrics.filter(m => !m.ok).map(m => (
-                  <span key={m.key} className="text-[10px] px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-slate-400">
-                    {m.icon} {m.label}
-                  </span>
+            {/* Water tracker */}
+            <GlassCard className="p-5" animate={false}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-white flex items-center gap-2"><Droplets size={16} className="text-cyan-400" /> Hidratación</h3>
+                <button onClick={() => { setWaterInput(''); setWaterModal(true) }} className="w-7 h-7 flex items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-all"><Pencil size={12} /></button>
+              </div>
+              <div className="flex items-end gap-3 mb-3">
+                <div>
+                  <span className="text-3xl font-black text-white tabular-nums">{waterToday.toFixed(1)}</span>
+                  <span className="text-slate-400 text-sm ml-1">L</span>
+                </div>
+                <div className="text-slate-500 text-sm pb-1">/ {waterTarget.toFixed(1)}L</div>
+                <div className="ml-auto text-right">
+                  <p className="text-lg font-bold tabular-nums" style={{ color: waterToday >= waterTarget ? '#10B981' : '#06B6D4' }}>{Math.min(100, Math.round((waterToday / waterTarget) * 100))}%</p>
+                  <p className="text-[10px] text-slate-600">completado</p>
+                </div>
+              </div>
+              <div className="h-3 rounded-full bg-white/[0.06] overflow-hidden mb-3">
+                <motion.div className="h-full rounded-full bg-cyan-500" initial={{ width: 0 }} animate={{ width: `${Math.min(100, (waterToday / waterTarget) * 100)}%` }} transition={{ duration: 0.6 }} />
+              </div>
+              {waterToday < waterTarget && (
+                <p className="text-xs text-cyan-400/70 mb-3">Te faltan {Math.max(0, waterTarget - waterToday).toFixed(1)}L para completar tu objetivo</p>
+              )}
+              <div className="flex gap-2 flex-wrap">
+                {[[0.25, '+250ml'], [0.5, '+500ml'], [1, '+1L']].map(([amount, label]) => (
+                  <button key={String(label)} onClick={() => { addWater(Number(amount)); addXP(2, 'Agua') }}
+                    className="flex-1 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-semibold hover:bg-cyan-500/20 transition-all min-w-[70px]">
+                    {String(label)}
+                  </button>
                 ))}
               </div>
+            </GlassCard>
+
+            {/* Quick macro summary */}
+            <GlassCard className="p-5" animate={false}>
+              <h3 className="font-semibold text-white flex items-center gap-2 mb-4"><Flame size={16} className="text-orange-400" /> Nutrición de Hoy</h3>
+              <div className="space-y-3">
+                <MacroBar label="Proteína" value={macros.protein} target={targets.protein} color="#7C3AED" />
+                <MacroBar label="Calorías" value={macros.calories} target={targets.calories} color="#F59E0B" unit=" kcal" />
+                <MacroBar label="Carbohidratos" value={macros.carbs} target={targets.carbs} color="#06B6D4" />
+                <MacroBar label="Grasas" value={macros.fats} target={targets.fats} color="#F97316" />
+                <MacroBar label="Fibra" value={macros.fiber} target={targets.fiber} color="#10B981" />
+              </div>
+              <button onClick={() => setActiveTab('nutricion')} className="mt-4 w-full py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-slate-500 hover:text-violet-400 hover:border-violet-500/20 transition-all">
+                Ver nutrición detallada →
+              </button>
+            </GlassCard>
+
+            {/* Testosterone section */}
+            <GlassCard className="p-5 border-amber-500/15" animate={false}>
+              <h3 className="font-semibold text-white flex items-center gap-2 mb-1">
+                <Zap size={16} className="text-amber-400" /> Niveles de Testosterona
+                <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold" style={{
+                  background: score.workout === 30 && macros.protein >= targets.protein * 0.8 ? '#10B98120' : '#F59E0B20',
+                  color: score.workout === 30 && macros.protein >= targets.protein * 0.8 ? '#10B981' : '#F59E0B'
+                }}>
+                  {score.workout === 30 && macros.protein >= targets.protein * 0.8 ? 'OPTIMIZANDO' : 'MEJORABLE'}
+                </span>
+              </h3>
+              <p className="text-xs text-slate-500 mb-3">Basado en tus hábitos de hoy</p>
+              <div className="space-y-2.5">
+                {tInsights.map((t, i) => (
+                  <div key={i} className={cn('flex items-start gap-3 p-3 rounded-xl border',
+                    t.level === 'boost' ? 'bg-emerald-500/08 border-emerald-500/20' :
+                    t.level === 'warn' ? 'bg-amber-500/06 border-amber-500/20' :
+                    'bg-white/[0.02] border-white/[0.05]')}>
+                    <span className="text-lg leading-none mt-0.5 shrink-0">{t.icon}</span>
+                    <p className="text-xs text-slate-300 leading-relaxed">{t.text}</p>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+          </motion.div>
+        )}
+
+        {/* ══ TAB: NUTRICIÓN ══ */}
+        {activeTab === 'nutricion' && (
+          <motion.div key="nutricion" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
+
+            {/* Macro summary */}
+            <GlassCard className="p-5" animate={false}>
+              <h3 className="font-semibold text-white flex items-center gap-2 mb-4"><BarChart3 size={16} className="text-violet-400" /> Macros del Día</h3>
+              <div className="space-y-3">
+                <MacroBar label="Proteína" value={macros.protein} target={targets.protein} color="#7C3AED" />
+                <MacroBar label="Carbohidratos" value={macros.carbs} target={targets.carbs} color="#06B6D4" />
+                <MacroBar label="Grasas" value={macros.fats} target={targets.fats} color="#F97316" />
+                <MacroBar label="Fibra" value={macros.fiber} target={targets.fiber} color="#10B981" />
+                <MacroBar label="Calorías" value={macros.calories} target={targets.calories} color="#F59E0B" unit=" kcal" />
+              </div>
+              {!profileSet && <p className="text-xs text-amber-400 mt-3 text-center">Configura tu perfil para ver objetivos personalizados</p>}
+            </GlassCard>
+
+            {/* Smart recs */}
+            {recommendations.filter(r => r.icon !== '💪').length > 0 && (
+              <GlassCard className="p-4" animate={false}>
+                <p className="text-xs font-semibold text-slate-400 mb-2">📊 Recomendaciones Nutricionales</p>
+                <div className="space-y-1.5">
+                  {recommendations.filter(r => r.icon !== '💪').map((r, i) => (
+                    <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-white/[0.02]">
+                      <span className="text-sm">{r.icon}</span>
+                      <div><p className="text-xs text-slate-300">{r.text}</p>{r.foods && <p className="text-[10px] text-slate-600 mt-0.5">{r.foods.join(' · ')}</p>}</div>
+                    </div>
+                  ))}
+                </div>
+              </GlassCard>
+            )}
+
+            {/* Meals */}
+            {MEAL_ORDER.map(mealType => {
+              const log = todayLogs.find(l => l.mealType === mealType)
+              const mealMacros = log ? log.items.reduce((acc, i) => ({ calories: acc.calories + i.calories, protein: acc.protein + i.protein }), { calories: 0, protein: 0 }) : null
+              const { label, icon } = MEAL_LABELS[mealType]
+              return (
+                <GlassCard key={mealType} className="p-4" animate={false}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-white flex items-center gap-2">
+                      <span>{icon}</span> {label}
+                      {mealMacros && <span className="text-xs text-slate-500 font-normal">{Math.round(mealMacros.calories)} kcal · {Math.round(mealMacros.protein)}g prot</span>}
+                    </h3>
+                    <button onClick={() => { setFoodSearch(''); setSelectedFood(null); setFoodQty(''); setManualMode(false); setFoodModal(mealType) }}
+                      className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 px-2 py-1 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 transition-all">
+                      <Plus size={11} /> Agregar
+                    </button>
+                  </div>
+                  {!log || log.items.length === 0 ? (
+                    <p className="text-xs text-slate-600 text-center py-3">Sin alimentos registrados</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {log.items.map(item => (
+                        <div key={item.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04] group">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-white truncate">{item.name}</p>
+                            <p className="text-[10px] text-slate-500 mt-0.5">
+                              🔥 {Math.round(item.calories)} kcal · P: {item.protein.toFixed(1)}g · C: {item.carbs.toFixed(1)}g · G: {item.fats.toFixed(1)}g{item.fiber > 0 ? ` · F: ${item.fiber.toFixed(1)}g` : ''}
+                            </p>
+                          </div>
+                          <button onClick={() => removeMealItem(log.id, item.id)} className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 transition-all shrink-0"><Trash2 size={13} /></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </GlassCard>
+              )
+            })}
+          </motion.div>
+        )}
+
+        {/* ══ TAB: ENTRENO ══ */}
+        {activeTab === 'entreno' && (
+          <motion.div key="entreno" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
+            {/* Weekly plan */}
+            <GlassCard className="p-5" animate={false}>
+              <h3 className="font-semibold text-white mb-4 flex items-center gap-2"><CalendarDays size={16} className="text-emerald-400" /> Plan Semanal</h3>
+              <div className="grid grid-cols-7 gap-1.5 min-w-0">
+                {Array.from({ length: 7 }, (_, i) => {
+                  const plan = weeklyPlan[i]; const isToday = i === todayDow; const done = isDayDone(i); const wt = WORKOUT_TYPES.find(t => t.type === plan?.type); const ds = getDayDate(i)
+                  return (
+                    <div key={i} className="flex flex-col items-center gap-1">
+                      <motion.button whileTap={{ scale: 0.95 }} onClick={() => openPlanModal(i)}
+                        className={cn('w-full flex flex-col items-center gap-1 p-2 rounded-xl border transition-all text-center',
+                          done ? 'border-emerald-500/40 bg-emerald-500/[0.08]' : isToday ? 'border-emerald-500/50 bg-emerald-500/10' : plan ? 'border-white/10 bg-white/[0.04] hover:bg-white/[0.07]' : 'border-dashed border-white/[0.08] hover:border-white/20')}>
+                        <span className={cn('text-[10px] font-bold uppercase', done || isToday ? 'text-emerald-400' : 'text-slate-500')}>{DAY_NAMES[i]}</span>
+                        {plan ? (<><span className="text-lg leading-none">{plan.icon}</span><span className="text-[8px] font-semibold leading-tight" style={{ color: done ? '#10B981' : (wt?.color ?? '#94a3b8') }}>{plan.name}</span></>) : (<><span className="text-slate-700 text-sm">+</span><span className="text-[8px] text-slate-700">Plan</span></>)}
+                      </motion.button>
+                      <motion.button whileTap={{ scale: 0.85 }} onClick={() => toggleCompletedDate(ds)}
+                        className={cn('w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all', done ? 'bg-emerald-500 border-emerald-500' : 'border-white/20 hover:border-emerald-400/60')}>
+                        {done && <svg width="8" height="7" viewBox="0 0 8 7" fill="none"><path d="M1 3.5L3 5.5L7 1.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </motion.button>
+                    </div>
+                  )
+                })}
+              </div>
+              {weeklyPlan[todayDow] && (
+                <div className={cn('mt-4 flex items-center gap-3 p-3 rounded-xl border', todayDone ? 'bg-emerald-500/[0.12] border-emerald-500/30' : 'bg-emerald-500/[0.08] border-emerald-500/20')}>
+                  <span className="text-2xl">{weeklyPlan[todayDow].icon}</span>
+                  <div className="flex-1"><p className="text-sm font-bold text-white">{todayDone ? '¡Completado! ' : 'Hoy: '}{weeklyPlan[todayDow].name}</p><p className="text-xs text-slate-400">{todayDone ? 'Excelente trabajo 🔥' : DAY_FULL[todayDow]}</p></div>
+                  {!todayDone && <Button variant="glow" size="sm" onClick={() => setWorkoutModal(true)}><Plus size={13} /> Registrar</Button>}
+                </div>
+              )}
+            </GlassCard>
+
+            {/* Recent sessions */}
+            <GlassCard className="p-5" animate={false}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-white flex items-center gap-2"><Activity size={16} className="text-emerald-400" /> Sesiones Recientes</h3>
+                <button onClick={() => setWorkoutModal(true)} className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 px-2.5 py-1 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 transition-all"><Plus size={12} /> Registrar</button>
+              </div>
+              {workoutSessions.length === 0 ? (
+                <div className="text-center py-8 text-slate-600"><Dumbbell size={28} className="mx-auto mb-2 opacity-30" /><p className="text-sm">Sin sesiones registradas</p></div>
+              ) : (
+                <div className="space-y-2">
+                  {workoutSessions.slice(-5).reverse().map(s => (
+                    <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-lg">{WORKOUT_TYPES.find(t => t.type === s.type)?.icon ?? '💪'}</div>
+                      <div className="flex-1"><p className="text-sm font-semibold text-white">{s.name}</p><p className="text-xs text-slate-500">{new Date(s.date).toLocaleDateString('es-ES')} · {s.duration}min</p></div>
+                      <span className="text-[10px] px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 font-medium">{s.type}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </GlassCard>
+          </motion.div>
+        )}
+
+        {/* ══ TAB: PROGRESO ══ */}
+        {activeTab === 'progreso' && (
+          <motion.div key="progreso" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
+            {/* Weekly stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { icon: '💪', label: 'Entrenamientos', val: `${weekStats.sessions}/7`, color: '#10B981' },
+                { icon: '🥩', label: 'Proteína prom.', val: weekStats.avgProtein > 0 ? `${weekStats.avgProtein}g` : '—', color: '#7C3AED' },
+                { icon: '🏆', label: 'Días perfectos', val: String(weekStats.perfectDays), color: '#F59E0B' },
+                { icon: '🔥', label: 'Racha actual', val: `${weekStats.streak} días`, color: '#EF4444' },
+              ].map(s => (
+                <GlassCard key={s.label} className="p-4" animate={false}>
+                  <p className="text-2xl mb-1">{s.icon}</p>
+                  <p className="text-xl font-black text-white">{s.val}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+                </GlassCard>
+              ))}
+            </div>
+
+            {/* Weight chart */}
+            <GlassCard className="p-5" animate={false}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-white flex items-center gap-2"><TrendingDown size={16} className="text-violet-400" /> Evolución de Peso</h3>
+                <div className="flex items-center gap-2">
+                  {latest && <span className="text-sm font-bold text-white tabular-nums">{latest.weight} kg</span>}
+                  <button onClick={() => setMeasModal(true)} className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/[0.05] text-slate-400 hover:text-white transition-all"><Plus size={12} /></button>
+                </div>
+              </div>
+              {weightData.length > 1 ? (
+                <ResponsiveContainer width="100%" height={160}>
+                  <LineChart data={weightData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                    <XAxis dataKey="i" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} domain={['auto', 'auto']} />
+                    <Tooltip contentStyle={{ background: '#1A1A27', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', fontSize: '12px', color: '#F8FAFC' }} formatter={(v) => [`${v} kg`, 'Peso']} />
+                    <Line type="monotone" dataKey="peso" stroke="#7C3AED" strokeWidth={2} dot={{ fill: '#7C3AED', strokeWidth: 0, r: 3 }} activeDot={{ r: 5 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-40 flex flex-col items-center justify-center text-slate-600 gap-2">
+                  <Scale size={28} className="opacity-30" />
+                  <p className="text-sm">Agrega mediciones para ver tu progreso</p>
+                  <Button variant="glow" size="sm" onClick={() => setMeasModal(true)}><Plus size={13} /> Registrar peso</Button>
+                </div>
+              )}
+            </GlassCard>
+
+            {/* Insights */}
+            <GlassCard className="p-5" animate={false}>
+              <h3 className="font-semibold text-white flex items-center gap-2 mb-3"><Star size={16} className="text-amber-400" /> Insights de la Semana</h3>
+              <div className="space-y-2">
+                {[
+                  weekStats.sessions >= 4 && { icon: '🔥', text: `¡Completaste ${weekStats.sessions} entrenamientos esta semana!` },
+                  weekStats.avgProtein > 0 && { icon: '🥩', text: `Tu proteína promedio esta semana fue ${weekStats.avgProtein}g${weekStats.avgProtein >= targets.protein * 0.9 ? ' — excelente consistencia.' : '. Meta: ' + targets.protein + 'g.'}` },
+                  weekStats.perfectDays > 0 && { icon: '🏆', text: `Tuviste ${weekStats.perfectDays} día${weekStats.perfectDays > 1 ? 's' : ''} perfecto${weekStats.perfectDays > 1 ? 's' : ''} esta semana.` },
+                  weekStats.streak >= 3 && { icon: '⚡', text: `Llevas ${weekStats.streak} días de entrenamiento consecutivos. ¡Mantén la racha!` },
+                  { icon: '💡', text: 'Consistencia > Intensidad. Los resultados vienen de semanas y meses de hábitos sostenidos.' },
+                ].filter(Boolean).slice(0, 5).map((ins, i) => ins && (
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                    <span className="text-base leading-none mt-0.5">{ins.icon}</span>
+                    <p className="text-sm text-slate-300 leading-snug">{ins.text}</p>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+          </motion.div>
+        )}
+
+        {/* ══ TAB: PERFIL ══ */}
+        {activeTab === 'perfil' && (
+          <motion.div key="perfil" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
+            {!profileSet ? (
+              <GlassCard className="p-6 text-center border-amber-500/20" animate={false}>
+                <User size={32} className="mx-auto text-amber-400 mb-3" />
+                <p className="font-semibold text-white mb-1">Configura tu perfil</p>
+                <p className="text-sm text-slate-400 mb-4">Con tu peso, talla y objetivo calculo tus macros, calorías y agua personalizados.</p>
+                <Button variant="glow" onClick={() => { setProfileForm({ weight: '', height: '', age: '', sex: 'male', activityLevel: 'moderate', goal: 'muscle' }); setProfileModal(true) }}><Settings size={14} /> Configurar perfil</Button>
+              </GlassCard>
+            ) : (
+              <>
+                <GlassCard className="p-5" animate={false}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-white flex items-center gap-2"><User size={16} className="text-violet-400" /> Tu Perfil</h3>
+                    <button onClick={() => { setProfileForm({ weight: String(userProfile.weight), height: String(userProfile.height), age: String(userProfile.age), sex: userProfile.sex, activityLevel: userProfile.activityLevel, goal: userProfile.goal }); setProfileModal(true) }}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/[0.05] text-slate-400 hover:text-white transition-all"><Pencil size={12} /></button>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[
+                      ['⚖️', 'Peso', `${userProfile.weight} kg`],
+                      ['📏', 'Talla', `${userProfile.height} cm`],
+                      ['🎂', 'Edad', `${userProfile.age} años`],
+                      ['⚡', 'Actividad', ACTIVITY_LABELS[userProfile.activityLevel]?.split('(')[0].trim() ?? '—'],
+                      ['🎯', 'Objetivo', userProfile.goal === 'muscle' ? 'Ganar músculo' : userProfile.goal === 'fat_loss' ? 'Perder grasa' : 'Mantenimiento'],
+                      ['👤', 'Sexo', userProfile.sex === 'male' ? 'Masculino' : 'Femenino'],
+                    ].map(([icon, label, val]) => (
+                      <div key={String(label)} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                        <p className="text-xs text-slate-500">{icon} {label}</p>
+                        <p className="text-sm font-semibold text-white mt-0.5 truncate">{val}</p>
+                      </div>
+                    ))}
+                  </div>
+                </GlassCard>
+                <GlassCard className="p-5" animate={false}>
+                  <h3 className="font-semibold text-white mb-4 flex items-center gap-2"><Flame size={16} className="text-orange-400" /> Objetivos Calculados</h3>
+                  <div className="space-y-3">
+                    {[
+                      { label: 'TMB (Metabolismo Basal)', val: `${targets.tmb} kcal`, desc: 'Calorías en reposo absoluto', color: '#475569' },
+                      { label: 'Calorías de Mantenimiento', val: `${targets.maintenance} kcal`, desc: 'Para mantener tu peso actual', color: '#06B6D4' },
+                      { label: 'Calorías Objetivo', val: `${targets.calories} kcal`, desc: userProfile.goal === 'muscle' ? '+400 kcal (superávit)' : userProfile.goal === 'fat_loss' ? '-450 kcal (déficit)' : 'Mantenimiento', color: '#F59E0B' },
+                      { label: 'Proteína Diaria', val: `${targets.protein}g`, desc: `${userProfile.goal === 'muscle' ? '2.2' : userProfile.goal === 'fat_loss' ? '2.0' : '1.8'}g por kg de peso corporal`, color: '#7C3AED' },
+                      { label: 'Carbohidratos', val: `${targets.carbs}g`, desc: 'Fuente principal de energía', color: '#06B6D4' },
+                      { label: 'Grasas', val: `${targets.fats}g`, desc: '28% de calorías totales', color: '#F97316' },
+                      { label: 'Fibra', val: '35g', desc: 'Recomendación diaria estándar', color: '#10B981' },
+                      { label: 'Agua Diaria', val: `${targets.water}L`, desc: `38ml × ${userProfile.weight}kg de peso corporal`, color: '#06B6D4' },
+                    ].map(t => (
+                      <div key={t.label} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
+                        <div><p className="text-sm text-white">{t.label}</p><p className="text-[10px] text-slate-600">{t.desc}</p></div>
+                        <span className="text-sm font-bold tabular-nums" style={{ color: t.color }}>{t.val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </GlassCard>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ════ MODALS ════ */}
+
+      {/* Registrar entreno */}
+      <Modal open={workoutModal} onClose={() => setWorkoutModal(false)} title="Nueva Sesión de Entrenamiento">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">Selecciona el tipo de entreno:</p>
+          <div className="grid grid-cols-2 gap-2">
+            {WORKOUT_TYPES.filter(t => t.type !== 'rest' && t.type !== 'custom').map(t => (
+              <button key={t.type} onClick={() => { addWorkout({ date: new Date().toISOString(), type: t.type as never, name: t.name, exercises: [], duration: 60, volume: 0, mood: 4, completed: true }); addXP(25, `Entreno: ${t.name}`); setWorkoutModal(false) }}
+                className="flex items-center gap-2 p-3 rounded-xl border border-white/[0.06] hover:border-emerald-500/30 hover:bg-emerald-500/[0.05] transition-all text-left">
+                <span className="text-xl">{t.icon}</span><span className="text-xs text-slate-300">{t.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Registrar peso */}
+      <Modal open={measModal} onClose={() => setMeasModal(false)} title="Registrar Peso">
+        <div className="space-y-4">
+          <Input label="Peso (kg)" type="number" step="0.1" placeholder="83.0" value={newWeight} onChange={e => setNewWeight(e.target.value)} />
+          <div className="flex gap-3 justify-end">
+            <Button variant="ghost" onClick={() => setMeasModal(false)}>Cancelar</Button>
+            <Button variant="glow" onClick={() => { if (!newWeight) return; addMeasurement({ date: new Date().toISOString(), weight: parseFloat(newWeight) }); setMeasModal(false); setNewWeight('') }}>Guardar</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Ajustar agua manualmente */}
+      <Modal open={waterModal} onClose={() => setWaterModal(false)} title="💧 Ajustar Hidratación">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">Establece el total de litros consumidos hoy.</p>
+          <Input label="Litros totales (ej: 2.5)" type="number" step="0.1" min="0" placeholder="0.0" value={waterInput} onChange={e => setWaterInput(e.target.value)} />
+          <div className="flex gap-3 justify-end">
+            <Button variant="ghost" onClick={() => setWaterModal(false)}>Cancelar</Button>
+            <Button variant="glow" onClick={() => { const v = parseFloat(waterInput); if (!isNaN(v) && v >= 0) setWater(v); setWaterModal(false) }}>Guardar</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Perfil modal */}
+      <Modal open={profileModal} onClose={() => setProfileModal(false)} title="👤 Perfil Físico">
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            <Input label="Peso (kg)" type="number" step="0.1" placeholder="83" value={profileForm.weight} onChange={e => setProfileForm(f => ({ ...f, weight: e.target.value }))} />
+            <Input label="Talla (cm)" type="number" placeholder="175" value={profileForm.height} onChange={e => setProfileForm(f => ({ ...f, height: e.target.value }))} />
+            <Input label="Edad" type="number" placeholder="28" value={profileForm.age} onChange={e => setProfileForm(f => ({ ...f, age: e.target.value }))} />
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 font-medium block mb-2">Sexo</label>
+            <div className="flex gap-2">
+              {(['male','female'] as const).map(s => (
+                <button key={s} onClick={() => setProfileForm(f => ({ ...f, sex: s }))}
+                  className={cn('flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all', profileForm.sex === s ? 'bg-violet-500/20 text-violet-300 border border-violet-500/40' : 'bg-white/[0.05] text-slate-400 hover:bg-white/[0.08]')}>
+                  {s === 'male' ? '♂ Masculino' : '♀ Femenino'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 font-medium block mb-2">Nivel de Actividad</label>
+            <div className="space-y-1.5">
+              {Object.entries(ACTIVITY_LABELS).map(([val, label]) => (
+                <button key={val} onClick={() => setProfileForm(f => ({ ...f, activityLevel: val as never }))}
+                  className={cn('w-full px-3 py-2 rounded-xl text-sm text-left transition-all', profileForm.activityLevel === val ? 'bg-violet-500/20 text-violet-300 border border-violet-500/40' : 'bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] border border-transparent')}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 font-medium block mb-2">Objetivo Principal</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[['muscle','💪 Ganar músculo'],['fat_loss','🔥 Perder grasa'],['maintenance','⚖️ Mantenimiento']].map(([val, label]) => (
+                <button key={val} onClick={() => setProfileForm(f => ({ ...f, goal: val as never }))}
+                  className={cn('py-2.5 rounded-xl text-xs font-semibold transition-all text-center', profileForm.goal === val ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-white/[0.05] text-slate-400 hover:bg-white/[0.08]')}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-3 justify-end pt-1">
+            <Button variant="ghost" onClick={() => setProfileModal(false)}>Cancelar</Button>
+            <Button variant="glow" onClick={handleSaveProfile}>Guardar perfil</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Agregar comida */}
+      <Modal open={!!foodModal} onClose={() => { setFoodModal(null); setSelectedFood(null); setFoodSearch(''); setManualMode(false) }} title={`${foodModal ? MEAL_LABELS[foodModal].icon : ''} Agregar a ${foodModal ? MEAL_LABELS[foodModal].label : ''}`}>
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <button onClick={() => setManualMode(false)} className={cn('flex-1 py-2 rounded-xl text-sm font-semibold transition-all', !manualMode ? 'bg-violet-500/20 text-violet-300 border border-violet-500/40' : 'bg-white/[0.05] text-slate-400 hover:bg-white/[0.08]')}>🔍 Base de alimentos</button>
+            <button onClick={() => setManualMode(true)} className={cn('flex-1 py-2 rounded-xl text-sm font-semibold transition-all', manualMode ? 'bg-violet-500/20 text-violet-300 border border-violet-500/40' : 'bg-white/[0.05] text-slate-400 hover:bg-white/[0.08]')}>✏️ Entrada manual</button>
+          </div>
+
+          {!manualMode ? (
+            <>
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input value={foodSearch} onChange={e => { setFoodSearch(e.target.value); setSelectedFood(null) }} placeholder="Buscar alimento... (ej: pollo, arroz, huevo)"
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-violet-500/40" />
+              </div>
+              {searchResults.length > 0 && !selectedFood && (
+                <div className="space-y-1 max-h-48 overflow-y-auto">
+                  {searchResults.map(f => (
+                    <button key={f.id} onClick={() => { setSelectedFood(f); setFoodQty(String(f.per)); setFoodSearch(f.name) }}
+                      className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04] text-left transition-all">
+                      <span className="text-sm text-white">{f.name}</span>
+                      <span className="text-[10px] text-slate-500">{f.cal} kcal / {f.per} {f.unit}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {selectedFood && (
+                <div className="space-y-3">
+                  <div className="p-3 rounded-xl bg-violet-500/10 border border-violet-500/20">
+                    <p className="text-sm font-semibold text-violet-300">{selectedFood.name}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Por {selectedFood.per} {selectedFood.unit}: {selectedFood.cal} kcal · P:{selectedFood.pro}g · C:{selectedFood.car}g · G:{selectedFood.fat}g</p>
+                  </div>
+                  <Input label={`Cantidad (${selectedFood.unit})`} type="number" step="0.5" min="0" placeholder={String(selectedFood.per)} value={foodQty} onChange={e => setFoodQty(e.target.value)} />
+                  {foodQty && Number(foodQty) > 0 && (
+                    <div className="grid grid-cols-5 gap-1 text-center">
+                      {[['Calorías', Math.round(selectedFood.cal * Number(foodQty) / selectedFood.per),'kcal','#F59E0B'],['Prot',Math.round(selectedFood.pro * Number(foodQty) / selectedFood.per * 10)/10,'g','#7C3AED'],['Carbs',Math.round(selectedFood.car * Number(foodQty) / selectedFood.per * 10)/10,'g','#06B6D4'],['Grasas',Math.round(selectedFood.fat * Number(foodQty) / selectedFood.per * 10)/10,'g','#F97316'],['Fibra',Math.round(selectedFood.fib * Number(foodQty) / selectedFood.per * 10)/10,'g','#10B981']].map(([label, val, unit, color]) => (
+                        <div key={String(label)} className="p-1.5 rounded-lg bg-white/[0.03]">
+                          <p className="text-[10px] text-slate-600">{label}</p>
+                          <p className="text-xs font-bold" style={{ color: String(color) }}>{val}{unit}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="space-y-3">
+              <Input label="Nombre del alimento" placeholder="Ej: 4 huevos revueltos..." value={manualEntry.name} onChange={e => setManualEntry(m => ({ ...m, name: e.target.value }))} />
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Calorías (kcal)" type="number" min={0} placeholder="0" value={manualEntry.calories} onChange={e => setManualEntry(m => ({ ...m, calories: e.target.value }))} />
+                <Input label="Proteína (g)" type="number" min={0} step="0.1" placeholder="0" value={manualEntry.protein} onChange={e => setManualEntry(m => ({ ...m, protein: e.target.value }))} />
+                <Input label="Carbohidratos (g)" type="number" min={0} step="0.1" placeholder="0" value={manualEntry.carbs} onChange={e => setManualEntry(m => ({ ...m, carbs: e.target.value }))} />
+                <Input label="Grasas (g)" type="number" min={0} step="0.1" placeholder="0" value={manualEntry.fats} onChange={e => setManualEntry(m => ({ ...m, fats: e.target.value }))} />
+              </div>
+              <Input label="Fibra (g) — opcional" type="number" min={0} step="0.1" placeholder="0" value={manualEntry.fiber} onChange={e => setManualEntry(m => ({ ...m, fiber: e.target.value }))} />
             </div>
           )}
-        </GlassCard>
-      </motion.div>
 
-      {/* Modal: Registrar peso */}
-      <Modal open={addMeasModal} onClose={() => setAddMeasModal(false)} title="Registrar Peso">
-        <div className="space-y-4">
-          <Input
-            label="Peso (kg)"
-            type="number"
-            step="0.1"
-            placeholder="75.3"
-            value={newWeight}
-            onChange={e => setNewWeight(e.target.value)}
-          />
-          <div className="flex gap-3 justify-end">
-            <Button variant="ghost" onClick={() => setAddMeasModal(false)}>Cancelar</Button>
-            <Button variant="glow" onClick={() => {
-              if (!newWeight) return
-              addMeasurement({ date: new Date().toISOString(), weight: parseFloat(newWeight) })
-              setAddMeasModal(false)
-              setNewWeight('')
-            }}>
-              Guardar
-            </Button>
+          <div className="flex gap-3 justify-end pt-1">
+            <Button variant="ghost" onClick={() => setFoodModal(null)}>Cancelar</Button>
+            <Button variant="glow" onClick={handleAddFood}><Apple size={14} /> Agregar</Button>
           </div>
         </div>
       </Modal>
 
-      {/* Modal: Nueva sesión */}
-      <Modal open={addWorkoutModal} onClose={() => setAddWorkoutModal(false)} title="Nueva Sesión">
+      {/* Plan semanal modal */}
+      <Modal open={planModal !== null} onClose={() => setPlanModal(null)} title={planModal !== null ? `${DAY_FULL[planModal]} — Plan` : ''}>
         <div className="space-y-4">
-          <p className="text-sm text-slate-400">Selecciona el tipo de entreno para hoy:</p>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { type: 'push',      name: 'Push (Pecho / Hombros / Tríceps)', icon: '💪' },
-              { type: 'pull',      name: 'Pull (Espalda / Bíceps)',           icon: '🔄' },
-              { type: 'legs',      name: 'Legs (Piernas)',                    icon: '🦵' },
-              { type: 'cardio',    name: 'Cardio',                            icon: '🏃' },
-              { type: 'full-body', name: 'Full Body',                         icon: '🏋️' },
-              { type: 'custom',    name: 'Personalizado',                     icon: '⚡' },
-            ].map(t => (
-              <button
-                key={t.type}
-                onClick={() => {
-                  addWorkout({
-                    date: new Date().toISOString(),
-                    type: t.type as never,
-                    name: t.name,
-                    exercises: [],
-                    duration: 60,
-                    volume: 0,
-                    mood: 4,
-                    completed: true,
-                  })
-                  addXP(25, `Entreno: ${t.name}`)
-                  setAddWorkoutModal(false)
-                }}
-                className="flex items-center gap-2 p-3 rounded-xl glass border border-white/[0.06] hover:border-emerald-500/30 hover:bg-emerald-500/[0.05] transition-all text-left"
-              >
-                <span className="text-xl">{t.icon}</span>
-                <span className="text-xs text-slate-300">{t.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </Modal>
-
-      {/* Modal: Editar día del plan */}
-      <Modal
-        open={planModal !== null}
-        onClose={() => setPlanModal(null)}
-        title={planModal !== null ? `${DAY_FULL[planModal]} — Plan` : ''}
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-slate-400">¿Qué entreno te toca este día?</p>
           <div className="grid grid-cols-2 gap-2">
             {WORKOUT_TYPES.map(wt => (
-              <button
-                key={wt.type}
-                onClick={() => setSelectedType(wt)}
-                className={cn(
-                  'flex items-center gap-2.5 p-3 rounded-xl border transition-all text-left',
-                  selectedType.type === wt.type
-                    ? 'border-opacity-60'
-                    : 'border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06]'
-                )}
-                style={selectedType.type === wt.type
-                  ? { background: `${wt.color}15`, borderColor: `${wt.color}50` }
-                  : undefined}
-              >
+              <button key={wt.type} onClick={() => setSelectedType(wt)}
+                className={cn('flex items-center gap-2.5 p-3 rounded-xl border transition-all text-left', selectedType.type === wt.type ? 'border-opacity-60' : 'border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06]')}
+                style={selectedType.type === wt.type ? { background: `${wt.color}15`, borderColor: `${wt.color}50` } : undefined}>
                 <span className="text-xl">{wt.icon}</span>
-                <div>
-                  <p className="text-xs font-semibold text-white">{wt.name}</p>
-                  <p className="text-[10px] text-slate-500">{wt.desc}</p>
-                </div>
+                <div><p className="text-xs font-semibold text-white">{wt.name}</p><p className="text-[10px] text-slate-500">{wt.desc}</p></div>
               </button>
             ))}
           </div>
-
-          {selectedType.type === 'custom' && (
-            <Input
-              label="Nombre del entreno"
-              placeholder="Ej: Hombros + Core"
-              value={customName}
-              onChange={e => setCustomName(e.target.value)}
-            />
-          )}
-
-          <div className="flex items-center gap-3 justify-between pt-1">
+          {selectedType.type === 'custom' && <Input label="Nombre del entreno" placeholder="Ej: Hombros + Core" value={customName} onChange={e => setCustomName(e.target.value)} />}
+          <div className="flex items-center justify-between pt-1">
             {planModal !== null && weeklyPlan[planModal] && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-400 hover:text-red-300"
-                onClick={() => { if (planModal !== null) clearDayPlan(planModal); setPlanModal(null) }}
-              >
-                <X size={14} /> Quitar
-              </Button>
+              <Button variant="ghost" size="sm" className="text-red-400" onClick={() => { if (planModal !== null) clearDayPlan(planModal); setPlanModal(null) }}><X size={14} /> Quitar</Button>
             )}
             <div className="flex gap-2 ml-auto">
               <Button variant="ghost" onClick={() => setPlanModal(null)}>Cancelar</Button>
