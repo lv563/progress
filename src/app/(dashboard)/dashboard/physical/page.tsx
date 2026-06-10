@@ -578,7 +578,7 @@ export default function PhysicalPage() {
                 {['D','L','M','M','J','V','S'].map((d,i) => <span key={i} className="text-[10px] font-bold text-slate-600">{d}</span>)}
               </div>
               <div className="grid grid-cols-7 gap-1">
-                {Array.from({ length: firstDow }).map((_,i) => <div key={`e-${i}`} />)}
+                {Array.from({ length: firstDow }).map((_,i) => <div key={`e-${i}`} className="h-7" />)}
                 {Array.from({ length: daysInMonth }, (_,i) => i+1).map(day => {
                   const ds  = format(new Date(calYear, calMonth, day), 'yyyy-MM-dd')
                   const gone   = isGymDay(day)
@@ -586,8 +586,8 @@ export default function PhysicalPage() {
                   const isPast  = ds < todayStr
                   return (
                     <motion.button key={day} whileTap={{ scale:0.85 }} onClick={() => toggleCompletedDate(ds)}
-                      className={cn('aspect-square rounded-full flex items-center justify-center text-[11px] font-bold transition-all',
-                        gone ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30' :
+                      className={cn('h-7 w-full rounded-md flex items-center justify-center text-[11px] font-bold transition-all',
+                        gone ? 'bg-emerald-500 text-white' :
                         isToday ? 'ring-2 ring-emerald-400 text-emerald-400' :
                         isPast ? 'bg-red-500/20 text-red-400/60' : 'text-slate-700 hover:text-slate-500')}>
                       {day}
