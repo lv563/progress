@@ -255,6 +255,29 @@ export default function PhysicalPage() {
     return completedDates.includes(ds) || workoutSessions.some(s => new Date(s.date).toISOString().slice(0, 10) === ds && s.completed)
   }
 
+  const isGymDayByDs = (ds: string) =>
+    completedDates.includes(ds) || workoutSessions.some(s => new Date(s.date).toISOString().slice(0, 10) === ds && s.completed)
+
+  const heatmapWeeks = useMemo(() => {
+    const result: { ds: string; inYear: boolean; month: number; dayOfMonth: number }[][] = []
+    const cursor = new Date(calYear, 0, 1)
+    cursor.setDate(cursor.getDate() - cursor.getDay()) // rewind to prev Sunday
+    while (true) {
+      const week: typeof result[0] = []
+      for (let d = 0; d < 7; d++) {
+        week.push({ ds: format(cursor, 'yyyy-MM-dd'), inYear: cursor.getFullYear() === calYear, month: cursor.getMonth(), dayOfMonth: cursor.getDate() })
+        cursor.setDate(cursor.getDate() + 1)
+      }
+      result.push(week)
+      if (cursor.getFullYear() > calYear || result.length > 53) break
+    }
+    return result
+  }, [calYear])
+
+  const gymDaysYear = useMemo(() =>
+    heatmapWeeks.flat().filter(d => d.inYear && d.ds <= todayStr && isGymDayByDs(d.ds)).length
+  , [heatmapWeeks, completedDates, workoutSessions, todayStr])
+
   const weightData = measurements.slice(0, 10).reverse().map((m, i) => ({ i: i + 1, peso: m.weight ?? 0 }))
 
   const getDayDate = (dow: number) => { const d = new Date(); d.setDate(d.getDate() + (dow - todayDow)); return d.toISOString().slice(0, 10) }
@@ -565,41 +588,71 @@ export default function PhysicalPage() {
               </AnimatePresence>
             </GlassCard>
 
-            {/* Monthly Calendar */}
-            <GlassCard className="p-5" animate={false}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-white flex items-center gap-2"><CalendarDays size={16} className="text-emerald-400" /> {MONTH_NAMES[calMonth]} {calYear}</h3>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1 text-slate-500"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Gym</span>
-                  <span className="flex items-center gap-1 text-slate-500"><span className="w-2.5 h-2.5 rounded-full bg-red-500/40 inline-block" /> Perdido</span>
+            {/* Annual Activity Heatmap */}
+            <GlassCard className="p-4" animate={false}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-white flex items-center gap-2"><Activity size={15} className="text-violet-400" /> Actividad Anual</h3>
+                <div className="flex items-center gap-3 text-xs text-slate-500">
+                  <span>{gymDaysYear} días este año</span>
+                  <span className="font-semibold" style={{ color: gymDaysMonth/now.getDate()>=0.7?'#10B981':gymDaysMonth/now.getDate()>=0.4?'#F59E0B':'#EF4444' }}>
+                    {gymDaysMonth/now.getDate()>=0.7?'🔥 Elite':gymDaysMonth/now.getDate()>=0.4?'⚡ Regular':'😴 Bajo'}
+                  </span>
                 </div>
               </div>
-              <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                {['D','L','M','M','J','V','S'].map((d,i) => <span key={i} className="text-[10px] font-bold text-slate-600">{d}</span>)}
+              <div className="overflow-x-auto">
+                <div style={{ minWidth: 'max-content' }}>
+                  {/* Month labels */}
+                  <div className="flex mb-1" style={{ paddingLeft: 30 }}>
+                    {heatmapWeeks.map((week, wi) => {
+                      const nm = week.find(d => d.inYear && d.dayOfMonth === 1)
+                      return (
+                        <div key={wi} style={{ width: 12, flexShrink: 0, position: 'relative' }}>
+                          {nm && <span className="absolute text-[9px] text-slate-500 whitespace-nowrap" style={{ left: 0 }}>{MONTH_NAMES[nm.month].slice(0, 3)}</span>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {/* Grid */}
+                  <div className="flex" style={{ gap: 2 }}>
+                    {/* Day labels */}
+                    <div className="flex flex-col shrink-0" style={{ gap: 2, width: 28 }}>
+                      {['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].map((d, i) => (
+                        <div key={i} style={{ height: 10, display:'flex', alignItems:'center', justifyContent:'flex-end', paddingRight: 4 }}>
+                          {[1, 3, 5].includes(i) && <span className="text-[8px] text-slate-600">{d}</span>}
+                        </div>
+                      ))}
+                    </div>
+                    {/* Weeks */}
+                    {heatmapWeeks.map((week, wi) => (
+                      <div key={wi} className="flex flex-col" style={{ gap: 2 }}>
+                        {week.map((day, di) => {
+                          if (!day.inYear) return <div key={di} style={{ width: 10, height: 10 }} />
+                          const gone     = isGymDayByDs(day.ds)
+                          const isFuture = day.ds > todayStr
+                          const isToday  = day.ds === todayStr
+                          return (
+                            <motion.button key={di} whileTap={{ scale: 0.7 }}
+                              onClick={() => !isFuture && toggleCompletedDate(day.ds)}
+                              title={day.ds}
+                              style={{ width: 10, height: 10 }}
+                              className={cn('rounded-full transition-all',
+                                gone    ? 'bg-violet-500'           :
+                                isToday ? 'ring-1 ring-violet-400 bg-violet-500/20' :
+                                isFuture? 'bg-white/[0.04]'         :
+                                          'bg-white/[0.08]'
+                              )} />
+                          )
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-7 gap-1">
-                {Array.from({ length: firstDow }).map((_,i) => <div key={`e-${i}`} className="h-7" />)}
-                {Array.from({ length: daysInMonth }, (_,i) => i+1).map(day => {
-                  const ds  = format(new Date(calYear, calMonth, day), 'yyyy-MM-dd')
-                  const gone   = isGymDay(day)
-                  const isToday = ds === todayStr
-                  const isPast  = ds < todayStr
-                  return (
-                    <motion.button key={day} whileTap={{ scale:0.85 }} onClick={() => toggleCompletedDate(ds)}
-                      className={cn('h-7 w-full rounded-md flex items-center justify-center text-[11px] font-bold transition-all',
-                        gone ? 'bg-emerald-500 text-white' :
-                        isToday ? 'ring-2 ring-emerald-400 text-emerald-400' :
-                        isPast ? 'bg-red-500/20 text-red-400/60' : 'text-slate-700 hover:text-slate-500')}>
-                      {day}
-                    </motion.button>
-                  )
-                })}
-              </div>
-              <div className="mt-3 flex items-center justify-between text-xs">
-                <span className="text-slate-500">{gymDaysMonth}/{now.getDate()} días ({Math.round(gymDaysMonth/now.getDate()*100)}% consistencia)</span>
-                <span className="font-semibold" style={{ color: gymDaysMonth/now.getDate()>=0.7?'#10B981':gymDaysMonth/now.getDate()>=0.4?'#F59E0B':'#EF4444' }}>
-                  {gymDaysMonth/now.getDate()>=0.7?'🔥 Elite':gymDaysMonth/now.getDate()>=0.4?'⚡ Regular':'😴 Bajo'}
-                </span>
+              <div className="mt-2 flex items-center gap-3 text-[10px] text-slate-600">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-500 inline-block" /> Gym</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-white/[0.08] inline-block" /> Sin gym</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-white/[0.04] inline-block" /> Futuro</span>
+                <span className="ml-auto text-slate-500">{gymDaysMonth}/{now.getDate()} días este mes</span>
               </div>
             </GlassCard>
 
