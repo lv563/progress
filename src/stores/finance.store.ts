@@ -4,6 +4,7 @@ import { userStorage } from '@/lib/utils/userStorage'
 
 export type TransactionType = 'income' | 'expense'
 export type SavingsTxType   = 'deposit' | 'withdrawal'
+export type PaymentMethod   = 'cash' | 'credit'
 
 export interface Transaction {
   id: string
@@ -13,7 +14,9 @@ export interface Transaction {
   description: string
   date: string
   icon: string
-  budgetPaymentKey?: string // `${month}:${category}` — identifica pagos de presupuesto
+  paymentMethod?: PaymentMethod
+  creditCardId?: string
+  budgetPaymentKey?: string
 }
 
 export interface SavingsTransaction {
@@ -42,45 +45,38 @@ export interface SavingsGoal {
   deadline?: string
 }
 
-interface FinanceStore {
-  transactions: Transaction[]
-  savingsTransactions: SavingsTransaction[]
-  budgets: Budget[]
-  savingsGoals: SavingsGoal[]
-
-  // Transactions
-  addTransaction: (t: Omit<Transaction, 'id'>) => void
-  removeTransaction: (id: string) => void
-
-  // Budget payments
-  isBudgetPaid: (category: string, month?: string) => boolean
-  markBudgetPaid: (category: string, amount?: number) => void
-  unmarkBudgetPaid: (category: string) => void
-
-  // Savings goals
-  addSavingsGoal: (g: Omit<SavingsGoal, 'id'>) => void
-  removeSavingsGoal: (id: string) => void
-  addSavingsTransaction: (t: Omit<SavingsTransaction, 'id'>) => void
-  removeSavingsTransaction: (id: string) => void
-  getGoalTransactions: (goalId: string) => SavingsTransaction[]
-
-  // Budgets
-  addBudget: (b: Budget) => void
-  updateBudget: (category: string, limit: number) => void
-  removeBudget: (category: string) => void
-
-  // Aggregates
-  getMonthlyIncome: (month?: string) => number
-  getMonthlyExpenses: (month?: string) => number
-  getMonthlyBalance: (month?: string) => number
-  getExpensesByCategory: (month?: string) => Record<string, number>
-  getSpentOnCategory: (category: string, month?: string) => number
-  _reset: () => void
+export interface CreditCard {
+  id: string
+  name: string
+  limit: number
+  balance: number
+  color: string
 }
 
-const currentMonth = () => new Date().toISOString().slice(0, 7)
-const today        = () => new Date().toISOString().slice(0, 10)
-const genId        = () => Math.random().toString(36).slice(2, 9)
+export interface Debt {
+  id: string
+  name: string
+  icon: string
+  totalOriginal: number
+  remaining: number
+  minPayment: number
+  color: string
+  dueDay?: number
+}
+
+export interface FinancialConfig {
+  monthlyIncome: number
+  fixedExpenses: number
+  autoSavings: number
+  safetyZone: number
+}
+
+const DEFAULT_CONFIG: FinancialConfig = {
+  monthlyIncome: 0,
+  fixedExpenses: 0,
+  autoSavings: 0,
+  safetyZone: 5000,
+}
 
 const DEFAULT_BUDGETS: Budget[] = [
   { category: 'Comida',          limit: 400,  icon: '🍽️', color: '#F59E0B' },
@@ -91,6 +87,64 @@ const DEFAULT_BUDGETS: Budget[] = [
   { category: 'Servicios',       limit: 250,  icon: '💡',  color: '#F97316' },
 ]
 
+interface FinanceStore {
+  transactions: Transaction[]
+  savingsTransactions: SavingsTransaction[]
+  budgets: Budget[]
+  savingsGoals: SavingsGoal[]
+  creditCards: CreditCard[]
+  debts: Debt[]
+  config: FinancialConfig
+
+  addTransaction: (t: Omit<Transaction, 'id'>) => void
+  removeTransaction: (id: string) => void
+
+  addCreditCard: (c: Omit<CreditCard, 'id'>) => void
+  updateCreditCard: (id: string, updates: Partial<CreditCard>) => void
+  removeCreditCard: (id: string) => void
+
+  addDebt: (d: Omit<Debt, 'id'>) => void
+  updateDebt: (id: string, updates: Partial<Debt>) => void
+  removeDebt: (id: string) => void
+  payDebt: (id: string, amount: number) => void
+
+  updateConfig: (updates: Partial<FinancialConfig>) => void
+
+  isBudgetPaid: (category: string, month?: string) => boolean
+  markBudgetPaid: (category: string, amount?: number) => void
+  unmarkBudgetPaid: (category: string) => void
+
+  addSavingsGoal: (g: Omit<SavingsGoal, 'id'>) => void
+  removeSavingsGoal: (id: string) => void
+  addSavingsTransaction: (t: Omit<SavingsTransaction, 'id'>) => void
+  removeSavingsTransaction: (id: string) => void
+  getGoalTransactions: (goalId: string) => SavingsTransaction[]
+
+  addBudget: (b: Budget) => void
+  updateBudget: (category: string, limit: number) => void
+  removeBudget: (category: string) => void
+
+  getMonthlyIncome: (month?: string) => number
+  getMonthlyExpenses: (month?: string) => number
+  getMonthlyBalance: (month?: string) => number
+  getExpensesByCategory: (month?: string) => Record<string, number>
+  getSpentOnCategory: (category: string, month?: string) => number
+  getCreditExpenses: (month?: string) => number
+  getCashExpenses: (month?: string) => number
+  getMonthlySavings: (month?: string) => number
+  getTotalDebt: () => number
+  getAvailableMoney: () => number
+  getDaysMoneyWillLast: () => number
+  getProjectedEndBalance: () => number
+  getFinancialScore: () => number
+
+  _reset: () => void
+}
+
+const currentMonth = () => new Date().toISOString().slice(0, 7)
+const today        = () => new Date().toISOString().slice(0, 10)
+const genId        = () => Math.random().toString(36).slice(2, 9)
+
 export const useFinanceStore = create<FinanceStore>()(
   persist(
     (set, get) => ({
@@ -98,62 +152,71 @@ export const useFinanceStore = create<FinanceStore>()(
       savingsTransactions: [],
       budgets: DEFAULT_BUDGETS,
       savingsGoals: [],
-      _reset: () => set({ transactions: [], savingsTransactions: [], budgets: DEFAULT_BUDGETS, savingsGoals: [] }),
+      creditCards: [],
+      debts: [],
+      config: DEFAULT_CONFIG,
 
-      /* ── Transactions ── */
-      addTransaction: (t) => set(s => ({
-        transactions: [{ ...t, id: genId() }, ...s.transactions],
+      _reset: () => set({
+        transactions: [], savingsTransactions: [], budgets: DEFAULT_BUDGETS,
+        savingsGoals: [], creditCards: [], debts: [], config: DEFAULT_CONFIG,
+      }),
+
+      addTransaction: (t) => set(s => ({ transactions: [{ ...t, id: genId() }, ...s.transactions] })),
+      removeTransaction: (id) => set(s => ({ transactions: s.transactions.filter(t => t.id !== id) })),
+
+      addCreditCard: (c) => set(s => ({ creditCards: [...s.creditCards, { ...c, id: genId() }] })),
+      updateCreditCard: (id, updates) => set(s => ({
+        creditCards: s.creditCards.map(c => c.id === id ? { ...c, ...updates } : c),
       })),
+      removeCreditCard: (id) => set(s => ({ creditCards: s.creditCards.filter(c => c.id !== id) })),
 
-      removeTransaction: (id) => set(s => ({
-        transactions: s.transactions.filter(t => t.id !== id),
+      addDebt: (d) => set(s => ({ debts: [...s.debts, { ...d, id: genId() }] })),
+      updateDebt: (id, updates) => set(s => ({
+        debts: s.debts.map(d => d.id === id ? { ...d, ...updates } : d),
       })),
-
-      /* ── Budget payments ── */
-      isBudgetPaid: (category, month) => {
-        const key = `${month ?? currentMonth()}:${category}`
-        return get().transactions.some(t => t.budgetPaymentKey === key)
-      },
-
-      markBudgetPaid: (category, amount) => {
-        const budget = get().budgets.find(b => b.category === category)
-        if (!budget) return
-        const month = currentMonth()
-        const key   = `${month}:${category}`
-        // prevent double payment
-        if (get().transactions.some(t => t.budgetPaymentKey === key)) return
-        const finalAmount = amount ?? budget.limit
+      removeDebt: (id) => set(s => ({ debts: s.debts.filter(d => d.id !== id) })),
+      payDebt: (id, amount) => {
+        const debt = get().debts.find(d => d.id === id)
+        if (!debt) return
         set(s => ({
+          debts: s.debts.map(d => d.id === id ? { ...d, remaining: Math.max(0, d.remaining - amount) } : d),
           transactions: [{
-            id: genId(),
-            type: 'expense',
-            category,
-            amount: finalAmount,
-            description: `${budget.icon} Pago — ${category}`,
-            date: today(),
-            icon: budget.icon,
-            budgetPaymentKey: key,
+            id: genId(), type: 'expense', category: 'Deuda', amount,
+            description: `Pago — ${debt.name}`, date: today(), icon: debt.icon,
           }, ...s.transactions],
         }))
       },
 
-      unmarkBudgetPaid: (category) => {
-        const key = `${currentMonth()}:${category}`
+      updateConfig: (updates) => set(s => ({ config: { ...s.config, ...updates } })),
+
+      isBudgetPaid: (category, month) => {
+        const key = `${month ?? currentMonth()}:${category}`
+        return get().transactions.some(t => t.budgetPaymentKey === key)
+      },
+      markBudgetPaid: (category, amount) => {
+        const budget = get().budgets.find(b => b.category === category)
+        if (!budget) return
+        const month = currentMonth()
+        const key = `${month}:${category}`
+        if (get().transactions.some(t => t.budgetPaymentKey === key)) return
         set(s => ({
-          transactions: s.transactions.filter(t => t.budgetPaymentKey !== key),
+          transactions: [{
+            id: genId(), type: 'expense', category, amount: amount ?? budget.limit,
+            description: `${budget.icon} Pago — ${category}`, date: today(), icon: budget.icon,
+            budgetPaymentKey: key,
+          }, ...s.transactions],
         }))
       },
+      unmarkBudgetPaid: (category) => {
+        const key = `${currentMonth()}:${category}`
+        set(s => ({ transactions: s.transactions.filter(t => t.budgetPaymentKey !== key) }))
+      },
 
-      /* ── Savings goals ── */
-      addSavingsGoal: (g) => set(s => ({
-        savingsGoals: [...s.savingsGoals, { ...g, id: genId() }],
-      })),
-
+      addSavingsGoal: (g) => set(s => ({ savingsGoals: [...s.savingsGoals, { ...g, id: genId() }] })),
       removeSavingsGoal: (id) => set(s => ({
         savingsGoals: s.savingsGoals.filter(g => g.id !== id),
         savingsTransactions: s.savingsTransactions.filter(t => t.goalId !== id),
       })),
-
       addSavingsTransaction: (t) => {
         const id = genId()
         set(s => {
@@ -161,14 +224,11 @@ export const useFinanceStore = create<FinanceStore>()(
           return {
             savingsTransactions: [{ ...t, id }, ...s.savingsTransactions],
             savingsGoals: s.savingsGoals.map(g =>
-              g.id === t.goalId
-                ? { ...g, current: Math.max(0, g.current + delta) }
-                : g
+              g.id === t.goalId ? { ...g, current: Math.max(0, g.current + delta) } : g
             ),
           }
         })
       },
-
       removeSavingsTransaction: (id) => {
         const tx = get().savingsTransactions.find(t => t.id === id)
         if (!tx) return
@@ -176,60 +236,102 @@ export const useFinanceStore = create<FinanceStore>()(
         set(s => ({
           savingsTransactions: s.savingsTransactions.filter(t => t.id !== id),
           savingsGoals: s.savingsGoals.map(g =>
-            g.id === tx.goalId
-              ? { ...g, current: Math.max(0, g.current + delta) }
-              : g
+            g.id === tx.goalId ? { ...g, current: Math.max(0, g.current + delta) } : g
           ),
         }))
       },
+      getGoalTransactions: (goalId) => get().savingsTransactions.filter(t => t.goalId === goalId),
 
-      getGoalTransactions: (goalId) =>
-        get().savingsTransactions.filter(t => t.goalId === goalId),
-
-      /* ── Budgets ── */
       addBudget: (b) => set(s => ({ budgets: [...s.budgets, b] })),
-
       updateBudget: (category, limit) => set(s => ({
         budgets: s.budgets.map(b => b.category === category ? { ...b, limit } : b),
       })),
+      removeBudget: (category) => set(s => ({ budgets: s.budgets.filter(b => b.category !== category) })),
 
-      removeBudget: (category) => set(s => ({
-        budgets: s.budgets.filter(b => b.category !== category),
-      })),
-
-      /* ── Aggregates ── */
       getMonthlyIncome: (month) => {
         const m = month ?? currentMonth()
-        return get().transactions
-          .filter(t => t.type === 'income' && t.date.startsWith(m))
-          .reduce((a, t) => a + t.amount, 0)
+        return get().transactions.filter(t => t.type === 'income' && t.date.startsWith(m)).reduce((a, t) => a + t.amount, 0)
       },
-
       getMonthlyExpenses: (month) => {
         const m = month ?? currentMonth()
-        return get().transactions
-          .filter(t => t.type === 'expense' && t.date.startsWith(m))
-          .reduce((a, t) => a + t.amount, 0)
+        return get().transactions.filter(t => t.type === 'expense' && t.date.startsWith(m)).reduce((a, t) => a + t.amount, 0)
       },
-
-      getMonthlyBalance: (month) =>
-        get().getMonthlyIncome(month) - get().getMonthlyExpenses(month),
-
+      getMonthlyBalance: (month) => get().getMonthlyIncome(month) - get().getMonthlyExpenses(month),
       getExpensesByCategory: (month) => {
         const m = month ?? currentMonth()
         return get().transactions
           .filter(t => t.type === 'expense' && t.date.startsWith(m))
-          .reduce((acc, t) => {
-            acc[t.category] = (acc[t.category] ?? 0) + t.amount
-            return acc
-          }, {} as Record<string, number>)
+          .reduce((acc, t) => { acc[t.category] = (acc[t.category] ?? 0) + t.amount; return acc }, {} as Record<string, number>)
       },
-
       getSpentOnCategory: (category, month) => {
         const m = month ?? currentMonth()
         return get().transactions
           .filter(t => t.type === 'expense' && t.category === category && t.date.startsWith(m))
           .reduce((a, t) => a + t.amount, 0)
+      },
+      getCreditExpenses: (month) => {
+        const m = month ?? currentMonth()
+        return get().transactions
+          .filter(t => t.type === 'expense' && t.paymentMethod === 'credit' && t.date.startsWith(m))
+          .reduce((a, t) => a + t.amount, 0)
+      },
+      getCashExpenses: (month) => {
+        const m = month ?? currentMonth()
+        return get().transactions
+          .filter(t => t.type === 'expense' && t.paymentMethod !== 'credit' && t.date.startsWith(m))
+          .reduce((a, t) => a + t.amount, 0)
+      },
+      getMonthlySavings: (month) => {
+        const m = month ?? currentMonth()
+        return get().savingsTransactions.filter(t => t.type === 'deposit' && t.date.startsWith(m)).reduce((a, t) => a + t.amount, 0)
+      },
+      getTotalDebt: () =>
+        get().debts.reduce((a, d) => a + d.remaining, 0) +
+        get().creditCards.reduce((a, c) => a + c.balance, 0),
+
+      getAvailableMoney: () => {
+        const { config, debts } = get()
+        const minPayments = debts.reduce((a, d) => a + d.minPayment, 0)
+        return config.monthlyIncome - config.fixedExpenses - minPayments - config.autoSavings
+      },
+
+      getDaysMoneyWillLast: () => {
+        const day = new Date().getDate()
+        if (day === 0) return 30
+        const expenses = get().getMonthlyExpenses()
+        const income = get().getMonthlyIncome() || get().config.monthlyIncome
+        if (expenses === 0 || income === 0) return 30
+        const currentBalance = income - expenses
+        if (currentBalance <= 0) return 0
+        const dailyBurn = expenses / day
+        if (dailyBurn === 0) return 30
+        return Math.max(0, Math.round(currentBalance / dailyBurn))
+      },
+
+      getProjectedEndBalance: () => {
+        const now = new Date()
+        const day = now.getDate()
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+        const expenses = get().getMonthlyExpenses()
+        const income = get().getMonthlyIncome() || get().config.monthlyIncome
+        if (day === 0 || expenses === 0) return income
+        const projected = (expenses / day) * daysInMonth
+        return income - projected
+      },
+
+      getFinancialScore: () => {
+        const income = get().config.monthlyIncome || get().getMonthlyIncome()
+        if (income === 0) return 0
+        const expenses = get().getMonthlyExpenses()
+        const savingsRate = Math.max(0, (income - expenses) / income)
+        const savingsScore = Math.min(40, savingsRate * 200)
+        const budgets = get().budgets
+        const over = budgets.filter(b => get().getSpentOnCategory(b.category) > b.limit).length
+        const budgetScore = budgets.length > 0 ? ((budgets.length - over) / budgets.length) * 30 : 15
+        const totalDebt = get().getTotalDebt()
+        const debtRatio = Math.min(1, totalDebt / (income * 6))
+        const debtScore = (1 - debtRatio) * 30
+        return Math.min(100, Math.max(0, Math.round(savingsScore + budgetScore + debtScore)))
       },
     }),
     { name: 'kingdom-finance', storage: userStorage }
