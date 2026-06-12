@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   NotebookPen, Plus, Search, Pin, Trash2, X,
@@ -14,7 +14,16 @@ import type { Note } from '@/stores/notes.store'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
-const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+const stripHtml = (html: string) =>
+  html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, ' ')
+    .trim()
 
 const NOTE_COLORS = [
   { label: 'Oscuro', value: '#0E1318' },
@@ -145,14 +154,18 @@ export default function NotesPage() {
     if (activeNote) updateNote(activeNote.id, { content: html })
   }
 
-  // On note switch: set editor content + attach native input listener
-  // Captures `editor` locally so cleanup removes the right listener from the right element
-  useEffect(() => {
+  // useLayoutEffect: runs synchronously after DOM commit so editorRef points to the NEW editor
+  // (useEffect would run too late with AnimatePresence because the new element might not be mounted)
+  useLayoutEffect(() => {
     const editor = editorRef.current
     if (!editor || !activeNote) return
-
     editor.innerHTML = activeNote.content || ''
+  }, [activeId]) // eslint-disable-line
 
+  // Attach native input listener — captures local `editor` so cleanup hits the right element
+  useEffect(() => {
+    const editor = editorRef.current
+    if (!editor) return
     const handler = () => saveRef.current(editor.innerHTML)
     editor.addEventListener('input', handler)
     return () => editor.removeEventListener('input', handler)
@@ -255,7 +268,7 @@ export default function NotesPage() {
       </div>
 
       {/* ── Editor ── */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {activeNote ? (
           <motion.div
             key={activeNote.id}
