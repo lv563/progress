@@ -165,7 +165,7 @@ function DroppableColumn({ id, color, label, icon, count, children }: {
           'min-h-[120px] space-y-2 rounded-xl p-2 transition-colors',
           isOver ? 'ring-1 ring-inset' : ''
         )}
-        style={isOver ? { background: `${color}0A`, ringColor: `${color}40` } : undefined}
+        style={isOver ? { background: `${color}0A`, outline: `1px solid ${color}40` } : undefined}
       >
         {children}
       </div>
