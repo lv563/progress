@@ -124,7 +124,8 @@ export default function NotesPage() {
   const [showFontSize, setShowFontSize] = useState(false)
   const titleRef = useRef<HTMLInputElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
-  const activeIdRef = useRef<string | null>(null)
+  // saveRef always holds the latest save function — no stale closures
+  const saveRef = useRef<(html: string) => void>(() => {})
 
   const [fmt, setFmt] = useState({
     bold: false, italic: false, underline: false, strikethrough: false,
@@ -139,14 +140,23 @@ export default function NotesPage() {
   const activeNote = notes.find(n => n.id === activeId)
   const accent = activeNote ? (NOTE_ACCENTS[activeNote.color] ?? '#00D4B8') : '#00D4B8'
 
-  // Sync editor content when switching notes
+  // Keep saveRef fresh every render so listeners never use stale state
+  saveRef.current = (html: string) => {
+    if (activeNote) updateNote(activeNote.id, { content: html })
+  }
+
+  // On note switch: set editor content + attach native input listener
+  // Captures `editor` locally so cleanup removes the right listener from the right element
   useEffect(() => {
-    if (!editorRef.current || !activeNote) return
-    if (activeNote.id !== activeIdRef.current) {
-      editorRef.current.innerHTML = activeNote.content || ''
-      activeIdRef.current = activeNote.id
-    }
-  }, [activeNote])
+    const editor = editorRef.current
+    if (!editor || !activeNote) return
+
+    editor.innerHTML = activeNote.content || ''
+
+    const handler = () => saveRef.current(editor.innerHTML)
+    editor.addEventListener('input', handler)
+    return () => editor.removeEventListener('input', handler)
+  }, [activeId]) // eslint-disable-line
 
   // Auto-select first note
   useEffect(() => {
@@ -156,30 +166,25 @@ export default function NotesPage() {
   const updateFormatState = useCallback(() => {
     try {
       setFmt({
-        bold:         document.queryCommandState('bold'),
-        italic:       document.queryCommandState('italic'),
-        underline:    document.queryCommandState('underline'),
-        strikethrough:document.queryCommandState('strikeThrough'),
-        justifyLeft:  document.queryCommandState('justifyLeft'),
-        justifyCenter:document.queryCommandState('justifyCenter'),
-        justifyRight: document.queryCommandState('justifyRight'),
+        bold:          document.queryCommandState('bold'),
+        italic:        document.queryCommandState('italic'),
+        underline:     document.queryCommandState('underline'),
+        strikethrough: document.queryCommandState('strikeThrough'),
+        justifyLeft:   document.queryCommandState('justifyLeft'),
+        justifyCenter: document.queryCommandState('justifyCenter'),
+        justifyRight:  document.queryCommandState('justifyRight'),
       })
     } catch { /* ignore */ }
   }, [])
 
   const exec = useCallback((cmd: string, value?: string) => {
-    if (!editorRef.current || !activeNote) return
-    editorRef.current.focus()
+    const editor = editorRef.current
+    if (!editor) return
+    editor.focus()
     document.execCommand(cmd, false, value ?? undefined)
-    updateNote(activeNote.id, { content: editorRef.current.innerHTML })
+    saveRef.current(editor.innerHTML)
     updateFormatState()
-  }, [activeNote, updateNote, updateFormatState])
-
-  const handleEditorInput = () => {
-    if (editorRef.current && activeNote) {
-      updateNote(activeNote.id, { content: editorRef.current.innerHTML })
-    }
-  }
+  }, [updateFormatState])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey) {
@@ -434,7 +439,6 @@ export default function NotesPage() {
               contentEditable
               suppressContentEditableWarning
               data-placeholder="Escribe tu nota aquí..."
-              onInput={handleEditorInput}
               onKeyDown={handleKeyDown}
               onKeyUp={updateFormatState}
               onMouseUp={updateFormatState}
