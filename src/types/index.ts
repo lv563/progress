@@ -283,3 +283,40 @@ export interface VaultItem {
   createdAt: string
   updatedAt: string
 }
+
+/* ── Goals & Progress ────────────────────────── */
+export type GoalType     = 'annual' | 'monthly' | 'weekly' | 'daily'
+export type GoalCategory = 'finance' | 'health' | 'career' | 'spiritual' | 'relationships' | 'education' | 'personal'
+export type GoalStatus   = 'not-started' | 'in-progress' | 'completed' | 'paused'
+export type GoalPriority = 'low' | 'medium' | 'high' | 'critical'
+
+export interface Goal {
+  id: string
+  title: string
+  description?: string
+  category: GoalCategory
+  priority: GoalPriority
+  status: GoalStatus
+  progress: number
+  type: GoalType
+  parentId?: string
+  targetDate: string
+  completedAt?: string
+  createdAt: string
+  updatedAt: string
+  // daily-specific
+  time?: string
+  repeat?: boolean
+  checkedDate?: string
+  notes?: string
+}
+
+export interface GoalAchievement {
+  id: string
+  slug: string
+  title: string
+  description: string
+  icon: string
+  xpReward: number
+  unlockedAt?: string
+}
