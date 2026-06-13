@@ -1,4 +1,5 @@
 import { createJSONStorage } from 'zustand/middleware'
+import { schedulePush } from './cloudSync'
 
 /** Module-level user ID. Set explicitly at login/logout so storage writes are always deterministic. */
 let currentUserId: string | null = null
@@ -23,6 +24,8 @@ const rawUserStorage = {
   setItem: (name: string, value: string): void => {
     if (!currentUserId) return
     localStorage.setItem(`${currentUserId}:${name}`, value)
+    // Schedule a debounced cloud push after every store write
+    schedulePush(currentUserId)
   },
   removeItem: (name: string): void => {
     if (!currentUserId) return

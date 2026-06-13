@@ -2,17 +2,29 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Settings, Zap, Flame, Crown } from 'lucide-react'
+import { Search, Settings, Zap, Flame, Crown, Cloud, CloudOff, Loader2, CloudCheck } from 'lucide-react'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { useAppStore } from '@/stores/app.store'
+import { useSyncStore, SyncStatus } from '@/stores/sync.store'
 import { formatXP, getLevelTitle, levelProgress } from '@/lib/utils/format'
 import { cn } from '@/lib/utils/cn'
 import { CommandPalette } from './CommandPalette'
 
+const SYNC_UI: Record<SyncStatus, { icon: any; color: string; title: string }> = {
+  idle:    { icon: Cloud,      color: 'text-slate-600',  title: 'Sin sincronizar' },
+  syncing: { icon: Loader2,    color: 'text-cyan-400',   title: 'Sincronizando...' },
+  synced:  { icon: CloudCheck, color: 'text-emerald-400',title: 'Sincronizado' },
+  error:   { icon: CloudOff,   color: 'text-red-400',    title: 'Error al sincronizar' },
+  offline: { icon: CloudOff,   color: 'text-slate-500',  title: 'Sin conexión' },
+}
+
 export function TopBar() {
   const { user, commandPaletteOpen, setCommandPaletteOpen } = useAppStore()
+  const { status: syncStatus, lastSync } = useSyncStore()
   const [searchFocused, setSearchFocused] = useState(false)
+  const syncUi = SYNC_UI[syncStatus]
+  const SyncIcon = syncUi.icon
 
   const today = format(new Date(), "EEEE, d 'de' MMMM")
   const xpPct = user ? levelProgress(user.xp, user.level) : 0
@@ -93,6 +105,15 @@ export function TopBar() {
 
         {/* Actions */}
         <div className="flex items-center gap-1">
+          {/* Sync indicator */}
+          <div title={`${syncUi.title}${lastSync ? ` · ${format(new Date(lastSync), 'HH:mm')}` : ''}`}
+            className="w-8 h-8 flex items-center justify-center">
+            <SyncIcon
+              size={15}
+              className={cn(syncUi.color, syncStatus === 'syncing' && 'animate-spin')}
+            />
+          </div>
+
           <Link href="/dashboard/settings">
             <button className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-white/[0.06] hover:text-slate-200 transition-colors">
               <Settings size={16} />

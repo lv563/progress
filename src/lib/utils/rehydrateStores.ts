@@ -9,6 +9,7 @@ import { usePhysicalStore } from '@/stores/physical.store'
 import { useDetoxStore } from '@/stores/detox.store'
 import { useNotesStore } from '@/stores/notes.store'
 import { useDailyLogStore } from '@/stores/dailyLog.store'
+import { useGoalsStore } from '@/stores/goals.store'
 
 const userStores = [
   useHabitsStore,
@@ -22,6 +23,7 @@ const userStores = [
   useDetoxStore,
   useNotesStore,
   useDailyLogStore,
+  useGoalsStore,
 ] as const
 
 export const resetAllStores = () => {
