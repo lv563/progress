@@ -113,6 +113,7 @@ interface FinanceStore {
   addCreditCard: (c: Omit<CreditCard, 'id'>) => void
   updateCreditCard: (id: string, updates: Partial<CreditCard>) => void
   removeCreditCard: (id: string) => void
+  payCard: (id: string, amount: number) => void
 
   addDebt: (d: Omit<Debt, 'id'>) => void
   updateDebt: (id: string, updates: Partial<Debt>) => void
@@ -189,6 +190,17 @@ export const useFinanceStore = create<FinanceStore>()(
         creditCards: s.creditCards.map(c => c.id === id ? { ...c, ...updates } : c),
       })),
       removeCreditCard: (id) => set(s => ({ creditCards: s.creditCards.filter(c => c.id !== id) })),
+      payCard: (id, amount) => {
+        const card = get().creditCards.find(c => c.id === id)
+        if (!card) return
+        set(s => ({
+          creditCards: s.creditCards.map(c => c.id === id ? { ...c, balance: Math.max(0, c.balance - amount) } : c),
+          transactions: [{
+            id: genId(), type: 'expense', category: 'Deuda', amount,
+            description: `Pago tarjeta — ${card.name}`, date: today(), icon: '💳',
+          }, ...s.transactions],
+        }))
+      },
 
       addDebt: (d) => set(s => ({ debts: [...s.debts, { ...d, id: genId() }] })),
       updateDebt: (id, updates) => set(s => ({

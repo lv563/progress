@@ -65,7 +65,7 @@ export default function FinancePage() {
     transactions, budgets, savingsGoals, savingsTransactions,
     creditCards, debts, config,
     addTransaction, removeTransaction,
-    addCreditCard, updateCreditCard, removeCreditCard,
+    addCreditCard, updateCreditCard, removeCreditCard, payCard,
     addDebt, updateDebt, removeDebt, payDebt,
     updateConfig,
     addFixedCharge, removeFixedCharge, isFixedChargePaid, payFixedCharge, unpayFixedCharge, getCardFixedCharges,
@@ -97,6 +97,8 @@ export default function FinancePage() {
   const [editValue, setEditValue]           = useState('')
   const [chargeModal, setChargeModal]       = useState<string | null>(null) // cardId
   const [expandedCard, setExpandedCard]     = useState<string | null>(null)
+  const [payCardModal, setPayCardModal]     = useState<string | null>(null) // cardId
+  const [payCardAmt, setPayCardAmt]         = useState('')
 
   // forms
   const [newTx, setNewTx] = useState({
@@ -230,6 +232,14 @@ export default function FinancePage() {
     payDebt(id, v)
     setPayDebtModal(null)
     setPayDebtAmt('')
+  }
+
+  const handlePayCard = (id: string) => {
+    const v = Number(payCardAmt)
+    if (!v || v <= 0) return
+    payCard(id, v)
+    setPayCardModal(null)
+    setPayCardAmt('')
   }
 
   const handleSaveConfig = () => {
@@ -476,6 +486,12 @@ export default function FinancePage() {
                             <p className="text-xs text-slate-500">Límite: {fmt(card.limit)}</p>
                           </div>
                           <div className="flex gap-1">
+                            <button
+                              onClick={() => { setPayCardAmt(''); setPayCardModal(card.id) }}
+                              className="flex items-center gap-1 px-2 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-[11px] font-semibold transition-all"
+                            >
+                              <ArrowDown size={11} /> Pagar
+                            </button>
                             <button onClick={() => openEditCard(card.id)} className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/[0.05] text-slate-400 hover:text-white hover:bg-white/10 transition-all"><Pencil size={11} /></button>
                             <button onClick={() => removeCreditCard(card.id)} className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/[0.05] text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"><Trash2 size={11} /></button>
                           </div>
@@ -1155,6 +1171,35 @@ export default function FinancePage() {
             <Button variant="glow" onClick={() => handlePayDebt(payDebtModal!)}><CheckCircle2 size={14} /> Registrar pago</Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Pay Credit Card */}
+      <Modal open={!!payCardModal} onClose={() => setPayCardModal(null)} title={`Pago a tarjeta — ${creditCards.find(c => c.id === payCardModal)?.name ?? ''}`}>
+        {(() => {
+          const card = creditCards.find(c => c.id === payCardModal)
+          return (
+            <div className="space-y-4">
+              {card && (
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                  <span className="text-sm text-slate-400">Balance actual</span>
+                  <span className="text-sm font-bold text-red-400 tabular-nums">{fmt(card.balance)}</span>
+                </div>
+              )}
+              <p className="text-sm text-slate-400">El pago se registrará como gasto y reducirá el balance de la tarjeta.</p>
+              <Input label="Monto a pagar (RD$)" type="number" min={1} placeholder="0" value={payCardAmt} onChange={e => setPayCardAmt(e.target.value)} icon={<DollarSign size={14} />} />
+              {card && payCardAmt && Number(payCardAmt) > 0 && (
+                <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/20">
+                  <span className="text-sm text-slate-400">Balance después del pago</span>
+                  <span className="text-sm font-bold text-emerald-400 tabular-nums">{fmt(Math.max(0, card.balance - Number(payCardAmt)))}</span>
+                </div>
+              )}
+              <div className="flex gap-3 justify-end">
+                <Button variant="ghost" onClick={() => setPayCardModal(null)}>Cancelar</Button>
+                <Button variant="glow" onClick={() => handlePayCard(payCardModal!)}><CheckCircle2 size={14} /> Registrar pago</Button>
+              </div>
+            </div>
+          )
+        })()}
       </Modal>
 
       {/* Marcar presupuesto pagado */}
