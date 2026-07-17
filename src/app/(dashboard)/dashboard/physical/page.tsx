@@ -166,10 +166,15 @@ export default function PhysicalPage() {
               </div>
             ) : (
               <button onClick={() => setWorkoutModal(true)}
-                className="w-full p-5 rounded-2xl border border-dashed border-white/[0.12] text-slate-500 hover:text-slate-300 hover:border-white/[0.2] transition-all flex flex-col items-center gap-2">
-                <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center text-2xl">💪</div>
-                <p className="text-sm font-medium">¿Entrenaste hoy?</p>
-                <p className="text-xs opacity-60">Toca para registrar tu sesión</p>
+                className="w-full p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-emerald-500/20 transition-all flex items-center gap-4 group">
+                <div className="w-6 h-6 rounded-full border-2 border-white/[0.15] group-hover:border-emerald-500/50 transition-all shrink-0 flex items-center justify-center">
+                  <Check size={12} className="text-white/0 group-hover:text-emerald-500/40 transition-all" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-slate-400 group-hover:text-slate-200 transition-colors">¿Entrenaste hoy?</p>
+                  <p className="text-xs text-slate-700 group-hover:text-slate-500 transition-colors mt-0.5">Toca para registrar tu sesión</p>
+                </div>
+                <span className="ml-auto text-xl opacity-40 group-hover:opacity-70 transition-opacity">💪</span>
               </button>
             )}
 
