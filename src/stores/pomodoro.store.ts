@@ -151,9 +151,14 @@ export const usePomodoroStore = create<PomodoroStore>()(
       },
 
       getWeekMinutes: () => {
-        const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+        // Week resets every Friday at midnight
+        const now = new Date()
+        const daysFromFriday = (now.getDay() - 5 + 7) % 7
+        const fridayStart = new Date(now)
+        fridayStart.setDate(fridayStart.getDate() - daysFromFriday)
+        fridayStart.setHours(0, 0, 0, 0)
         return get().sessions
-          .filter(s => s.completed && new Date(s.startedAt).getTime() > weekAgo)
+          .filter(s => s.completed && new Date(s.startedAt) >= fridayStart)
           .reduce((acc, s) => acc + s.duration, 0)
       },
     }),

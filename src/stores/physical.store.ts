@@ -176,6 +176,9 @@ interface PhysicalStore {
   addMeasurement: (m: Omit<BodyMeasurement, 'id'>) => void
   addWater: (liters: number) => void
   setWater: (liters: number) => void
+  mealsToday: number
+  setMeals: (n: number) => void
+  getGymStreak: () => number
   toggleCompletedDate: (date: string) => void
   setDayPlan: (day: number, plan: DayPlan) => void
   clearDayPlan: (day: number) => void
@@ -212,10 +215,11 @@ export const usePhysicalStore = create<PhysicalStore>()(
       userProfile: DEFAULT_PROFILE,
       mealLogs: [],
       waterToday: 0,
+      mealsToday: 0,
       challenges: [],
       challengeLogs: [],
 
-      _reset: () => set({ exercises: DEFAULT_EXERCISES, workoutSessions: [], measurements: [], completedDates: [], weeklyPlan: {}, userProfile: DEFAULT_PROFILE, mealLogs: [], waterToday: 0, challenges: [], challengeLogs: [] }),
+      _reset: () => set({ exercises: DEFAULT_EXERCISES, workoutSessions: [], measurements: [], completedDates: [], weeklyPlan: {}, userProfile: DEFAULT_PROFILE, mealLogs: [], waterToday: 0, mealsToday: 0, challenges: [], challengeLogs: [] }),
 
       updateUserProfile: (u) => set(s => ({ userProfile: { ...s.userProfile, ...u } })),
 
@@ -229,6 +233,22 @@ export const usePhysicalStore = create<PhysicalStore>()(
 
       addWater: (liters) => set(s => ({ waterToday: Math.round((s.waterToday + liters) * 100) / 100 })),
       setWater: (liters) => set({ waterToday: liters }),
+      setMeals: (n) => set({ mealsToday: Math.max(0, Math.min(6, n)) }),
+
+      getGymStreak: () => {
+        const sessions = get().workoutSessions
+        const todayStr = format(new Date(), 'yyyy-MM-dd')
+        const todayDone = sessions.some(s => s.date === todayStr && s.completed)
+        let streak = 0
+        const start = todayDone ? 0 : 1
+        for (let i = start; i < 365; i++) {
+          const d = new Date(); d.setDate(d.getDate() - i)
+          const dateStr = format(d, 'yyyy-MM-dd')
+          if (sessions.some(s => s.date === dateStr && s.completed)) streak++
+          else break
+        }
+        return streak
+      },
 
       toggleCompletedDate: (date) => set(s => ({
         completedDates: s.completedDates.includes(date) ? s.completedDates.filter(d => d !== date) : [...s.completedDates, date],
@@ -360,7 +380,7 @@ export const usePhysicalStore = create<PhysicalStore>()(
       getTodayWorkout: () => { const today = new Date().toDateString(); return get().workoutSessions.find(w => new Date(w.date).toDateString() === today) },
       getWeekSessions: () => { const weekAgo = Date.now() - 7 * 86400000; return get().workoutSessions.filter(w => new Date(w.date).getTime() > weekAgo && w.completed) },
       getLatestMeasurement: () => get().measurements[0],
-      resetDaily: () => set({ waterToday: 0 }),
+      resetDaily: () => set({ waterToday: 0, mealsToday: 0 }),
     }),
     { name: 'kingdom-physical', storage: userStorage }
   )
