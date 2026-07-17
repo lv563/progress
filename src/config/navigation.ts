@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Target, Timer, CheckSquare, Calendar,
-  Dumbbell, Church, FolderLock, BarChart3, Wallet, Ban, NotebookPen, Trophy, Crown
+  Dumbbell, Church, FolderLock, BarChart3, Wallet, Ban, NotebookPen, Trophy, Crown, Heart, Brain
 } from 'lucide-react'
 
 export const NAV_ITEMS = [
@@ -17,6 +17,8 @@ export const NAV_ITEMS = [
   { id: 'finance',    label: 'Finanzas',     href: '/dashboard/finance',   icon: Wallet,          shortcut: 'G $' },
   { id: 'vault',      label: 'Bóveda',       href: '/dashboard/vault',     icon: FolderLock,      shortcut: 'G V' },
   { id: 'analytics',  label: 'Análisis',     href: '/dashboard/analytics', icon: BarChart3,       shortcut: 'G A' },
+  { id: 'spiritual',  label: 'Espiritual',   href: '/dashboard/spiritual', icon: Heart,           shortcut: 'G E' },
+  { id: 'mental',     label: 'Mental',       href: '/dashboard/mental',    icon: Brain,           shortcut: 'G L' },
   { id: 'season',     label: 'Temporada',    href: '/dashboard/season',    icon: Crown,           shortcut: 'G S' },
 ] as const
 
