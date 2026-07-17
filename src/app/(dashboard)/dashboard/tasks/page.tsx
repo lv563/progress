@@ -198,6 +198,30 @@ export default function TasksPage() {
     }
   }, [projectFiltered, taskFilter])
 
+  // Completed tasks grouped by date (for history view)
+  const groupedDone = useMemo(() => {
+    const done = projectFiltered.filter(t => t.status === 'done')
+    const map = new Map<string, typeof done>()
+    for (const t of done) {
+      const key = t.completedAt ? new Date(t.completedAt).toDateString() : 'Sin fecha'
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(t)
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => {
+        if (a[0] === 'Sin fecha') return 1
+        if (b[0] === 'Sin fecha') return -1
+        return new Date(b[0]).getTime() - new Date(a[0]).getTime()
+      })
+      .map(([dateStr, tasks]) => ({
+        dateStr,
+        date: dateStr !== 'Sin fecha' ? new Date(dateStr) : null,
+        tasks: [...tasks].sort((a, b) =>
+          new Date(b.completedAt ?? 0).getTime() - new Date(a.completedAt ?? 0).getTime()
+        ),
+      }))
+  }, [projectFiltered])
+
   // Stats
   const stats = useMemo(() => ({
     total:      projectFiltered.filter(t => t.status !== 'done').length,
@@ -378,76 +402,123 @@ export default function TasksPage() {
       {/* List view */}
       {view === 'list' && (
         <motion.div variants={fadeUp} className="space-y-2">
-          {filteredTasks.filter(t => t.status !== 'done').map(task => {
-            const overdue  = isOverdue(task.dueDate)
-            const dueToday = isDueToday(task.dueDate)
-            const pm = PRIORITY_META[task.priority]
-            return (
-              <div
-                key={task.id}
-                className={cn(
-                  'flex items-center gap-3 p-3 rounded-xl border transition-all',
-                  overdue  ? 'border-red-500/25 bg-red-500/[0.03]' :
-                  dueToday ? 'border-amber-500/25 bg-amber-500/[0.03]' :
-                  'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'
-                )}
-              >
-                <button
-                  onClick={() => { moveTask(task.id, 'done'); addXP(5, 'Tarea completada') }}
-                  className="w-5 h-5 rounded-full border-2 hover:scale-110 transition-all shrink-0 flex items-center justify-center"
-                  style={{ borderColor: pm.color }}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white">{task.title}</p>
-                  {task.description && <p className="text-xs text-slate-500 mt-0.5 truncate">{task.description}</p>}
-                  {task.tags && task.tags.length > 0 && (
-                    <div className="flex gap-1 mt-1">
-                      {task.tags.map(tag => (
-                        <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-slate-600">#{tag}</span>
+
+          {/* Done history view */}
+          {taskFilter === 'done' ? (
+            groupedDone.length === 0 ? (
+              <div className="text-center py-14 text-slate-600">
+                <CheckSquare size={32} className="mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Sin tareas completadas</p>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {groupedDone.map(({ dateStr, date, tasks: doneTasks }) => (
+                  <div key={dateStr}>
+                    <p className="text-xs text-slate-600 uppercase tracking-wider font-medium mb-2 px-1">
+                      {date ? date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) : dateStr}
+                      <span className="ml-2 font-bold text-emerald-500/70">{doneTasks.length}</span>
+                    </p>
+                    <div className="space-y-1.5">
+                      {doneTasks.map(task => (
+                        <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.04] bg-white/[0.01]">
+                          <div className="w-5 h-5 rounded-full border-2 border-emerald-500/40 bg-emerald-500/10 flex items-center justify-center shrink-0">
+                            <span className="text-[8px] text-emerald-400">✓</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-slate-500 line-through truncate">{task.title}</p>
+                            {task.completedAt && (
+                              <p className="text-[10px] text-slate-700 mt-0.5">
+                                {new Date(task.completedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <div className="w-1.5 h-1.5 rounded-full" style={{ background: PRIORITY_META[task.priority].dot }} />
+                            <button onClick={() => deleteTask(task.id)} className="text-slate-800 hover:text-red-400 transition-colors">
+                              <Trash2 size={11} />
+                            </button>
+                          </div>
+                        </div>
                       ))}
                     </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: pm.dot }} />
-                  {task.dueDate && (
-                    <span className={cn('text-[10px] flex items-center gap-0.5', overdue ? 'text-red-400' : dueToday ? 'text-amber-400' : 'text-slate-500')}>
-                      {overdue && <AlertTriangle size={9} />}
-                      {new Date(task.dueDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                    </span>
-                  )}
-                  <button onClick={() => deleteTask(task.id)} className="text-slate-700 hover:text-red-400 transition-colors">
-                    <Trash2 size={12} />
-                  </button>
-                </div>
+                  </div>
+                ))}
               </div>
             )
-          })}
-          {/* Completed section */}
-          {filteredTasks.filter(t => t.status === 'done').length > 0 && taskFilter !== 'done' && (
-            <div className="pt-2">
-              <p className="text-xs text-slate-700 uppercase tracking-wider mb-2 px-1">Completadas</p>
-              {filteredTasks.filter(t => t.status === 'done').slice(0, 5).map(task => (
-                <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.03] bg-transparent mb-1.5">
-                  <div className="w-5 h-5 rounded-full border-2 border-emerald-500/40 bg-emerald-500/10 flex items-center justify-center shrink-0">
-                    <span className="text-[8px] text-emerald-400">✓</span>
+          ) : (
+            <>
+              {filteredTasks.filter(t => t.status !== 'done').map(task => {
+                const overdue  = isOverdue(task.dueDate)
+                const dueToday = isDueToday(task.dueDate)
+                const pm = PRIORITY_META[task.priority]
+                return (
+                  <div
+                    key={task.id}
+                    className={cn(
+                      'flex items-center gap-3 p-3 rounded-xl border transition-all',
+                      overdue  ? 'border-red-500/25 bg-red-500/[0.03]' :
+                      dueToday ? 'border-amber-500/25 bg-amber-500/[0.03]' :
+                      'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'
+                    )}
+                  >
+                    <button
+                      onClick={() => { moveTask(task.id, 'done'); addXP(5, 'Tarea completada') }}
+                      className="w-5 h-5 rounded-full border-2 hover:scale-110 transition-all shrink-0 flex items-center justify-center"
+                      style={{ borderColor: pm.color }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white">{task.title}</p>
+                      {task.description && <p className="text-xs text-slate-500 mt-0.5 truncate">{task.description}</p>}
+                      {task.tags && task.tags.length > 0 && (
+                        <div className="flex gap-1 mt-1">
+                          {task.tags.map(tag => (
+                            <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-slate-600">#{tag}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: pm.dot }} />
+                      {task.dueDate && (
+                        <span className={cn('text-[10px] flex items-center gap-0.5', overdue ? 'text-red-400' : dueToday ? 'text-amber-400' : 'text-slate-500')}>
+                          {overdue && <AlertTriangle size={9} />}
+                          {new Date(task.dueDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                        </span>
+                      )}
+                      <button onClick={() => deleteTask(task.id)} className="text-slate-700 hover:text-red-400 transition-colors">
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-sm text-slate-600 line-through flex-1 truncate">{task.title}</p>
-                  <button onClick={() => deleteTask(task.id)} className="text-slate-800 hover:text-red-400 transition-colors">
-                    <Trash2 size={11} />
+                )
+              })}
+              {/* Compact completed section */}
+              {filteredTasks.filter(t => t.status === 'done').length > 0 && (
+                <div className="pt-2">
+                  <p className="text-xs text-slate-700 uppercase tracking-wider mb-2 px-1">Completadas</p>
+                  {filteredTasks.filter(t => t.status === 'done').slice(0, 5).map(task => (
+                    <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.03] bg-transparent mb-1.5">
+                      <div className="w-5 h-5 rounded-full border-2 border-emerald-500/40 bg-emerald-500/10 flex items-center justify-center shrink-0">
+                        <span className="text-[8px] text-emerald-400">✓</span>
+                      </div>
+                      <p className="text-sm text-slate-600 line-through flex-1 truncate">{task.title}</p>
+                      <button onClick={() => deleteTask(task.id)} className="text-slate-800 hover:text-red-400 transition-colors">
+                        <Trash2 size={11} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {filteredTasks.filter(t => t.status !== 'done').length === 0 && taskFilter === 'all' && (
+                <div className="text-center py-14 text-slate-600">
+                  <CheckSquare size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">¡Sin tareas pendientes!</p>
+                  <button onClick={() => setAddModal(true)} className="text-xs text-cyan-400 mt-2 hover:text-cyan-300 transition-colors">
+                    + Agregar tarea
                   </button>
                 </div>
-              ))}
-            </div>
-          )}
-          {filteredTasks.filter(t => t.status !== 'done').length === 0 && taskFilter === 'all' && (
-            <div className="text-center py-14 text-slate-600">
-              <CheckSquare size={32} className="mx-auto mb-2 opacity-30" />
-              <p className="text-sm">¡Sin tareas pendientes!</p>
-              <button onClick={() => setAddModal(true)} className="text-xs text-cyan-400 mt-2 hover:text-cyan-300 transition-colors">
-                + Agregar tarea
-              </button>
-            </div>
+              )}
+            </>
           )}
         </motion.div>
       )}

@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { stagger, fadeUp } from '@/lib/utils/motion'
-import { Play, Pause, Square, SkipForward, Timer, Maximize2, Minimize2, Settings2, Flame, Zap, Coffee, Leaf } from 'lucide-react'
+import { Play, Pause, Square, SkipForward, Timer, Maximize2, Minimize2, Settings2, Flame, Zap, Coffee, Leaf, History } from 'lucide-react'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 import { Button } from '@/components/ui/Button'
 import { ProgressRing } from '@/components/ui/ProgressRing'
 import { Modal } from '@/components/ui/Modal'
@@ -27,6 +29,111 @@ const MOTIVATIONAL: Record<PomodoroMode, string[]> = {
   'deep-work':   ['90 minutos sin interrupciones.', 'Trabajo profundo = resultados reales.', 'Esto moverá la aguja.'],
 }
 
+const STAGE_LABELS = ['', 'Brote', 'Sapling', 'Creciendo', 'Con hojas', 'Fructificando', 'Árbol', 'Florecido', '¡Maestro!']
+
+function GrowingTree({ count }: { count: number }) {
+  const stage = Math.min(8, count)
+  const show = (n: number) => stage >= n
+
+  const gp = (delay = 0) => ({
+    initial: { pathLength: 0 as number, opacity: 0 as number },
+    animate: { pathLength: 1, opacity: 1 },
+    transition: { duration: 0.8, ease: 'easeOut' as const, delay },
+  })
+  const fi = (delay = 0) => ({
+    initial: { scale: 0 as number, opacity: 0 as number },
+    animate: { scale: 1, opacity: 1 },
+    transition: { type: 'spring' as const, stiffness: 200, damping: 15, delay },
+  })
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <svg viewBox="0 0 140 155" className="w-28 h-28">
+        <ellipse cx="70" cy="147" rx="38" ry="5" fill="rgba(139,90,43,0.3)" />
+        {show(1) && <motion.path d="M70 147 L70 100" stroke="#8B5A2B" strokeWidth="6" strokeLinecap="round" fill="none" {...gp(0)} />}
+        {show(2) && <motion.path d="M70 118 Q52 106 40 100" stroke="#8B5A2B" strokeWidth="4" strokeLinecap="round" fill="none" {...gp(0.1)} />}
+        {show(2) && <motion.path d="M70 118 Q88 106 100 100" stroke="#8B5A2B" strokeWidth="4" strokeLinecap="round" fill="none" {...gp(0.2)} />}
+        {show(3) && <motion.path d="M70 107 Q58 94 50 87" stroke="#8B5A2B" strokeWidth="3" strokeLinecap="round" fill="none" {...gp(0.1)} />}
+        {show(3) && <motion.path d="M70 107 Q82 94 90 87" stroke="#8B5A2B" strokeWidth="3" strokeLinecap="round" fill="none" {...gp(0.2)} />}
+        {show(4) && <motion.circle cx="40" cy="94" r="18" fill="rgba(34,197,94,0.55)" {...fi(0.1)} />}
+        {show(4) && <motion.circle cx="100" cy="94" r="18" fill="rgba(34,197,94,0.55)" {...fi(0.2)} />}
+        {show(4) && <motion.circle cx="70" cy="78" r="24" fill="rgba(34,197,94,0.65)" {...fi(0.3)} />}
+        {show(5) && <motion.circle cx="55" cy="87" r="13" fill="rgba(22,163,74,0.55)" {...fi(0.1)} />}
+        {show(5) && <motion.circle cx="85" cy="87" r="13" fill="rgba(22,163,74,0.55)" {...fi(0.2)} />}
+        {show(5) && <motion.circle cx="40" cy="101" r="5.5" fill="#EF4444" {...fi(0.3)} />}
+        {show(6) && <motion.circle cx="100" cy="98" r="5.5" fill="#EF4444" {...fi(0.1)} />}
+        {show(7) && <motion.circle cx="70" cy="66" r="5.5" fill="#F59E0B" {...fi(0.2)} />}
+        {show(8) && <motion.circle cx="70" cy="56" r="20" fill="rgba(234,179,8,0.2)" {...fi(0)} />}
+        {show(8) && (
+          <>
+            <motion.path d="M35 42 L35 52 M30 47 L40 47" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" {...fi(0.1)} />
+            <motion.path d="M105 46 L105 56 M100 51 L110 51" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" {...fi(0.2)} />
+            <motion.path d="M70 26 L70 36 M65 31 L75 31" stroke="#FCD34D" strokeWidth="1.5" strokeLinecap="round" {...fi(0.3)} />
+          </>
+        )}
+      </svg>
+      <p className="text-[10px] font-medium" style={{ color: stage > 0 ? '#22c55e99' : '#334155' }}>
+        {stage > 0 ? STAGE_LABELS[stage] : 'Completa una sesión para plantar'}
+      </p>
+    </div>
+  )
+}
+
+function HistoryModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { sessions } = usePomodoroStore()
+
+  const grouped = useMemo(() => {
+    const done = sessions.filter(s => s.completed)
+    const map = new Map<string, typeof sessions>()
+    for (const s of done) {
+      const key = new Date(s.startedAt).toDateString()
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(s)
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime())
+      .map(([dateStr, ss]) => ({
+        date: new Date(dateStr),
+        sessions: [...ss].sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()),
+        totalMinutes: ss.reduce((acc, s) => acc + s.duration, 0),
+      }))
+  }, [sessions])
+
+  return (
+    <Modal open={open} onClose={onClose} title="Historial de sesiones">
+      <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+        {grouped.length === 0 ? (
+          <div className="text-center py-10 text-slate-500 text-sm">Sin sesiones registradas aún</div>
+        ) : grouped.map(({ date, sessions: ss, totalMinutes }) => (
+          <div key={date.toDateString()}>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-slate-300 capitalize">
+                {format(date, "EEEE d 'de' MMMM", { locale: es })}
+              </p>
+              <span className="text-[10px] text-slate-600">{Math.round(totalMinutes / 60 * 10) / 10}h · {ss.length} ses.</span>
+            </div>
+            <div className="space-y-1">
+              {ss.map(s => {
+                const m = MODE_META[s.mode ?? 'focus']
+                return (
+                  <div key={s.id} className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
+                    <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: m.color }} />
+                    <span className="text-xs text-slate-400 flex-1 truncate">{s.taskTitle ?? m.label}</span>
+                    <span className="text-xs font-mono" style={{ color: m.color }}>{s.duration}min</span>
+                    <span className="text-[10px] text-slate-700">
+                      {new Date(s.startedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Modal>
+  )
+}
+
 export default function PomodoroPage() {
   const {
     config, currentMode, isRunning, isPaused, secondsLeft, sessionCount,
@@ -37,6 +144,7 @@ export default function PomodoroPage() {
   const { addXP } = useAppStore()
   const [fullscreen, setFullscreen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const [quoteIdx, setQuoteIdx] = useState(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -284,6 +392,9 @@ export default function PomodoroPage() {
                 <span className="text-xs font-bold text-amber-400">{streak} días</span>
               </div>
             )}
+            <Button variant="ghost" size="icon" onClick={() => setHistoryOpen(true)}>
+              <History size={18} />
+            </Button>
             <Button variant="ghost" size="icon" onClick={() => setSettingsOpen(true)}>
               <Settings2 size={18} />
             </Button>
@@ -336,10 +447,31 @@ export default function PomodoroPage() {
             <p className="text-2xl font-black text-white tabular-nums">
               {Math.round(getWeekMinutes() / 60 * 10) / 10}h
             </p>
-            <p className="text-[11px] text-slate-500 mt-1">Esta semana</p>
+            <p className="text-[11px] text-slate-500 mt-1">Desde el viernes</p>
             <div className="h-1 rounded-full bg-white/[0.06] mt-2 overflow-hidden">
               <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${Math.min(100, (getWeekMinutes() / 60 / 40) * 100)}%` }} />
             </div>
+          </div>
+        </motion.div>
+
+        {/* Growing tree card */}
+        <motion.div variants={fadeUp}>
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 flex flex-col items-center gap-2">
+            <p className="text-xs text-slate-600 font-medium uppercase tracking-wider self-start">Tu árbol de hoy</p>
+            <GrowingTree count={todaySessions.length} />
+            <div className="flex gap-1 mt-1">
+              {Array.from({ length: 8 }, (_, i) => (
+                <div
+                  key={i}
+                  className="h-1 rounded-full transition-all"
+                  style={{
+                    width: i < todaySessions.length ? 14 : 10,
+                    background: i < todaySessions.length ? '#22c55e' : 'rgba(255,255,255,0.07)',
+                  }}
+                />
+              ))}
+            </div>
+            <p className="text-[10px] text-slate-700">{todaySessions.length}/8 sesiones hoy</p>
           </div>
         </motion.div>
 
@@ -349,7 +481,12 @@ export default function PomodoroPage() {
             <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-white">Sesiones de hoy</h3>
-                <span className="text-xs text-slate-600">{todaySessions.length} sesiones</span>
+                <button
+                  onClick={() => setHistoryOpen(true)}
+                  className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                >
+                  Ver todo →
+                </button>
               </div>
 
               {/* Mini bar chart */}
@@ -391,6 +528,9 @@ export default function PomodoroPage() {
           </motion.div>
         )}
       </motion.div>
+
+      {/* History Modal */}
+      <HistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} />
 
       {/* Settings Modal */}
       <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Configuración Pomodoro">

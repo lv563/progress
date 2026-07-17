@@ -6,7 +6,7 @@ import { stagger, fadeUp } from '@/lib/utils/motion'
 import { format, subDays, eachDayOfInterval } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
-  Dumbbell, Droplets, Plus, Scale, Trash2, Check,
+  Dumbbell, Droplets, Plus, Scale, Trash2, Check, Flame, Utensils,
   ChevronDown, ChevronUp, TrendingUp,
 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
@@ -40,9 +40,11 @@ export default function PhysicalPage() {
   const {
     workoutSessions, measurements,
     waterToday, setWater,
+    mealsToday, setMeals,
     addWorkout, deleteWorkout,
     addMeasurement,
-    getWeekSessions, getTodayWorkout, getLatestMeasurement,
+    weeklyPlan, setDayPlan, clearDayPlan,
+    getWeekSessions, getTodayWorkout, getLatestMeasurement, getGymStreak,
   } = usePhysicalStore()
   const { addXP } = useAppStore()
 
@@ -53,12 +55,16 @@ export default function PhysicalPage() {
   const [workoutNotes, setWorkoutNotes] = useState('')
   const [newWeight, setNewWeight]       = useState('')
   const [expandedSession, setExpandedSession] = useState<string | null>(null)
+  const [routineDay, setRoutineDay] = useState<number | null>(null)
+  const [routineType, setRoutineType] = useState<string>('push')
 
   const today        = format(new Date(), 'yyyy-MM-dd')
   const todayWorkout = getTodayWorkout()
   const weekSessions = getWeekSessions()
   const latestMeas   = getLatestMeasurement()
   const waterPct     = Math.min(100, (waterToday / WATER_TARGET) * 100)
+  const gymStreak    = getGymStreak()
+  const MEALS_TARGET = 5
 
   const handleLogWorkout = () => {
     const wt = WORKOUT_TYPES.find(w => w.type === selectedType) ?? WORKOUT_TYPES[0]
@@ -110,9 +116,14 @@ export default function PhysicalPage() {
           <h1 className="text-2xl font-black text-white flex items-center gap-2">
             <Dumbbell size={24} className="text-emerald-400" /> Físico
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">
+          <p className="text-slate-500 text-sm mt-0.5 flex items-center gap-2">
             {weekSessions.length} entrenos esta semana
             {latestMeas?.weight ? ` · ${latestMeas.weight} kg` : ''}
+            {gymStreak > 0 && (
+              <span className="flex items-center gap-0.5 text-orange-400 font-semibold">
+                · <Flame size={12} className="inline" /> {gymStreak}d racha
+              </span>
+            )}
           </p>
         </div>
         <Button onClick={() => setWorkoutModal(true)} variant="glow" size="sm">
@@ -191,6 +202,39 @@ export default function PhysicalPage() {
               </div>
             </div>
 
+            {/* Meal counter */}
+            <div className="p-4 rounded-2xl border border-orange-500/15 bg-white/[0.02]">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Utensils size={16} className="text-orange-400" />
+                  <span className="text-sm font-semibold text-white">Comidas</span>
+                </div>
+                <span className="text-xs font-bold text-orange-400">{mealsToday}/{MEALS_TARGET} hoy</span>
+              </div>
+              <div className="flex gap-1.5 mb-3">
+                {Array.from({ length: MEALS_TARGET }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setMeals(i < mealsToday ? i : i + 1)}
+                    className={cn(
+                      'flex-1 h-8 rounded-lg transition-all flex items-center justify-center',
+                      i < mealsToday ? 'bg-orange-500/45 hover:bg-orange-500/35' : 'bg-white/[0.04] hover:bg-white/[0.08]'
+                    )}
+                  >
+                    <Utensils size={12} className={i < mealsToday ? 'text-orange-300' : 'text-slate-700'} />
+                  </button>
+                ))}
+              </div>
+              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-orange-500"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(mealsToday / MEALS_TARGET) * 100}%` }}
+                  transition={{ duration: 0.5 }}
+                />
+              </div>
+            </div>
+
             {/* Weight quick add */}
             <div className="p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
               <div className="flex items-center justify-between">
@@ -222,31 +266,72 @@ export default function PhysicalPage() {
         {tab === 'semana' && (
           <motion.div key="semana" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
 
+            {/* Weekly routine builder */}
+            <div className="p-4 rounded-2xl border border-violet-500/15 bg-white/[0.02]">
+              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-3">Mi Rutina Semanal</p>
+              <div className="grid grid-cols-7 gap-1">
+                {DAY_LABELS.map((label, dayIdx) => {
+                  const plan = weeklyPlan[dayIdx]
+                  const wt = plan ? WORKOUT_TYPES.find(w => w.type === plan.type) : null
+                  return (
+                    <button
+                      key={dayIdx}
+                      onClick={() => { setRoutineDay(dayIdx); setRoutineType(plan?.type ?? 'push') }}
+                      className={cn(
+                        'flex flex-col items-center gap-1 p-1.5 rounded-xl border transition-all group',
+                        plan ? 'border-transparent' : 'border-dashed border-white/[0.08] hover:border-white/[0.18]'
+                      )}
+                      style={plan && wt ? { background: `${wt.color}18`, borderColor: `${wt.color}40` } : undefined}
+                    >
+                      <span className="text-[9px] text-slate-600">{label}</span>
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+                        style={{ background: wt ? `${wt.color}22` : 'rgba(255,255,255,0.03)' }}>
+                        {wt ? wt.icon : <span className="text-slate-700 text-base leading-none">+</span>}
+                      </div>
+                      {wt && <p className="text-[8px] text-slate-500 text-center leading-tight truncate w-full">{wt.name}</p>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             {/* 7-day view */}
-            <div className="grid grid-cols-7 gap-1.5">
-              {last7.map(day => {
+            <div>
+              <p className="text-xs text-slate-600 uppercase tracking-wider font-medium mb-2">Esta semana</p>
+              <div className="grid grid-cols-7 gap-1.5">
+                {last7.map(day => {
                 const key     = format(day, 'yyyy-MM-dd')
                 const isToday = key === today
                 const session = workoutSessions.find(s => s.date === key)
                 const wt      = session ? WORKOUT_TYPES.find(w => w.type === session.type) : null
+                const planned = weeklyPlan[day.getDay()]
+                const planWt  = planned ? WORKOUT_TYPES.find(w => w.type === planned.type) : null
+                const matched = session && planned && session.type === planned.type
 
                 return (
                   <div key={key} className={cn(
-                    'flex flex-col items-center gap-1.5 p-2 rounded-xl border transition-all',
+                    'flex flex-col items-center gap-1.5 p-2 rounded-xl border transition-all relative',
                     isToday ? 'border-emerald-500/30 bg-emerald-500/[0.07]' : 'border-white/[0.05] bg-white/[0.02]'
                   )}>
+                    {matched && (
+                      <div className="absolute top-1 right-1 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+                        <Check size={7} className="text-white" />
+                      </div>
+                    )}
                     <span className="text-[10px] text-slate-600">{DAY_LABELS[day.getDay()]}</span>
                     <span className={cn('text-xs font-bold', isToday ? 'text-emerald-400' : 'text-slate-500')}>
                       {format(day, 'd')}
                     </span>
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
-                      style={{ background: wt ? `${wt.color}22` : 'rgba(255,255,255,0.03)' }}>
-                      {wt ? wt.icon : <span className="text-slate-700 text-xs">—</span>}
+                      style={{ background: wt ? `${wt.color}22` : planWt ? `${planWt.color}0F` : 'rgba(255,255,255,0.03)' }}>
+                      {wt ? wt.icon : planWt ? <span className="text-slate-700 opacity-40">{planWt.icon}</span> : <span className="text-slate-700 text-xs">—</span>}
                     </div>
                     {wt && <p className="text-[9px] text-slate-500 text-center leading-tight">{wt.name}</p>}
+                    {!wt && planWt && <p className="text-[8px] text-slate-700 text-center leading-tight">{planWt.name}</p>}
                   </div>
                 )
               })}
+              </div>
             </div>
 
             {/* Recent sessions list */}
@@ -309,6 +394,28 @@ export default function PhysicalPage() {
         {/* ══ PROGRESO ══ */}
         {tab === 'progreso' && (
           <motion.div key="progreso" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
+
+            {/* Gym streak banner */}
+            <div className={cn(
+              'p-4 rounded-2xl border flex items-center gap-4',
+              gymStreak >= 3 ? 'border-orange-500/30 bg-orange-500/[0.06]' : 'border-white/[0.06] bg-white/[0.02]'
+            )}>
+              <div className={cn(
+                'w-14 h-14 rounded-2xl flex items-center justify-center shrink-0',
+                gymStreak >= 3 ? 'bg-orange-500/20' : 'bg-white/[0.05]'
+              )}>
+                <Flame size={28} className={gymStreak >= 3 ? 'text-orange-400' : 'text-slate-600'} />
+              </div>
+              <div>
+                <p className={cn('text-3xl font-black tabular-nums', gymStreak >= 3 ? 'text-orange-400' : 'text-slate-400')}>
+                  {gymStreak} {gymStreak === 1 ? 'día' : 'días'}
+                </p>
+                <p className="text-xs text-slate-500 mt-0.5">Racha consecutiva en el gym</p>
+              </div>
+              {gymStreak >= 7 && (
+                <div className="ml-auto text-2xl">🏆</div>
+              )}
+            </div>
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-3">
@@ -410,6 +517,50 @@ export default function PhysicalPage() {
             <Button variant="glow" onClick={handleLogWorkout}>
               <Check size={14} /> Guardar +30 XP
             </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Routine day editor */}
+      <Modal
+        open={routineDay !== null}
+        onClose={() => setRoutineDay(null)}
+        title={routineDay !== null ? `Rutina — ${DAY_LABELS[routineDay]}` : 'Rutina'}
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
+            {WORKOUT_TYPES.map(wt => (
+              <button key={wt.type} onClick={() => setRoutineType(wt.type)}
+                className={cn(
+                  'flex items-center gap-3 p-3 rounded-xl border text-left transition-all',
+                  routineType === wt.type ? 'border-transparent' : 'bg-white/[0.03] border-white/[0.07] hover:border-white/[0.14]'
+                )}
+                style={routineType === wt.type ? { background: `${wt.color}20`, borderColor: `${wt.color}50` } : undefined}>
+                <span className="text-xl shrink-0">{wt.icon}</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white leading-tight">{wt.name}</p>
+                  <p className="text-[10px] text-slate-500 leading-tight truncate">{wt.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-3 justify-between">
+            {routineDay !== null && weeklyPlan[routineDay] && (
+              <Button variant="ghost" onClick={() => { clearDayPlan(routineDay!); setRoutineDay(null) }}>
+                <Trash2 size={14} /> Quitar
+              </Button>
+            )}
+            <div className="flex gap-3 ml-auto">
+              <Button variant="ghost" onClick={() => setRoutineDay(null)}>Cancelar</Button>
+              <Button variant="glow" onClick={() => {
+                if (routineDay === null) return
+                const wt = WORKOUT_TYPES.find(w => w.type === routineType) ?? WORKOUT_TYPES[0]
+                setDayPlan(routineDay, { type: routineType, name: wt.name, icon: wt.icon })
+                setRoutineDay(null)
+              }}>
+                <Check size={14} /> Guardar
+              </Button>
+            </div>
           </div>
         </div>
       </Modal>
