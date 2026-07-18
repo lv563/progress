@@ -57,6 +57,7 @@ export default function PhysicalPage() {
   const [expandedSession, setExpandedSession] = useState<string | null>(null)
   const [routineDay, setRoutineDay] = useState<number | null>(null)
   const [routineType, setRoutineType] = useState<string>('push')
+  const [logDate, setLogDate] = useState<string>('')
 
   const today        = format(new Date(), 'yyyy-MM-dd')
   const todayWorkout = getTodayWorkout()
@@ -69,7 +70,7 @@ export default function PhysicalPage() {
   const handleLogWorkout = () => {
     const wt = WORKOUT_TYPES.find(w => w.type === selectedType) ?? WORKOUT_TYPES[0]
     addWorkout({
-      date: today,
+      date: logDate || today,
       type: selectedType as WorkoutType,
       name: wt.name,
       exercises: [],
@@ -150,33 +151,58 @@ export default function PhysicalPage() {
         {tab === 'hoy' && (
           <motion.div key="hoy" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
 
-            {/* Today's workout */}
-            {todayWorkout ? (
-              <div className="p-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06]">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-2xl">
-                    {WORKOUT_TYPES.find(w => w.type === todayWorkout.type)?.icon ?? '💪'}
-                  </div>
-                  <div>
-                    <p className="font-bold text-white">{todayWorkout.name}</p>
-                    <p className="text-xs text-emerald-400">✓ Completado hoy</p>
-                    {todayWorkout.notes && <p className="text-xs text-slate-500 mt-0.5">{todayWorkout.notes}</p>}
-                  </div>
-                </div>
+            {/* 7-day workout check-in strip */}
+            <div className="p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-3">Asistencia al gym</p>
+              <div className="grid grid-cols-7 gap-1.5">
+                {last7.map(day => {
+                  const key     = format(day, 'yyyy-MM-dd')
+                  const isToday = key === today
+                  const session = workoutSessions.find(s => s.date === key)
+                  const wt      = session ? WORKOUT_TYPES.find(w => w.type === session.type) : null
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        if (session) {
+                          deleteWorkout(session.id)
+                        } else {
+                          setLogDate(key)
+                          setSelectedType('push')
+                          setWorkoutNotes('')
+                          setWorkoutModal(true)
+                        }
+                      }}
+                      className={cn(
+                        'flex flex-col items-center gap-1.5 py-2.5 rounded-xl border transition-all group',
+                        isToday && !session ? 'border-emerald-500/25 bg-emerald-500/[0.05]' : '',
+                        session ? 'border-transparent' : !isToday ? 'border-white/[0.06] hover:border-emerald-500/20' : ''
+                      )}
+                      style={session && wt ? { background: `${wt.color}18`, borderColor: `${wt.color}40` } : undefined}
+                    >
+                      <span className="text-[9px] text-slate-600 font-medium">{DAY_LABELS[day.getDay()]}</span>
+                      <span className={cn('text-[10px] font-bold', isToday ? 'text-emerald-400' : 'text-slate-500')}>
+                        {format(day, 'd')}
+                      </span>
+                      <div className={cn(
+                        'w-7 h-7 rounded-full flex items-center justify-center transition-all',
+                        session
+                          ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
+                          : 'border-2 border-white/[0.12] group-hover:border-emerald-500/40'
+                      )}>
+                        {session
+                          ? <span className="text-sm leading-none">{wt?.icon ?? '💪'}</span>
+                          : <Check size={11} className="text-white/0 group-hover:text-emerald-500/50 transition-all" />
+                        }
+                      </div>
+                      {session && wt && (
+                        <span className="text-[8px] text-slate-500 leading-tight">{wt.name}</span>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
-            ) : (
-              <button onClick={() => setWorkoutModal(true)}
-                className="w-full p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-emerald-500/20 transition-all flex items-center gap-4 group">
-                <div className="w-6 h-6 rounded-full border-2 border-white/[0.15] group-hover:border-emerald-500/50 transition-all shrink-0 flex items-center justify-center">
-                  <Check size={12} className="text-white/0 group-hover:text-emerald-500/40 transition-all" />
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-medium text-slate-400 group-hover:text-slate-200 transition-colors">¿Entrenaste hoy?</p>
-                  <p className="text-xs text-slate-700 group-hover:text-slate-500 transition-colors mt-0.5">Toca para registrar tu sesión</p>
-                </div>
-                <span className="ml-auto text-xl opacity-40 group-hover:opacity-70 transition-opacity">💪</span>
-              </button>
-            )}
+            </div>
 
             {/* Water tracker */}
             <div className="p-4 rounded-2xl border border-cyan-500/15 bg-white/[0.02]">
