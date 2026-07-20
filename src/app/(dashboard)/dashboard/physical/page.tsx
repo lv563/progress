@@ -7,7 +7,7 @@ import { format, subDays, eachDayOfInterval } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   Dumbbell, Droplets, Plus, Scale, Trash2, Check, Flame, Utensils,
-  ChevronDown, ChevronUp, TrendingUp,
+  ChevronDown, ChevronUp, TrendingUp, Settings2, Pencil,
 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { Button } from '@/components/ui/Button'
@@ -31,16 +31,15 @@ const WORKOUT_TYPES = [
   { type: 'custom',    name: 'Otro',      desc: 'Descripción libre',         icon: '✏️', color: '#8B5CF6' },
 ] as const
 
-const WATER_TARGET = 8
-const DAY_LABELS   = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const DAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 
 type Tab = 'hoy' | 'semana' | 'progreso'
 
 export default function PhysicalPage() {
   const {
     workoutSessions, measurements,
-    waterToday, setWater,
-    mealsToday, setMeals,
+    waterLogs, mealCountLogs, mealGoal, waterConfig,
+    setWater, setMeals, setMealGoal, updateWaterConfig,
     addWorkout, deleteWorkout,
     addMeasurement,
     weeklyPlan, setDayPlan, clearDayPlan,
@@ -58,14 +57,23 @@ export default function PhysicalPage() {
   const [routineDay, setRoutineDay] = useState<number | null>(null)
   const [routineType, setRoutineType] = useState<string>('push')
   const [logDate, setLogDate] = useState<string>('')
+  const [waterConfigModal, setWaterConfigModal] = useState(false)
+  const [mealGoalEdit, setMealGoalEdit] = useState(false)
+  const [wcGoal, setWcGoal]   = useState('')
+  const [wcMl, setWcMl]       = useState('')
+  const [mealGoalVal, setMealGoalVal] = useState('')
 
-  const today        = format(new Date(), 'yyyy-MM-dd')
-  const todayWorkout = getTodayWorkout()
-  const weekSessions = getWeekSessions()
-  const latestMeas   = getLatestMeasurement()
-  const waterPct     = Math.min(100, (waterToday / WATER_TARGET) * 100)
-  const gymStreak    = getGymStreak()
-  const MEALS_TARGET = 5
+  const today          = format(new Date(), 'yyyy-MM-dd')
+  const todayWorkout   = getTodayWorkout()
+  const weekSessions   = getWeekSessions()
+  const latestMeas     = getLatestMeasurement()
+  const gymStreak      = getGymStreak()
+
+  const waterToday      = waterLogs[today] ?? 0
+  const mealsToday      = mealCountLogs[today] ?? 0
+  const numContainers   = Math.max(1, Math.ceil(waterConfig.goalLiters / (waterConfig.containerMl / 1000)))
+  const litersToday     = Math.round(waterToday * waterConfig.containerMl) / 1000
+  const waterPct        = Math.min(100, waterConfig.goalLiters > 0 ? (litersToday / waterConfig.goalLiters) * 100 : 0)
 
   const handleLogWorkout = () => {
     const wt = WORKOUT_TYPES.find(w => w.type === selectedType) ?? WORKOUT_TYPES[0]
@@ -151,58 +159,33 @@ export default function PhysicalPage() {
         {tab === 'hoy' && (
           <motion.div key="hoy" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
 
-            {/* 7-day workout check-in strip */}
-            <div className="p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-3">Asistencia al gym</p>
-              <div className="grid grid-cols-7 gap-1.5">
-                {last7.map(day => {
-                  const key     = format(day, 'yyyy-MM-dd')
-                  const isToday = key === today
-                  const session = workoutSessions.find(s => s.date === key)
-                  const wt      = session ? WORKOUT_TYPES.find(w => w.type === session.type) : null
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => {
-                        if (session) {
-                          deleteWorkout(session.id)
-                        } else {
-                          setLogDate(key)
-                          setSelectedType('push')
-                          setWorkoutNotes('')
-                          setWorkoutModal(true)
-                        }
-                      }}
-                      className={cn(
-                        'flex flex-col items-center gap-1.5 py-2.5 rounded-xl border transition-all group',
-                        isToday && !session ? 'border-emerald-500/25 bg-emerald-500/[0.05]' : '',
-                        session ? 'border-transparent' : !isToday ? 'border-white/[0.06] hover:border-emerald-500/20' : ''
-                      )}
-                      style={session && wt ? { background: `${wt.color}18`, borderColor: `${wt.color}40` } : undefined}
-                    >
-                      <span className="text-[9px] text-slate-600 font-medium">{DAY_LABELS[day.getDay()]}</span>
-                      <span className={cn('text-[10px] font-bold', isToday ? 'text-emerald-400' : 'text-slate-500')}>
-                        {format(day, 'd')}
-                      </span>
-                      <div className={cn(
-                        'w-7 h-7 rounded-full flex items-center justify-center transition-all',
-                        session
-                          ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
-                          : 'border-2 border-white/[0.12] group-hover:border-emerald-500/40'
-                      )}>
-                        {session
-                          ? <span className="text-sm leading-none">{wt?.icon ?? '💪'}</span>
-                          : <Check size={11} className="text-white/0 group-hover:text-emerald-500/50 transition-all" />
-                        }
-                      </div>
-                      {session && wt && (
-                        <span className="text-[8px] text-slate-500 leading-tight">{wt.name}</span>
-                      )}
-                    </button>
-                  )
-                })}
+            {/* Today's workout */}
+            {todayWorkout ? (
+              <div className="p-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06]">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-2xl">
+                    {WORKOUT_TYPES.find(w => w.type === todayWorkout.type)?.icon ?? '💪'}
+                  </div>
+                  <div>
+                    <p className="font-bold text-white">{todayWorkout.name}</p>
+                    <p className="text-xs text-emerald-400">✓ Completado hoy</p>
+                    {todayWorkout.notes && <p className="text-xs text-slate-500 mt-0.5">{todayWorkout.notes}</p>}
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <button onClick={() => { setLogDate(today); setWorkoutModal(true) }}
+                className="w-full p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-emerald-500/20 transition-all flex items-center gap-4 group">
+                <div className="w-6 h-6 rounded-full border-2 border-white/[0.15] group-hover:border-emerald-500/50 transition-all shrink-0 flex items-center justify-center">
+                  <Check size={12} className="text-white/0 group-hover:text-emerald-500/40 transition-all" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-slate-400 group-hover:text-slate-200 transition-colors">¿Entrenaste hoy?</p>
+                  <p className="text-xs text-slate-700 group-hover:text-slate-500 transition-colors mt-0.5">Toca para registrar tu sesión</p>
+                </div>
+                <span className="ml-auto text-xl opacity-40 group-hover:opacity-70 transition-opacity">💪</span>
+              </button>
+            )}
 
             {/* Water tracker */}
             <div className="p-4 rounded-2xl border border-cyan-500/15 bg-white/[0.02]">
@@ -211,19 +194,27 @@ export default function PhysicalPage() {
                   <Droplets size={16} className="text-cyan-400" />
                   <span className="text-sm font-semibold text-white">Agua</span>
                 </div>
-                <span className="text-xs font-bold text-cyan-400">{waterToday}/{WATER_TARGET} vasos</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-cyan-400 tabular-nums">
+                    {litersToday.toFixed(1)}L / {waterConfig.goalLiters}L
+                  </span>
+                  <button onClick={() => { setWcGoal(String(waterConfig.goalLiters)); setWcMl(String(waterConfig.containerMl)); setWaterConfigModal(true) }}
+                    className="text-slate-600 hover:text-slate-300 transition-colors p-0.5">
+                    <Settings2 size={13} />
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-1.5 mb-3">
-                {Array.from({ length: WATER_TARGET }, (_, i) => (
+              <div className="flex gap-2 mb-3 flex-wrap">
+                {Array.from({ length: numContainers }, (_, i) => (
                   <button
                     key={i}
                     onClick={() => setWater(i < waterToday ? i : i + 1)}
                     className={cn(
-                      'flex-1 h-8 rounded-lg transition-all',
-                      i < waterToday ? 'bg-cyan-500/50 hover:bg-cyan-500/40' : 'bg-white/[0.04] hover:bg-white/[0.08]'
+                      'flex-1 min-w-[32px] h-12 rounded-xl transition-all flex items-center justify-center',
+                      i < waterToday ? 'bg-cyan-500/55 hover:bg-cyan-500/40' : 'bg-white/[0.05] hover:bg-white/[0.09]'
                     )}
                   >
-                    <Droplets size={12} className={cn('mx-auto', i < waterToday ? 'text-cyan-300' : 'text-slate-700')} />
+                    <Droplets size={14} className={cn(i < waterToday ? 'text-cyan-200' : 'text-slate-700')} />
                   </button>
                 ))}
               </div>
@@ -231,6 +222,7 @@ export default function PhysicalPage() {
                 <motion.div className="h-full rounded-full bg-cyan-500"
                   initial={{ width: 0 }} animate={{ width: `${waterPct}%` }} transition={{ duration: 0.5 }} />
               </div>
+              <p className="text-[10px] text-slate-700 mt-1.5">{waterConfig.containerMl}ml por pote · {numContainers} potes para la meta</p>
             </div>
 
             {/* Meal counter */}
@@ -240,19 +232,34 @@ export default function PhysicalPage() {
                   <Utensils size={16} className="text-orange-400" />
                   <span className="text-sm font-semibold text-white">Comidas</span>
                 </div>
-                <span className="text-xs font-bold text-orange-400">{mealsToday}/{MEALS_TARGET} hoy</span>
+                <div className="flex items-center gap-2">
+                  {mealGoalEdit ? (
+                    <input autoFocus type="number" min={1} max={10}
+                      value={mealGoalVal}
+                      onChange={e => setMealGoalVal(e.target.value)}
+                      onBlur={() => { const n = Number(mealGoalVal); if (n >= 1) setMealGoal(n); setMealGoalEdit(false) }}
+                      onKeyDown={e => { if (e.key === 'Enter') { const n = Number(mealGoalVal); if (n >= 1) setMealGoal(n); setMealGoalEdit(false) } }}
+                      className="w-10 bg-transparent text-xs font-bold text-orange-400 focus:outline-none text-right tabular-nums" />
+                  ) : (
+                    <span className="text-xs font-bold text-orange-400">{mealsToday}/{mealGoal} hoy</span>
+                  )}
+                  <button onClick={() => { setMealGoalVal(String(mealGoal)); setMealGoalEdit(true) }}
+                    className="text-slate-600 hover:text-slate-300 transition-colors p-0.5">
+                    <Pencil size={12} />
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-1.5 mb-3">
-                {Array.from({ length: MEALS_TARGET }, (_, i) => (
+              <div className="flex gap-2 mb-3">
+                {Array.from({ length: mealGoal }, (_, i) => (
                   <button
                     key={i}
                     onClick={() => setMeals(i < mealsToday ? i : i + 1)}
                     className={cn(
-                      'flex-1 h-8 rounded-lg transition-all flex items-center justify-center',
-                      i < mealsToday ? 'bg-orange-500/45 hover:bg-orange-500/35' : 'bg-white/[0.04] hover:bg-white/[0.08]'
+                      'flex-1 h-12 rounded-xl transition-all flex items-center justify-center',
+                      i < mealsToday ? 'bg-orange-500/50 hover:bg-orange-500/35' : 'bg-white/[0.05] hover:bg-white/[0.09]'
                     )}
                   >
-                    <Utensils size={12} className={i < mealsToday ? 'text-orange-300' : 'text-slate-700'} />
+                    <Utensils size={14} className={i < mealsToday ? 'text-orange-300' : 'text-slate-700'} />
                   </button>
                 ))}
               </div>
@@ -260,7 +267,7 @@ export default function PhysicalPage() {
                 <motion.div
                   className="h-full rounded-full bg-orange-500"
                   initial={{ width: 0 }}
-                  animate={{ width: `${(mealsToday / MEALS_TARGET) * 100}%` }}
+                  animate={{ width: `${mealGoal > 0 ? (mealsToday / mealGoal) * 100 : 0}%` }}
                   transition={{ duration: 0.5 }}
                 />
               </div>
@@ -605,6 +612,43 @@ export default function PhysicalPage() {
           <div className="flex gap-3 justify-end">
             <Button variant="ghost" onClick={() => setWeightModal(false)}>Cancelar</Button>
             <Button variant="glow" disabled={!newWeight} onClick={handleLogWeight}>
+              <Check size={14} /> Guardar
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Water config */}
+      <Modal open={waterConfigModal} onClose={() => setWaterConfigModal(false)} title="Configurar Agua">
+        <div className="space-y-4">
+          <p className="text-xs text-slate-500">El tamaño del pote se aplica igual a todos los registros.</p>
+          <Input
+            label="Meta diaria (litros)"
+            type="number" min={0.5} max={10} step={0.1} placeholder="2.5"
+            value={wcGoal}
+            onChange={e => setWcGoal(e.target.value)}
+            icon={<Droplets size={14} />}
+          />
+          <Input
+            label="Tamaño de mi pote (ml)"
+            type="number" min={50} max={2000} step={50} placeholder="500"
+            value={wcMl}
+            onChange={e => setWcMl(e.target.value)}
+            icon={<Droplets size={14} />}
+          />
+          {wcGoal && wcMl && (
+            <p className="text-xs text-cyan-400">
+              → {Math.ceil(Number(wcGoal) / (Number(wcMl) / 1000))} potes para alcanzar la meta
+            </p>
+          )}
+          <div className="flex gap-3 justify-end">
+            <Button variant="ghost" onClick={() => setWaterConfigModal(false)}>Cancelar</Button>
+            <Button variant="glow"
+              disabled={!wcGoal || !wcMl}
+              onClick={() => {
+                updateWaterConfig({ goalLiters: Number(wcGoal), containerMl: Number(wcMl) })
+                setWaterConfigModal(false)
+              }}>
               <Check size={14} /> Guardar
             </Button>
           </div>

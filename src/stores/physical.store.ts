@@ -32,6 +32,8 @@ export interface DailyTargets {
 
 export interface DayPlan { type: string; name: string; icon: string; notes?: string }
 
+export interface WaterConfig { goalLiters: number; containerMl: number }
+
 export interface FoodDBEntry {
   id: string; name: string; unit: string; per: number
   cal: number; pro: number; car: number; fat: number; fib: number
@@ -165,7 +167,10 @@ interface PhysicalStore {
   weeklyPlan: Record<number, DayPlan>
   userProfile: UserProfile
   mealLogs: MealLog[]
-  waterToday: number
+  waterLogs: Record<string, number>
+  mealCountLogs: Record<string, number>
+  mealGoal: number
+  waterConfig: WaterConfig
   challenges: Challenge[]
   challengeLogs: ChallengeEntry[]
 
@@ -174,10 +179,11 @@ interface PhysicalStore {
   updateWorkout: (id: string, u: Partial<WorkoutSession>) => void
   deleteWorkout: (id: string) => void
   addMeasurement: (m: Omit<BodyMeasurement, 'id'>) => void
-  addWater: (liters: number) => void
-  setWater: (liters: number) => void
-  mealsToday: number
+  addWater: () => void
+  setWater: (count: number) => void
   setMeals: (n: number) => void
+  setMealGoal: (n: number) => void
+  updateWaterConfig: (c: Partial<WaterConfig>) => void
   getGymStreak: () => number
   toggleCompletedDate: (date: string) => void
   setDayPlan: (day: number, plan: DayPlan) => void
@@ -214,12 +220,14 @@ export const usePhysicalStore = create<PhysicalStore>()(
       weeklyPlan: {},
       userProfile: DEFAULT_PROFILE,
       mealLogs: [],
-      waterToday: 0,
-      mealsToday: 0,
+      waterLogs: {},
+      mealCountLogs: {},
+      mealGoal: 5,
+      waterConfig: { goalLiters: 2.5, containerMl: 500 },
       challenges: [],
       challengeLogs: [],
 
-      _reset: () => set({ exercises: DEFAULT_EXERCISES, workoutSessions: [], measurements: [], completedDates: [], weeklyPlan: {}, userProfile: DEFAULT_PROFILE, mealLogs: [], waterToday: 0, mealsToday: 0, challenges: [], challengeLogs: [] }),
+      _reset: () => set({ exercises: DEFAULT_EXERCISES, workoutSessions: [], measurements: [], completedDates: [], weeklyPlan: {}, userProfile: DEFAULT_PROFILE, mealLogs: [], waterLogs: {}, mealCountLogs: {}, mealGoal: 5, waterConfig: { goalLiters: 2.5, containerMl: 500 }, challenges: [], challengeLogs: [] }),
 
       updateUserProfile: (u) => set(s => ({ userProfile: { ...s.userProfile, ...u } })),
 
@@ -231,9 +239,20 @@ export const usePhysicalStore = create<PhysicalStore>()(
         measurements: [...s.measurements, { ...m, id: genId() }].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       })),
 
-      addWater: (liters) => set(s => ({ waterToday: Math.round((s.waterToday + liters) * 100) / 100 })),
-      setWater: (liters) => set({ waterToday: liters }),
-      setMeals: (n) => set({ mealsToday: Math.max(0, Math.min(6, n)) }),
+      addWater: () => set(s => {
+        const d = format(new Date(), 'yyyy-MM-dd')
+        return { waterLogs: { ...s.waterLogs, [d]: (s.waterLogs[d] ?? 0) + 1 } }
+      }),
+      setWater: (count) => set(s => {
+        const d = format(new Date(), 'yyyy-MM-dd')
+        return { waterLogs: { ...s.waterLogs, [d]: Math.max(0, count) } }
+      }),
+      setMeals: (n) => set(s => {
+        const d = format(new Date(), 'yyyy-MM-dd')
+        return { mealCountLogs: { ...s.mealCountLogs, [d]: Math.max(0, n) } }
+      }),
+      setMealGoal: (n) => set({ mealGoal: Math.max(1, Math.min(10, n)) }),
+      updateWaterConfig: (c) => set(s => ({ waterConfig: { ...s.waterConfig, ...c } })),
 
       getGymStreak: () => {
         const sessions = get().workoutSessions
@@ -332,22 +351,20 @@ export const usePhysicalStore = create<PhysicalStore>()(
         return { calories, protein, carbs, fats, fiber: 35, water, tmb: Math.round(tmb), maintenance }
       },
 
-      getWaterTarget: () => {
-        const w = get().userProfile.weight
-        return w > 0 ? Math.round(w * 0.038 * 10) / 10 : 2.5
-      },
+      getWaterTarget: () => get().waterConfig.goalLiters,
 
       getDailyScore: () => {
         const targets = get().getDailyTargets()
         const macros = get().getTodayMacros()
-        const water = get().waterToday
-        const waterTarget = get().getWaterTarget()
         const today = format(new Date(), 'yyyy-MM-dd')
+        const wc = get().waterConfig
+        const waterLiters = (get().waterLogs[today] ?? 0) * wc.containerMl / 1000
+        const waterTarget = wc.goalLiters
         const workoutDone = get().completedDates.includes(today) ||
           get().workoutSessions.some(s => new Date(s.date).toISOString().slice(0, 10) === today && s.completed)
         const workout = workoutDone ? 30 : 0
         const protein = targets.protein > 0 ? Math.round(Math.min(1, macros.protein / targets.protein) * 30) : 0
-        const waterScore = waterTarget > 0 ? Math.round(Math.min(1, water / waterTarget) * 20) : 0
+        const waterScore = waterTarget > 0 ? Math.round(Math.min(1, waterLiters / waterTarget) * 20) : 0
         const calPct = targets.calories > 0 ? macros.calories / targets.calories : 0
         const calories = macros.calories === 0 ? 0 : (calPct >= 0.7 && calPct <= 1.15 ? 10 : Math.max(0, Math.round((1 - Math.abs(1 - calPct) * 2) * 10)))
         const fiber = targets.fiber > 0 ? Math.round(Math.min(1, macros.fiber / targets.fiber) * 10) : 0
@@ -380,7 +397,7 @@ export const usePhysicalStore = create<PhysicalStore>()(
       getTodayWorkout: () => { const today = new Date().toDateString(); return get().workoutSessions.find(w => new Date(w.date).toDateString() === today) },
       getWeekSessions: () => { const weekAgo = Date.now() - 7 * 86400000; return get().workoutSessions.filter(w => new Date(w.date).getTime() > weekAgo && w.completed) },
       getLatestMeasurement: () => get().measurements[0],
-      resetDaily: () => set({ waterToday: 0, mealsToday: 0 }),
+      resetDaily: () => {},
     }),
     { name: 'kingdom-physical', storage: userStorage }
   )

@@ -111,7 +111,8 @@ export default function DashboardPage() {
   const { habits, getTodayLogs, getStreakDates } = useHabitsStore()
   const { getTodaySessions, getWeekMinutes } = usePomodoroStore()
   const { getTodayTasks } = useTasksStore()
-  const { waterToday, getWeekSessions, getLatestMeasurement } = usePhysicalStore()
+  const { waterLogs, waterConfig, getWeekSessions, getLatestMeasurement } = usePhysicalStore()
+  const waterToday = waterLogs[new Date().toISOString().slice(0, 10)] ?? 0
   const { getPendingFollowUps } = useMinistryStore()
   const { getYesterdayLog } = useDailyLogStore()
 
@@ -288,13 +289,13 @@ export default function DashboardPage() {
               <span className="text-sm font-semibold text-white">Agua</span>
             </div>
             <div className="flex gap-1 flex-wrap">
-              {Array.from({ length: 8 }, (_, i) => (
+              {Array.from({ length: Math.max(1, Math.ceil(waterConfig.goalLiters / (waterConfig.containerMl / 1000))) }, (_, i) => (
                 <div key={i} className={cn('w-6 h-6 rounded-md text-center text-sm transition-all', i < waterToday ? 'bg-cyan-500/30 text-cyan-400' : 'bg-white/[0.04] text-slate-700')}>
                   💧
                 </div>
               ))}
             </div>
-            <p className="text-xs text-slate-500 mt-2">{waterToday}/8 vasos</p>
+            <p className="text-xs text-slate-500 mt-2">{(waterToday * waterConfig.containerMl / 1000).toFixed(1)}L / {waterConfig.goalLiters}L</p>
           </GlassCard>
           <GlassCard className="p-4" animate={false}>
             <div className="flex items-center gap-2 mb-3">

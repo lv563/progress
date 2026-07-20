@@ -24,7 +24,9 @@ export function AppShell({ children }: AppShellProps) {
   const { habits, getTodayLogs } = useHabitsStore()
   const { getTodaySessions } = usePomodoroStore()
   const { tasks } = useTasksStore()
-  const { waterToday, getTodayMacros, getWaterTarget, resetDaily } = usePhysicalStore()
+  const { waterLogs, waterConfig, getTodayMacros, getWaterTarget, resetDaily } = usePhysicalStore()
+  const waterToday = waterLogs[new Date().toISOString().slice(0, 10)] ?? 0
+  const waterLitersToday = waterToday * waterConfig.containerMl / 1000
   const { saveLog, lastResetDate, setLastResetDate } = useDailyLogStore()
   const router = useRouter()
   const [isMobile, setIsMobile] = useState(true)
@@ -55,7 +57,7 @@ export function AppShell({ children }: AppShellProps) {
       const score = Math.round(
         (habits.length > 0 ? (completedHabits / habits.length) * 30 : 0) +
         (Math.min(sessions.length, 4) / 4) * 25 +
-        (Math.min(waterToday, getWaterTarget()) / getWaterTarget()) * 20 +
+        (getWaterTarget() > 0 ? Math.min(waterLitersToday, getWaterTarget()) / getWaterTarget() : 0) * 20 +
         0 +  // meals metric removed
         (completedTasks > 0 ? 10 : 0)
       )
@@ -66,7 +68,7 @@ export function AppShell({ children }: AppShellProps) {
         pomodoroSessions: sessions.length,
         focusMinutes: sessions.reduce((a, s) => a + s.duration, 0),
         tasksCompleted: completedTasks,
-        waterGlasses: waterToday,
+        waterGlasses: waterToday,  // container count for the day
         mealsEaten: getTodayMacros().calories > 0 ? 3 : 0,
         mealsTarget: 3,
         gymDone: false,

@@ -45,7 +45,7 @@ function ScoreRing({ score, color }: { score: number; color: string }) {
 export default function SeasonPage() {
   const { activeSeason, startSeason, endSeason, logDay, getSeasonProgress, getDayLog, getStreakCount } = useSeasonStore()
   const { getTodaySessions } = usePomodoroStore()
-  const { getTodayWorkout, mealsToday } = usePhysicalStore()
+  const { getTodayWorkout, mealCountLogs } = usePhysicalStore()
   const { tasks } = useTasksStore()
 
   const [selectedMode, setSelectedMode] = useState<SeasonMode>('guerra')
@@ -62,7 +62,7 @@ export default function SeasonPage() {
   // Live data from other stores
   const todayPomodoros = getTodaySessions().length
   const todayWorkout = !!getTodayWorkout()
-  const todayMeals = mealsToday
+  const todayMeals = mealCountLogs[today] ?? 0
   const todayTasks = useMemo(
     () => tasks.filter(t => t.status === 'done' && t.completedAt?.slice(0, 10) === today).length,
     [tasks, today]
