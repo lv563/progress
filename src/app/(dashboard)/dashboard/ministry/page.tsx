@@ -92,8 +92,8 @@ const stageOf = (p: SpiritualPerson) =>
 type DrawerStep = 'detail' | 'templates' | 'preview' | 'schedule'
 
 function PersonDrawer({
-  person, onClose, ultraCfg, templates,
-}: { person: SpiritualPerson; onClose: () => void; ultraCfg: UltraConfig; templates: MessageTemplate[] }) {
+  person, onClose, ultraCfg, templates, onEditTemplates,
+}: { person: SpiritualPerson; onClose: () => void; ultraCfg: UltraConfig; templates: MessageTemplate[]; onEditTemplates: () => void }) {
   const { updatePerson, addNote, addFollowUpRecord, setDiscipleshipStage, deletePerson, getPersonFollowUps } = useMinistryStore()
   const { addXP } = useAppStore()
 
@@ -113,7 +113,7 @@ function PersonDrawer({
 
   const pendingFollowUp = person.nextFollowUp && new Date(person.nextFollowUp) <= now
 
-  const handleSendMessage = async (tpl: typeof TEMPLATES[0]) => {
+  const handleSendMessage = async (tpl: MessageTemplate) => {
     if (!person.phone) return
     const msg = personalize(tpl.body, person)
     setSending(true)
@@ -389,9 +389,17 @@ function PersonDrawer({
           {/* ── TEMPLATES ── */}
           {step === 'templates' && (
             <motion.div key="templates" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="p-4 space-y-3">
-              <div className="flex items-center gap-2 mb-1">
-                <button onClick={() => setStep('detail')} className="text-slate-500 hover:text-slate-300 transition-colors"><X size={16} /></button>
-                <p className="text-sm font-semibold text-white">Selecciona una plantilla</p>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setStep('detail')} className="text-slate-500 hover:text-slate-300 transition-colors"><X size={16} /></button>
+                  <p className="text-sm font-semibold text-white">Selecciona una plantilla</p>
+                </div>
+                <button
+                  onClick={onEditTemplates}
+                  className="flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 px-2.5 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/15 transition-all"
+                >
+                  <Pencil size={11} /> Editar / Nueva
+                </button>
               </div>
               {templates.map(tpl => (
                 <button
@@ -497,8 +505,8 @@ type BulkStep = 'recipients' | 'template' | 'preview' | 'sending' | 'done'
 interface SendResult { person: SpiritualPerson; status: 'sent' | 'failed'; error?: string }
 
 function BulkMessageModal({
-  people, ultraCfg, templates, onClose,
-}: { people: SpiritualPerson[]; ultraCfg: UltraConfig; templates: MessageTemplate[]; onClose: () => void }) {
+  people, ultraCfg, templates, onClose, onEditTemplates,
+}: { people: SpiritualPerson[]; ultraCfg: UltraConfig; templates: MessageTemplate[]; onClose: () => void; onEditTemplates: () => void }) {
   const { addFollowUpRecord, updatePerson } = useMinistryStore()
   const { addXP } = useAppStore()
 
@@ -628,7 +636,15 @@ function BulkMessageModal({
         {/* ── TEMPLATE ── */}
         {step === 'template' && (
           <motion.div key="template" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-3">
-            <p className="text-xs text-slate-500">Elige qué mensaje enviar a {recipients.length} persona{recipients.length !== 1 ? 's' : ''}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-slate-500">Elige qué mensaje enviar a {recipients.length} persona{recipients.length !== 1 ? 's' : ''}</p>
+              <button
+                onClick={onEditTemplates}
+                className="flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 px-2.5 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/15 transition-all"
+              >
+                <Pencil size={11} /> Editar / Nueva
+              </button>
+            </div>
             {templates.map(tpl => (
               <button key={tpl.id} onClick={() => setTemplate(tpl)}
                 className={cn(
@@ -1041,6 +1057,7 @@ export default function MinistryPage() {
             onClose={() => setSelectedId(null)}
             ultraCfg={ultraCfg}
             templates={templates}
+            onEditTemplates={() => setTplModal(true)}
           />
         )}
       </AnimatePresence>
@@ -1063,6 +1080,7 @@ export default function MinistryPage() {
           ultraCfg={ultraCfg}
           templates={templates}
           onClose={() => setBulkModal(false)}
+          onEditTemplates={() => { setBulkModal(false); setTplModal(true) }}
         />
       )}
 
