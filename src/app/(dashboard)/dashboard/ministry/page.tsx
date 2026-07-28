@@ -6,7 +6,7 @@ import {
   Church, Plus, Phone, MessageCircle, CheckCircle2,
   Send, Settings, Loader2, Wifi, X, ChevronRight,
   Clock, Calendar, Users, UserCheck, Bell, AlertTriangle,
-  Tv2, Trash2, RadioTower, Check, XCircle,
+  Tv2, Trash2, RadioTower, Check, XCircle, Pencil, RotateCcw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
@@ -16,7 +16,7 @@ import { useAppStore } from '@/stores/app.store'
 import { cn } from '@/lib/utils/cn'
 import { format, formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
-import type { SpiritualLevel, FollowUpType, SpiritualPerson } from '@/types'
+import type { SpiritualLevel, FollowUpType, SpiritualPerson, MessageTemplate } from '@/types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -38,29 +38,6 @@ const DISC_STAGES = [
   { icon: '📚', label: 'Bautismo',             color: '#F97316' },
   { icon: '🌱', label: 'Creciendo',            color: '#84CC16' },
   { icon: '🙌', label: 'Sirviendo',            color: '#F59E0B' },
-]
-
-const TEMPLATES = [
-  {
-    id: 'bienvenida', icon: '👋', name: 'Bienvenida',
-    body: '¡Hola {{nombre}}!\n\nDios te bendiga.\n\nNos alegra mucho que hayas tomado la decisión de seguir a Cristo.\n\nQueremos acompañarte en este nuevo comienzo y saber cómo podemos ayudarte.\n\nQue Dios continúe obrando en tu vida.',
-  },
-  {
-    id: 'como-estas', icon: '❤️', name: '¿Cómo estás?',
-    body: '¡Hola {{nombre}}!\n\nDios te bendiga.\n\nSolo quería saber cómo te encuentras.\n\n¿Hay algo por lo que podamos orar o ayudarte?\n\nEstamos para servirte.',
-  },
-  {
-    id: 'ya-respondo', icon: '🙏', name: 'Ya te respondo',
-    body: 'Hola {{nombre}}.\n\nRecibí tu mensaje.\n\nEn unos minutos te responderé con más detalle.\n\n¡Dios te bendiga!',
-  },
-  {
-    id: 'discipulado', icon: '📖', name: 'Invitación al discipulado',
-    body: 'Hola {{nombre}}.\n\nQuería recordarte nuestro discipulado.\n\nNos encantaría verte.\n\nSerá un tiempo de crecimiento y comunión.\n\n¡Te esperamos!',
-  },
-  {
-    id: 'servicio', icon: '⛪', name: 'Invitación al servicio',
-    body: 'Hola {{nombre}}.\n\nEste domingo tendremos nuestro servicio.\n\nSerá una bendición contar contigo.\n\n¡Nos vemos!',
-  },
 ]
 
 const SNOOZE_OPTIONS = [
@@ -115,13 +92,13 @@ const stageOf = (p: SpiritualPerson) =>
 type DrawerStep = 'detail' | 'templates' | 'preview' | 'schedule'
 
 function PersonDrawer({
-  person, onClose, ultraCfg,
-}: { person: SpiritualPerson; onClose: () => void; ultraCfg: UltraConfig }) {
+  person, onClose, ultraCfg, templates,
+}: { person: SpiritualPerson; onClose: () => void; ultraCfg: UltraConfig; templates: MessageTemplate[] }) {
   const { updatePerson, addNote, addFollowUpRecord, setDiscipleshipStage, deletePerson, getPersonFollowUps } = useMinistryStore()
   const { addXP } = useAppStore()
 
   const [step, setStep]             = useState<DrawerStep>('detail')
-  const [selectedTpl, setSelectedTpl] = useState<typeof TEMPLATES[0] | null>(null)
+  const [selectedTpl, setSelectedTpl] = useState<MessageTemplate | null>(null)
   const [sending, setSending]       = useState(false)
   const [noteText, setNoteText]     = useState('')
   const [showNoteBox, setShowNoteBox] = useState(false)
@@ -395,7 +372,7 @@ function PersonDrawer({
                       <div key={r.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
                         <div className={cn('w-2 h-2 rounded-full shrink-0', r.status === 'sent' ? 'bg-emerald-500' : 'bg-red-500')} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-white">{TEMPLATES.find(t => t.id === r.templateId)?.icon} {r.templateName}</p>
+                          <p className="text-xs font-medium text-white">{templates.find(t => t.id === r.templateId)?.icon} {r.templateName}</p>
                           <p className="text-[10px] text-slate-600">{r.medium} · {format(new Date(r.date), 'd MMM, HH:mm', { locale: es })}</p>
                         </div>
                         <span className={cn('text-[10px] font-medium', r.status === 'sent' ? 'text-emerald-400' : 'text-red-400')}>
@@ -416,7 +393,7 @@ function PersonDrawer({
                 <button onClick={() => setStep('detail')} className="text-slate-500 hover:text-slate-300 transition-colors"><X size={16} /></button>
                 <p className="text-sm font-semibold text-white">Selecciona una plantilla</p>
               </div>
-              {TEMPLATES.map(tpl => (
+              {templates.map(tpl => (
                 <button
                   key={tpl.id}
                   onClick={() => { setSelectedTpl(tpl); setStep('preview') }}
@@ -520,15 +497,15 @@ type BulkStep = 'recipients' | 'template' | 'preview' | 'sending' | 'done'
 interface SendResult { person: SpiritualPerson; status: 'sent' | 'failed'; error?: string }
 
 function BulkMessageModal({
-  people, ultraCfg, onClose,
-}: { people: SpiritualPerson[]; ultraCfg: UltraConfig; onClose: () => void }) {
+  people, ultraCfg, templates, onClose,
+}: { people: SpiritualPerson[]; ultraCfg: UltraConfig; templates: MessageTemplate[]; onClose: () => void }) {
   const { addFollowUpRecord, updatePerson } = useMinistryStore()
   const { addXP } = useAppStore()
 
   const withPhone = people.filter(p => p.phone)
   const [step, setStep]             = useState<BulkStep>('recipients')
   const [selected, setSelected]     = useState<Set<string>>(new Set(withPhone.map(p => p.id)))
-  const [template, setTemplate]     = useState<typeof TEMPLATES[0] | null>(null)
+  const [template, setTemplate]     = useState<MessageTemplate | null>(null)
   const [results, setResults]       = useState<SendResult[]>([])
   const [currentIdx, setCurrentIdx] = useState(0)
   const [currentName, setCurrentName] = useState('')
@@ -652,7 +629,7 @@ function BulkMessageModal({
         {step === 'template' && (
           <motion.div key="template" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-3">
             <p className="text-xs text-slate-500">Elige qué mensaje enviar a {recipients.length} persona{recipients.length !== 1 ? 's' : ''}</p>
-            {TEMPLATES.map(tpl => (
+            {templates.map(tpl => (
               <button key={tpl.id} onClick={() => setTemplate(tpl)}
                 className={cn(
                   'w-full p-3.5 rounded-2xl border text-left transition-all flex items-center gap-3',
@@ -809,6 +786,7 @@ export default function MinistryPage() {
   const {
     people, addPerson, updatePerson, getPendingFollowUps,
     getTodayFollowUpsDone, getNoContactPeople,
+    templates, updateTemplate, addTemplate, deleteTemplate, resetTemplates,
   } = useMinistryStore()
   const { addXP } = useAppStore()
 
@@ -816,6 +794,7 @@ export default function MinistryPage() {
   const [addModal, setAddModal]         = useState(false)
   const [configModal, setConfigModal]   = useState(false)
   const [bulkModal, setBulkModal]       = useState(false)
+  const [tplModal, setTplModal]         = useState(false)
   const [selectedId, setSelectedId]     = useState<string | null>(null)
   const [levelFilter, setLevelFilter]   = useState<LevelFilter>('all')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -873,6 +852,13 @@ export default function MinistryPage() {
             title={isConfigured ? 'WhatsApp configurado' : 'Configurar WhatsApp'}
           >
             {isConfigured ? <Wifi size={15} /> : <Settings size={15} />}
+          </button>
+          <button
+            onClick={() => setTplModal(true)}
+            className="w-9 h-9 rounded-xl flex items-center justify-center border border-white/[0.08] bg-white/[0.04] text-slate-500 hover:text-slate-300 transition-all"
+            title="Editar plantillas"
+          >
+            <Pencil size={15} />
           </button>
           <Button
             onClick={() => setBulkModal(true)}
@@ -1054,15 +1040,28 @@ export default function MinistryPage() {
             person={selectedPerson}
             onClose={() => setSelectedId(null)}
             ultraCfg={ultraCfg}
+            templates={templates}
           />
         )}
       </AnimatePresence>
+
+      {/* ── Edit Templates Modal ── */}
+      <Modal open={tplModal} onClose={() => setTplModal(false)} title="Editar plantillas">
+        <EditTemplatesModal
+          templates={templates}
+          onUpdate={updateTemplate}
+          onAdd={addTemplate}
+          onDelete={deleteTemplate}
+          onReset={() => { resetTemplates(); }}
+        />
+      </Modal>
 
       {/* ── Bulk Message Modal ── */}
       {bulkModal && (
         <BulkMessageModal
           people={people}
           ultraCfg={ultraCfg}
+          templates={templates}
           onClose={() => setBulkModal(false)}
         />
       )}
@@ -1108,6 +1107,125 @@ export default function MinistryPage() {
           onClose={() => setConfigModal(false)}
         />
       </Modal>
+    </div>
+  )
+}
+
+function EditTemplatesModal({
+  templates, onUpdate, onAdd, onDelete, onReset,
+}: {
+  templates: MessageTemplate[]
+  onUpdate: (id: string, u: Partial<Pick<MessageTemplate, 'name' | 'body' | 'icon'>>) => void
+  onAdd: () => void
+  onDelete: (id: string) => void
+  onReset: () => void
+}) {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [draftName, setDraftName] = useState('')
+  const [draftBody, setDraftBody] = useState('')
+  const [draftIcon, setDraftIcon] = useState('')
+  const [confirmReset, setConfirmReset] = useState(false)
+
+  const startEdit = (t: MessageTemplate) => {
+    setEditingId(t.id)
+    setDraftName(t.name)
+    setDraftBody(t.body)
+    setDraftIcon(t.icon)
+  }
+
+  const saveEdit = () => {
+    if (!editingId) return
+    onUpdate(editingId, { name: draftName.trim() || 'Sin nombre', body: draftBody, icon: draftIcon || '💬' })
+    setEditingId(null)
+  }
+
+  const cancelEdit = () => setEditingId(null)
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-slate-500">{templates.length} plantilla{templates.length !== 1 ? 's' : ''} · Usa <span className="text-slate-300 font-mono">{`{{nombre}}`}</span> para personalizar</p>
+        <button onClick={() => setConfirmReset(v => !v)}
+          className="text-[10px] text-slate-700 hover:text-amber-400 transition-colors flex items-center gap-1">
+          <RotateCcw size={10} /> Restaurar
+        </button>
+      </div>
+
+      {confirmReset && (
+        <div className="p-3 rounded-xl bg-amber-500/[0.08] border border-amber-500/20 flex items-center justify-between">
+          <p className="text-xs text-amber-400">¿Restaurar las 5 plantillas originales?</p>
+          <div className="flex gap-2">
+            <button onClick={() => setConfirmReset(false)} className="text-xs text-slate-500 hover:text-slate-300 px-2 py-1">No</button>
+            <button onClick={() => { onReset(); setConfirmReset(false); setEditingId(null) }}
+              className="text-xs text-amber-400 px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 transition-all">
+              Sí, restaurar
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="max-h-[55vh] overflow-y-auto space-y-2 pr-0.5">
+        {templates.map(t => (
+          <div key={t.id} className="rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+            {editingId === t.id ? (
+              /* ── Edit mode ── */
+              <div className="p-3.5 space-y-3">
+                <div className="flex gap-2">
+                  <div className="w-12">
+                    <label className="text-[10px] text-slate-600 block mb-1">Emoji</label>
+                    <input value={draftIcon} onChange={e => setDraftIcon(e.target.value)}
+                      className="w-full h-9 text-center text-xl rounded-lg bg-white/[0.05] border border-white/[0.08] focus:outline-none focus:border-cyan-500/50"
+                      maxLength={2} />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-[10px] text-slate-600 block mb-1">Nombre</label>
+                    <input value={draftName} onChange={e => setDraftName(e.target.value)}
+                      className="w-full h-9 px-3 rounded-lg bg-white/[0.05] border border-white/[0.08] text-sm text-white focus:outline-none focus:border-cyan-500/50" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-600 block mb-1">Mensaje</label>
+                  <textarea value={draftBody} onChange={e => setDraftBody(e.target.value)} rows={6}
+                    className="w-full px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.08] text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-cyan-500/50 resize-none leading-relaxed" />
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <button onClick={cancelEdit} className="text-xs text-slate-500 hover:text-slate-300 px-3 py-1.5 rounded-lg hover:bg-white/[0.05] transition-all">Cancelar</button>
+                  <button onClick={saveEdit}
+                    className="text-xs text-white px-3 py-1.5 rounded-lg bg-cyan-500/25 hover:bg-cyan-500/35 transition-all flex items-center gap-1">
+                    <Check size={11} /> Guardar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* ── View mode ── */
+              <div className="flex items-start gap-3 p-3.5">
+                <span className="text-xl shrink-0 mt-0.5">{t.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white">{t.name}</p>
+                  <p className="text-xs text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">{t.body.replace(/\n/g, ' ')}</p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button onClick={() => startEdit(t)}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all">
+                    <Pencil size={13} />
+                  </button>
+                  {templates.length > 1 && (
+                    <button onClick={() => onDelete(t.id)}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-red-400 hover:bg-red-500/10 transition-all">
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <button onClick={onAdd}
+        className="w-full py-2.5 rounded-xl border border-dashed border-white/[0.10] text-xs text-slate-600 hover:text-slate-400 hover:border-white/[0.18] transition-all flex items-center justify-center gap-1.5">
+        <Plus size={13} /> Nueva plantilla
+      </button>
     </div>
   )
 }

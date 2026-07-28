@@ -252,6 +252,13 @@ export interface Note {
   createdAt: string
 }
 
+export interface MessageTemplate {
+  id: string
+  icon: string
+  name: string
+  body: string
+}
+
 export interface ChurchEvent {
   id: string
   title: string

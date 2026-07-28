@@ -1,9 +1,17 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { userStorage } from '@/lib/utils/userStorage'
-import type { SpiritualPerson, ChurchEvent, Devotional, FollowUpRecord } from '@/types'
+import type { SpiritualPerson, ChurchEvent, Devotional, FollowUpRecord, MessageTemplate } from '@/types'
 
 const genId = () => Math.random().toString(36).slice(2, 9)
+
+const DEFAULT_TEMPLATES: MessageTemplate[] = [
+  { id: 'bienvenida', icon: '👋', name: 'Bienvenida', body: '¡Hola {{nombre}}!\n\nDios te bendiga.\n\nNos alegra mucho que hayas tomado la decisión de seguir a Cristo.\n\nQueremos acompañarte en este nuevo comienzo y saber cómo podemos ayudarte.\n\nQue Dios continúe obrando en tu vida.' },
+  { id: 'como-estas', icon: '❤️', name: '¿Cómo estás?', body: '¡Hola {{nombre}}!\n\nDios te bendiga.\n\nSolo quería saber cómo te encuentras.\n\n¿Hay algo por lo que podamos orar o ayudarte?\n\nEstamos para servirte.' },
+  { id: 'ya-respondo', icon: '🙏', name: 'Ya te respondo', body: 'Hola {{nombre}}.\n\nRecibí tu mensaje.\n\nEn unos minutos te responderé con más detalle.\n\n¡Dios te bendiga!' },
+  { id: 'discipulado', icon: '📖', name: 'Invitación al discipulado', body: 'Hola {{nombre}}.\n\nQuería recordarte nuestro discipulado.\n\nNos encantaría verte.\n\nSerá un tiempo de crecimiento y comunión.\n\n¡Te esperamos!' },
+  { id: 'servicio', icon: '⛪', name: 'Invitación al servicio', body: 'Hola {{nombre}}.\n\nEste domingo tendremos nuestro servicio.\n\nSerá una bendición contar contigo.\n\n¡Nos vemos!' },
+]
 
 const DEMO_PEOPLE: SpiritualPerson[] = [
   { id: 'sp1', name: 'Carlos Méndez',  phone: '+1234567890', level: 'new-believer', discipleshipProgress: 40, discipleshipStage: 2, lastContact: new Date(Date.now() - 2 * 86400000).toISOString(), nextFollowUp: new Date().toISOString(), followUpType: 'call',     notes: [], createdAt: new Date().toISOString() },
@@ -24,6 +32,7 @@ interface MinistryStore {
   events: ChurchEvent[]
   devotionals: Devotional[]
   followUpRecords: FollowUpRecord[]
+  templates: MessageTemplate[]
 
   addPerson: (person: Omit<SpiritualPerson, 'id' | 'notes' | 'createdAt'>) => string
   updatePerson: (id: string, updates: Partial<SpiritualPerson>) => void
@@ -36,6 +45,11 @@ interface MinistryStore {
   addDevotional: (dev: Omit<Devotional, 'id'>) => void
 
   addFollowUpRecord: (r: Omit<FollowUpRecord, 'id'>) => void
+
+  updateTemplate: (id: string, updates: Partial<Pick<MessageTemplate, 'name' | 'body' | 'icon'>>) => void
+  addTemplate: () => void
+  deleteTemplate: (id: string) => void
+  resetTemplates: () => void
 
   getPendingFollowUps: () => SpiritualPerson[]
   getTodayEvents: () => ChurchEvent[]
@@ -53,8 +67,9 @@ export const useMinistryStore = create<MinistryStore>()(
       events: DEMO_EVENTS,
       devotionals: [],
       followUpRecords: [],
+      templates: DEFAULT_TEMPLATES,
 
-      _reset: () => set({ people: DEMO_PEOPLE, events: DEMO_EVENTS, devotionals: [], followUpRecords: [] }),
+      _reset: () => set({ people: DEMO_PEOPLE, events: DEMO_EVENTS, devotionals: [], followUpRecords: [], templates: DEFAULT_TEMPLATES }),
 
       addPerson: (person) => {
         const id = genId()
@@ -98,6 +113,20 @@ export const useMinistryStore = create<MinistryStore>()(
       addFollowUpRecord: (r) => set(s => ({
         followUpRecords: [{ ...r, id: genId() }, ...s.followUpRecords]
       })),
+
+      updateTemplate: (id, updates) => set(s => ({
+        templates: s.templates.map(t => t.id === id ? { ...t, ...updates } : t)
+      })),
+
+      addTemplate: () => set(s => ({
+        templates: [...s.templates, { id: genId(), icon: '💬', name: 'Nueva plantilla', body: 'Hola {{nombre}}.' }]
+      })),
+
+      deleteTemplate: (id) => set(s => ({
+        templates: s.templates.filter(t => t.id !== id)
+      })),
+
+      resetTemplates: () => set({ templates: DEFAULT_TEMPLATES }),
 
       getPendingFollowUps: () => {
         const now = new Date()
