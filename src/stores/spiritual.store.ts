@@ -7,10 +7,14 @@ import { format } from 'date-fns'
 
 export interface DevotionalLog { date: string; completed: boolean; notes?: string }
 export interface PrayerLog     { date: string; count: number }
+export type FastType = 'daniel' | 'una-comida' | 'redes'
+
 export interface Fast {
   id: string
-  weekDate: string   // ISO date of the fasting day
-  dayOfWeek: number  // 0-6
+  weekDate: string        // ISO start date
+  dayOfWeek: number       // 0-6 (kept for backward compat)
+  days: number            // duration in days (default 1)
+  type: FastType          // kind of fast
   purpose: string
   completed: boolean
 }
@@ -26,7 +30,7 @@ interface SpiritualStore {
   unmarkDevotional: (date: string) => void
   setPrayerCount: (date: string, count: number) => void
   addPrayer: (date: string) => void
-  addFast: (weekDate: string, dayOfWeek: number, purpose: string) => void
+  addFast: (weekDate: string, dayOfWeek: number, purpose: string, type?: FastType, days?: number) => void
   completeFast: (id: string) => void
   deleteFast: (id: string) => void
   updateFastPurpose: (id: string, purpose: string) => void
@@ -77,8 +81,8 @@ export const useSpiritualStore = create<SpiritualStore>()(
         }
       },
 
-      addFast: (weekDate, dayOfWeek, purpose) => {
-        set(s => ({ fasts: [...s.fasts, { id: genId(), weekDate, dayOfWeek, purpose, completed: false }] }))
+      addFast: (weekDate, dayOfWeek, purpose, type = 'una-comida', days = 1) => {
+        set(s => ({ fasts: [...s.fasts, { id: genId(), weekDate, dayOfWeek, purpose, type, days, completed: false }] }))
       },
 
       completeFast: (id) => {
@@ -128,15 +132,16 @@ export const useSpiritualStore = create<SpiritualStore>()(
       },
 
       getThisWeekFast: () => {
-        const now = new Date()
-        const startOfWeek = new Date(now)
-        startOfWeek.setDate(now.getDate() - now.getDay())
-        startOfWeek.setHours(0, 0, 0, 0)
-        const endOfWeek = new Date(startOfWeek)
-        endOfWeek.setDate(startOfWeek.getDate() + 6)
+        const today = new Date(); today.setHours(0, 0, 0, 0)
+        // Return the first fast that is currently active (today within its date range)
+        // or started this week
+        const startOfWeek = new Date(today); startOfWeek.setDate(today.getDate() - today.getDay())
+        const endOfWeek   = new Date(startOfWeek); endOfWeek.setDate(startOfWeek.getDate() + 6)
         return get().fasts.find(f => {
-          const fd = new Date(f.weekDate)
-          return fd >= startOfWeek && fd <= endOfWeek
+          const start = new Date(f.weekDate); start.setHours(0, 0, 0, 0)
+          const end   = new Date(start); end.setDate(start.getDate() + (f.days ?? 1) - 1)
+          // active today, or started this week
+          return (start <= today && today <= end) || (start >= startOfWeek && start <= endOfWeek)
         })
       },
 
