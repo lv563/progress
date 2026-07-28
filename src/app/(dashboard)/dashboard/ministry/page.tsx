@@ -6,7 +6,7 @@ import {
   Church, Plus, Phone, MessageCircle, CheckCircle2,
   Send, Settings, Loader2, Wifi, X, ChevronRight,
   Clock, Calendar, Users, UserCheck, Bell, AlertTriangle,
-  Tv2, Trash2,
+  Tv2, Trash2, RadioTower, Check, XCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
@@ -513,6 +513,276 @@ function PersonDrawer({
   )
 }
 
+// ─── Bulk Message Modal ────────────────────────────────────────────────────────
+
+type BulkStep = 'recipients' | 'template' | 'preview' | 'sending' | 'done'
+
+interface SendResult { person: SpiritualPerson; status: 'sent' | 'failed'; error?: string }
+
+function BulkMessageModal({
+  people, ultraCfg, onClose,
+}: { people: SpiritualPerson[]; ultraCfg: UltraConfig; onClose: () => void }) {
+  const { addFollowUpRecord, updatePerson } = useMinistryStore()
+  const { addXP } = useAppStore()
+
+  const withPhone = people.filter(p => p.phone)
+  const [step, setStep]             = useState<BulkStep>('recipients')
+  const [selected, setSelected]     = useState<Set<string>>(new Set(withPhone.map(p => p.id)))
+  const [template, setTemplate]     = useState<typeof TEMPLATES[0] | null>(null)
+  const [results, setResults]       = useState<SendResult[]>([])
+  const [currentIdx, setCurrentIdx] = useState(0)
+  const [currentName, setCurrentName] = useState('')
+  const abortRef = useRef(false)
+
+  const recipients = withPhone.filter(p => selected.has(p.id))
+  const allSelected = selected.size === withPhone.length
+
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set())
+    else setSelected(new Set(withPhone.map(p => p.id)))
+  }
+
+  const togglePerson = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const startSend = async () => {
+    if (!template || recipients.length === 0) return
+    abortRef.current = false
+    setStep('sending')
+    setResults([])
+    const acc: SendResult[] = []
+
+    for (let i = 0; i < recipients.length; i++) {
+      if (abortRef.current) break
+      const p = recipients[i]
+      setCurrentIdx(i + 1)
+      setCurrentName(p.name.split(' ')[0])
+
+      const msg = personalize(template.body, p)
+      try {
+        await sendWA(ultraCfg, p.phone!, msg)
+        acc.push({ person: p, status: 'sent' })
+        addFollowUpRecord({
+          personId: p.id, date: new Date().toISOString(),
+          templateId: template.id, templateName: template.name,
+          medium: 'whatsapp', status: 'sent', messagePreview: msg.slice(0, 80),
+        })
+        updatePerson(p.id, { lastContact: new Date().toISOString() })
+        addXP(5, `Masivo: ${p.name}`)
+      } catch (e: unknown) {
+        acc.push({ person: p, status: 'failed', error: e instanceof Error ? e.message : 'Error' })
+        addFollowUpRecord({
+          personId: p.id, date: new Date().toISOString(),
+          templateId: template.id, templateName: template.name,
+          medium: 'whatsapp', status: 'failed',
+        })
+      }
+      setResults([...acc])
+      // 1.5s delay between sends to avoid WhatsApp rate limits
+      if (i < recipients.length - 1 && !abortRef.current) {
+        await new Promise(r => setTimeout(r, 1500))
+      }
+    }
+    setStep('done')
+  }
+
+  const sent   = results.filter(r => r.status === 'sent').length
+  const failed = results.filter(r => r.status === 'failed').length
+  const progress = recipients.length > 0 ? (currentIdx / recipients.length) * 100 : 0
+
+  return (
+    <Modal open onClose={step === 'sending' ? () => {} : onClose} title="Mensaje masivo">
+      <AnimatePresence mode="wait">
+
+        {/* ── RECIPIENTS ── */}
+        {step === 'recipients' && (
+          <motion.div key="recipients" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-slate-500">{selected.size} de {withPhone.length} seleccionados</p>
+              <button onClick={toggleAll} className="text-xs text-cyan-400 hover:text-cyan-300 font-medium transition-colors">
+                {allSelected ? 'Deseleccionar todos' : 'Seleccionar todos'}
+              </button>
+            </div>
+
+            <div className="max-h-64 overflow-y-auto space-y-1.5 pr-0.5">
+              {withPhone.length === 0 ? (
+                <p className="text-sm text-slate-600 text-center py-6">Ninguna persona tiene teléfono guardado</p>
+              ) : withPhone.map(p => (
+                <button key={p.id} onClick={() => togglePerson(p.id)}
+                  className={cn(
+                    'w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition-all',
+                    selected.has(p.id)
+                      ? 'border-cyan-500/30 bg-cyan-500/[0.07]'
+                      : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'
+                  )}>
+                  <div className={cn(
+                    'w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-all',
+                    selected.has(p.id) ? 'bg-cyan-500 border-cyan-500' : 'border-white/20 bg-white/[0.04]'
+                  )}>
+                    {selected.has(p.id) && <Check size={12} className="text-white" />}
+                  </div>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+                    style={{ background: LEVEL_COLORS[p.level] }}>
+                    {p.name[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{p.name}</p>
+                    <p className="text-[10px] text-slate-600">{p.phone}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3 justify-end pt-1 border-t border-white/[0.06]">
+              <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+              <Button variant="glow" disabled={selected.size === 0}
+                onClick={() => setStep('template')}>
+                Siguiente → Plantilla
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── TEMPLATE ── */}
+        {step === 'template' && (
+          <motion.div key="template" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-3">
+            <p className="text-xs text-slate-500">Elige qué mensaje enviar a {recipients.length} persona{recipients.length !== 1 ? 's' : ''}</p>
+            {TEMPLATES.map(tpl => (
+              <button key={tpl.id} onClick={() => setTemplate(tpl)}
+                className={cn(
+                  'w-full p-3.5 rounded-2xl border text-left transition-all flex items-center gap-3',
+                  template?.id === tpl.id
+                    ? 'border-cyan-500/40 bg-cyan-500/[0.08]'
+                    : 'border-white/[0.07] bg-white/[0.03] hover:bg-white/[0.06]'
+                )}>
+                <span className="text-2xl shrink-0">{tpl.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white">{tpl.name}</p>
+                  <p className="text-xs text-slate-500 mt-0.5 truncate">{tpl.body.split('\n')[0]}</p>
+                </div>
+                {template?.id === tpl.id && <Check size={16} className="text-cyan-400 shrink-0" />}
+              </button>
+            ))}
+            <div className="flex gap-3 justify-between pt-1 border-t border-white/[0.06]">
+              <Button variant="ghost" onClick={() => setStep('recipients')}>← Atrás</Button>
+              <Button variant="glow" disabled={!template} onClick={() => setStep('preview')}>
+                Previsualizar
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── PREVIEW ── */}
+        {step === 'preview' && template && (
+          <motion.div key="preview" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+            <div className="p-4 rounded-2xl bg-emerald-500/[0.07] border border-emerald-500/15">
+              <p className="text-[10px] text-emerald-400 font-medium mb-2 uppercase tracking-wider">Ejemplo · {recipients[0]?.name.split(' ')[0]}</p>
+              <p className="text-sm text-slate-200 whitespace-pre-line leading-relaxed">
+                {recipients[0] ? personalize(template.body, recipients[0]) : template.body}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-1.5">
+              <p className="text-xs text-slate-500 font-medium">Se enviará a {recipients.length} persona{recipients.length !== 1 ? 's' : ''}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {recipients.map(p => (
+                  <span key={p.id} className="text-[11px] px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-400">
+                    {p.name.split(' ')[0]}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="p-3 rounded-xl bg-amber-500/[0.07] border border-amber-500/20 text-xs text-amber-400 flex items-start gap-2">
+              <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+              Habrá 1.5s de pausa entre cada envío para no bloquear tu número. No cierres la ventana.
+            </div>
+            <div className="flex gap-3 justify-between pt-1 border-t border-white/[0.06]">
+              <Button variant="ghost" onClick={() => setStep('template')}>← Atrás</Button>
+              <Button variant="glow" onClick={startSend}>
+                <RadioTower size={14} /> Enviar a todos
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── SENDING ── */}
+        {step === 'sending' && (
+          <motion.div key="sending" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-5 py-2">
+            <div className="text-center">
+              <Loader2 size={32} className="animate-spin text-cyan-400 mx-auto mb-3" />
+              <p className="text-base font-bold text-white">Enviando mensajes...</p>
+              <p className="text-sm text-slate-500 mt-1">
+                {currentIdx} de {recipients.length} · <span className="text-cyan-400">{currentName}</span>
+              </p>
+            </div>
+
+            {/* Progress bar */}
+            <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+              <motion.div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-violet-500"
+                animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} />
+            </div>
+
+            {/* Live results */}
+            {results.length > 0 && (
+              <div className="max-h-40 overflow-y-auto space-y-1.5">
+                {[...results].reverse().map((r, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs py-1">
+                    {r.status === 'sent'
+                      ? <Check size={12} className="text-emerald-400 shrink-0" />
+                      : <XCircle size={12} className="text-red-400 shrink-0" />}
+                    <span className={r.status === 'sent' ? 'text-slate-300' : 'text-red-300'}>{r.person.name.split(' ')[0]}</span>
+                    {r.error && <span className="text-slate-600 truncate">{r.error}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button onClick={() => { abortRef.current = true }}
+              className="w-full text-xs text-slate-600 hover:text-red-400 transition-colors py-1">
+              Detener envío
+            </button>
+          </motion.div>
+        )}
+
+        {/* ── DONE ── */}
+        {step === 'done' && (
+          <motion.div key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4 py-2">
+            <div className="text-center">
+              <CheckCircle2 size={36} className="text-emerald-400 mx-auto mb-2" />
+              <p className="text-base font-bold text-white">Envío completado</p>
+              <div className="flex items-center justify-center gap-4 mt-3">
+                <span className="text-sm font-bold text-emerald-400">{sent} enviados</span>
+                {failed > 0 && <span className="text-sm font-bold text-red-400">{failed} fallaron</span>}
+              </div>
+            </div>
+
+            <div className="max-h-52 overflow-y-auto space-y-1.5">
+              {results.map((r, i) => (
+                <div key={i} className={cn(
+                  'flex items-center gap-2.5 p-2.5 rounded-xl border text-sm',
+                  r.status === 'sent' ? 'border-emerald-500/15 bg-emerald-500/[0.05]' : 'border-red-500/15 bg-red-500/[0.05]'
+                )}>
+                  {r.status === 'sent'
+                    ? <Check size={14} className="text-emerald-400 shrink-0" />
+                    : <XCircle size={14} className="text-red-400 shrink-0" />}
+                  <span className="text-white">{r.person.name}</span>
+                  {r.error && <span className="text-xs text-red-400 ml-auto shrink-0 truncate max-w-24">{r.error}</span>}
+                </div>
+              ))}
+            </div>
+
+            <Button variant="glow" className="w-full" onClick={onClose}>Cerrar</Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Modal>
+  )
+}
+
 // ─── Stat Tile ─────────────────────────────────────────────────────────────────
 
 function StatTile({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
@@ -545,6 +815,7 @@ export default function MinistryPage() {
   const [ministry, setMinistry]         = useState<Ministry>('seguimiento')
   const [addModal, setAddModal]         = useState(false)
   const [configModal, setConfigModal]   = useState(false)
+  const [bulkModal, setBulkModal]       = useState(false)
   const [selectedId, setSelectedId]     = useState<string | null>(null)
   const [levelFilter, setLevelFilter]   = useState<LevelFilter>('all')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -603,6 +874,15 @@ export default function MinistryPage() {
           >
             {isConfigured ? <Wifi size={15} /> : <Settings size={15} />}
           </button>
+          <Button
+            onClick={() => setBulkModal(true)}
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-1.5 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/10"
+            title="Mensaje masivo"
+          >
+            <RadioTower size={14} /> Masivo
+          </Button>
           <Button onClick={() => setAddModal(true)} variant="glow" size="sm">
             <Plus size={14} /> Agregar
           </Button>
@@ -777,6 +1057,15 @@ export default function MinistryPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* ── Bulk Message Modal ── */}
+      {bulkModal && (
+        <BulkMessageModal
+          people={people}
+          ultraCfg={ultraCfg}
+          onClose={() => setBulkModal(false)}
+        />
+      )}
 
       {/* ── Add Person Modal ── */}
       <Modal open={addModal} onClose={() => setAddModal(false)} title="Agregar Persona">
