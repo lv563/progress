@@ -193,7 +193,22 @@ export default function NotesPage() {
   const exec = useCallback((cmd: string, value?: string) => {
     const editor = editorRef.current
     if (!editor) return
+
+    // Save the current selection — editor.focus() resets it in some browsers
+    const sel = window.getSelection()
+    let savedRange: Range | null = null
+    if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
+      savedRange = sel.getRangeAt(0).cloneRange()
+    }
+
     editor.focus()
+
+    // Restore selection so execCommand has the right range
+    if (savedRange && sel) {
+      sel.removeAllRanges()
+      sel.addRange(savedRange)
+    }
+
     document.execCommand(cmd, false, value ?? undefined)
     saveRef.current(editor.innerHTML)
     updateFormatState()

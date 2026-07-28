@@ -226,11 +226,24 @@ export interface SpiritualPerson {
   avatar?: string
   level: SpiritualLevel
   discipleshipProgress: number
+  discipleshipStage?: number   // 0-7 explicit stage; overrides computed from progress
+  conversionDate?: string      // ISO date
   lastContact?: string
   nextFollowUp?: string
   followUpType: FollowUpType
   notes: Note[]
   createdAt: string
+}
+
+export interface FollowUpRecord {
+  id: string
+  personId: string
+  date: string
+  templateId: string
+  templateName: string
+  medium: 'whatsapp' | 'call' | 'visit' | 'pray'
+  status: 'sent' | 'pending' | 'failed'
+  messagePreview?: string
 }
 
 export interface Note {

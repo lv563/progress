@@ -1,17 +1,19 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { userStorage } from '@/lib/utils/userStorage'
-import type { SpiritualPerson, ChurchEvent, Devotional } from '@/types'
+import type { SpiritualPerson, ChurchEvent, Devotional, FollowUpRecord } from '@/types'
+
+const genId = () => Math.random().toString(36).slice(2, 9)
 
 const DEMO_PEOPLE: SpiritualPerson[] = [
-  { id: 'sp1', name: 'Carlos Méndez',  phone: '+1234567890', level: 'new-believer', discipleshipProgress: 40, lastContact: new Date(Date.now() - 2 * 86400000).toISOString(), nextFollowUp: new Date().toISOString(), followUpType: 'call',     notes: [], createdAt: new Date().toISOString() },
-  { id: 'sp2', name: 'Ana Patricia',   phone: '+0987654321', level: 'growing',      discipleshipProgress: 75, lastContact: new Date(Date.now() - 5 * 86400000).toISOString(), nextFollowUp: new Date(Date.now() + 2 * 86400000).toISOString(), followUpType: 'visit', notes: [], createdAt: new Date().toISOString() },
-  { id: 'sp3', name: 'Juan Reyes',     phone: '+1122334455', level: 'growing',      discipleshipProgress: 55, lastContact: new Date(Date.now() - 1 * 86400000).toISOString(), nextFollowUp: new Date(Date.now() + 4 * 86400000).toISOString(), followUpType: 'whatsapp', notes: [], createdAt: new Date().toISOString() },
-  { id: 'sp4', name: 'María López',    level: 'mature',      discipleshipProgress: 90, lastContact: new Date().toISOString(), followUpType: 'pray', notes: [], createdAt: new Date().toISOString() },
+  { id: 'sp1', name: 'Carlos Méndez',  phone: '+1234567890', level: 'new-believer', discipleshipProgress: 40, discipleshipStage: 2, lastContact: new Date(Date.now() - 2 * 86400000).toISOString(), nextFollowUp: new Date().toISOString(), followUpType: 'call',     notes: [], createdAt: new Date().toISOString() },
+  { id: 'sp2', name: 'Ana Patricia',   phone: '+0987654321', level: 'growing',      discipleshipProgress: 75, discipleshipStage: 5, lastContact: new Date(Date.now() - 5 * 86400000).toISOString(), nextFollowUp: new Date(Date.now() + 2 * 86400000).toISOString(), followUpType: 'visit', notes: [], createdAt: new Date().toISOString() },
+  { id: 'sp3', name: 'Juan Reyes',     phone: '+1122334455', level: 'growing',      discipleshipProgress: 55, discipleshipStage: 3, lastContact: new Date(Date.now() - 1 * 86400000).toISOString(), nextFollowUp: new Date(Date.now() + 4 * 86400000).toISOString(), followUpType: 'whatsapp', notes: [], createdAt: new Date().toISOString() },
+  { id: 'sp4', name: 'María López',    level: 'mature',      discipleshipProgress: 90, discipleshipStage: 6, lastContact: new Date().toISOString(), followUpType: 'pray', notes: [], createdAt: new Date().toISOString() },
 ]
 
 const DEMO_EVENTS: ChurchEvent[] = [
-  { id: 'ev1', title: 'Culto General',      date: new Date(Date.now() + 86400000).toISOString(),    time: '10:00', type: 'service', location: 'Templo Central' },
+  { id: 'ev1', title: 'Culto General',      date: new Date(Date.now() + 86400000).toISOString(),     time: '10:00', type: 'service', location: 'Templo Central' },
   { id: 'ev2', title: 'Grupo de Jóvenes',   date: new Date(Date.now() + 3 * 86400000).toISOString(), time: '19:00', type: 'group',   location: 'Sala B' },
   { id: 'ev3', title: 'Retiro de Oración',  date: new Date(Date.now() + 4 * 86400000).toISOString(), time: '08:00', type: 'retreat' },
   { id: 'ev4', title: 'Bautismos',          date: new Date(Date.now() + 6 * 86400000).toISOString(), time: '11:00', type: 'service' },
@@ -21,16 +23,26 @@ interface MinistryStore {
   people: SpiritualPerson[]
   events: ChurchEvent[]
   devotionals: Devotional[]
+  followUpRecords: FollowUpRecord[]
 
-  addPerson: (person: Omit<SpiritualPerson, 'id' | 'notes' | 'createdAt'>) => void
+  addPerson: (person: Omit<SpiritualPerson, 'id' | 'notes' | 'createdAt'>) => string
   updatePerson: (id: string, updates: Partial<SpiritualPerson>) => void
   deletePerson: (id: string) => void
   addNote: (personId: string, content: string) => void
+  setDiscipleshipStage: (personId: string, stage: number) => void
+
   addEvent: (event: Omit<ChurchEvent, 'id'>) => void
   deleteEvent: (id: string) => void
   addDevotional: (dev: Omit<Devotional, 'id'>) => void
+
+  addFollowUpRecord: (r: Omit<FollowUpRecord, 'id'>) => void
+
   getPendingFollowUps: () => SpiritualPerson[]
   getTodayEvents: () => ChurchEvent[]
+  getPersonFollowUps: (personId: string) => FollowUpRecord[]
+  getTodayFollowUpsDone: () => FollowUpRecord[]
+  getNoContactPeople: (days: number) => SpiritualPerson[]
+
   _reset: () => void
 }
 
@@ -40,11 +52,15 @@ export const useMinistryStore = create<MinistryStore>()(
       people: DEMO_PEOPLE,
       events: DEMO_EVENTS,
       devotionals: [],
-      _reset: () => set({ people: DEMO_PEOPLE, events: DEMO_EVENTS, devotionals: [] }),
+      followUpRecords: [],
 
-      addPerson: (person) => set(s => ({
-        people: [...s.people, { ...person, id: Math.random().toString(36).slice(2), notes: [], createdAt: new Date().toISOString() }]
-      })),
+      _reset: () => set({ people: DEMO_PEOPLE, events: DEMO_EVENTS, devotionals: [], followUpRecords: [] }),
+
+      addPerson: (person) => {
+        const id = genId()
+        set(s => ({ people: [...s.people, { ...person, id, notes: [], createdAt: new Date().toISOString() }] }))
+        return id
+      },
 
       updatePerson: (id, updates) => set(s => ({
         people: s.people.map(p => p.id === id ? { ...p, ...updates } : p)
@@ -54,19 +70,33 @@ export const useMinistryStore = create<MinistryStore>()(
 
       addNote: (personId, content) => set(s => ({
         people: s.people.map(p => p.id === personId
-          ? { ...p, notes: [...p.notes, { id: Math.random().toString(36).slice(2), content, createdAt: new Date().toISOString() }] }
+          ? { ...p, notes: [...p.notes, { id: genId(), content, createdAt: new Date().toISOString() }] }
           : p
         )
       })),
 
+      setDiscipleshipStage: (personId, stage) => {
+        const clampedStage = Math.max(0, Math.min(7, stage))
+        set(s => ({
+          people: s.people.map(p => p.id === personId
+            ? { ...p, discipleshipStage: clampedStage, discipleshipProgress: Math.round((clampedStage / 7) * 100) }
+            : p
+          )
+        }))
+      },
+
       addEvent: (event) => set(s => ({
-        events: [...s.events, { ...event, id: Math.random().toString(36).slice(2) }]
+        events: [...s.events, { ...event, id: genId() }]
       })),
 
       deleteEvent: (id) => set(s => ({ events: s.events.filter(e => e.id !== id) })),
 
       addDevotional: (dev) => set(s => ({
-        devotionals: [...s.devotionals, { ...dev, id: Math.random().toString(36).slice(2) }]
+        devotionals: [...s.devotionals, { ...dev, id: genId() }]
+      })),
+
+      addFollowUpRecord: (r) => set(s => ({
+        followUpRecords: [{ ...r, id: genId() }, ...s.followUpRecords]
       })),
 
       getPendingFollowUps: () => {
@@ -77,6 +107,21 @@ export const useMinistryStore = create<MinistryStore>()(
       getTodayEvents: () => {
         const today = new Date().toDateString()
         return get().events.filter(e => new Date(e.date).toDateString() === today)
+      },
+
+      getPersonFollowUps: (personId) =>
+        get().followUpRecords.filter(r => r.personId === personId),
+
+      getTodayFollowUpsDone: () => {
+        const today = new Date().toDateString()
+        return get().followUpRecords.filter(r => new Date(r.date).toDateString() === today)
+      },
+
+      getNoContactPeople: (days) => {
+        const cutoff = Date.now() - days * 86400000
+        return get().people.filter(p =>
+          !p.lastContact || new Date(p.lastContact).getTime() < cutoff
+        )
       },
     }),
     { name: 'kingdom-ministry', storage: userStorage }
