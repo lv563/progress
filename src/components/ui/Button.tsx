@@ -12,12 +12,12 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
-  primary:   'bg-violet-600 hover:bg-violet-500 text-white shadow-[0_4px_20px_rgba(124,58,237,0.4)]',
-  secondary: 'bg-white/[0.08] hover:bg-white/[0.12] text-slate-200 border border-white/10',
-  ghost:     'hover:bg-white/[0.06] text-slate-300 hover:text-white',
-  danger:    'bg-red-500/80 hover:bg-red-500 text-white',
-  glow:      'gradient-hero text-white shadow-[0_4px_20px_rgba(124,58,237,0.5)] hover:shadow-[0_4px_32px_rgba(124,58,237,0.7)]',
-  outline:   'border border-white/20 hover:bg-white/[0.06] text-slate-300',
+  primary:   'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-200',
+  secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200',
+  ghost:     'hover:bg-gray-100 text-gray-600 hover:text-gray-900',
+  danger:    'bg-red-500 hover:bg-red-600 text-white shadow-sm',
+  glow:      'gradient-hero text-white shadow-sm hover:opacity-90',
+  outline:   'border border-gray-200 hover:bg-gray-50 text-gray-700 hover:border-gray-300',
 }
 
 const sizes = {
@@ -30,11 +30,11 @@ const sizes = {
 export function Button({ variant = 'primary', size = 'md', loading, children, className, disabled, ...props }: ButtonProps) {
   return (
     <motion.button
-      whileHover={{ scale: disabled || loading ? 1 : 1.02 }}
-      whileTap={{ scale: disabled || loading ? 1 : 0.97 }}
+      whileHover={{ scale: disabled || loading ? 1 : 1.01 }}
+      whileTap={{ scale: disabled || loading ? 1 : 0.98 }}
       transition={{ type: 'spring', stiffness: 400, damping: 20 }}
       className={cn(
-        'inline-flex items-center justify-center gap-2 font-medium transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center gap-2 font-medium transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed',
         variants[variant],
         sizes[size],
         className

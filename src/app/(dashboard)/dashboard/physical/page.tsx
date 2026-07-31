@@ -102,18 +102,16 @@ export default function PhysicalPage() {
     setNewWeight('')
   }
 
-  // Last 30 days for weight chart
   const weightChartData = measurements
     .filter(m => m.weight)
     .slice(0, 30)
     .reverse()
     .map(m => ({ date: format(new Date(m.date), 'd/MM'), weight: m.weight }))
 
-  // Last 7 days for week view
   const last7 = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() })
 
   const tooltipStyle = {
-    contentStyle: { background: '#1A1A27', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', fontSize: '12px', color: '#F8FAFC' },
+    contentStyle: { background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '10px', fontSize: '12px', color: '#111827' },
   }
 
   return (
@@ -122,14 +120,14 @@ export default function PhysicalPage() {
       {/* Header */}
       <motion.div variants={fadeUp} className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-white flex items-center gap-2">
-            <Dumbbell size={24} className="text-emerald-400" /> Físico
+          <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+            <Dumbbell size={24} className="text-emerald-600" /> Físico
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5 flex items-center gap-2">
+          <p className="text-gray-500 text-sm mt-0.5 flex items-center gap-2">
             {weekSessions.length} entrenos esta semana
             {latestMeas?.weight ? ` · ${latestMeas.weight} kg` : ''}
             {gymStreak > 0 && (
-              <span className="flex items-center gap-0.5 text-orange-400 font-semibold">
+              <span className="flex items-center gap-0.5 text-orange-500 font-semibold">
                 · <Flame size={12} className="inline" /> {gymStreak}d racha
               </span>
             )}
@@ -141,12 +139,12 @@ export default function PhysicalPage() {
       </motion.div>
 
       {/* Tabs */}
-      <motion.div variants={fadeUp} className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06] w-fit">
+      <motion.div variants={fadeUp} className="flex gap-1 p-1 rounded-xl bg-gray-100 border border-gray-200 w-fit">
         {([['hoy', 'Hoy'], ['semana', 'Semana'], ['progreso', 'Progreso']] as [Tab, string][]).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)}
             className={cn(
               'px-4 py-2 rounded-lg text-sm font-medium transition-all',
-              tab === id ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-slate-200'
+              tab === id ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             )}>
             {label}
           </button>
@@ -161,45 +159,45 @@ export default function PhysicalPage() {
 
             {/* Today's workout */}
             {todayWorkout ? (
-              <div className="p-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06]">
+              <div className="p-5 rounded-2xl border border-emerald-200 bg-emerald-50">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-2xl">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-2xl">
                     {WORKOUT_TYPES.find(w => w.type === todayWorkout.type)?.icon ?? '💪'}
                   </div>
                   <div>
-                    <p className="font-bold text-white">{todayWorkout.name}</p>
-                    <p className="text-xs text-emerald-400">✓ Completado hoy</p>
-                    {todayWorkout.notes && <p className="text-xs text-slate-500 mt-0.5">{todayWorkout.notes}</p>}
+                    <p className="font-bold text-gray-900">{todayWorkout.name}</p>
+                    <p className="text-xs text-emerald-600">✓ Completado hoy</p>
+                    {todayWorkout.notes && <p className="text-xs text-gray-400 mt-0.5">{todayWorkout.notes}</p>}
                   </div>
                 </div>
               </div>
             ) : (
               <button onClick={() => { setLogDate(today); setWorkoutModal(true) }}
-                className="w-full p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-emerald-500/20 transition-all flex items-center gap-4 group">
-                <div className="w-6 h-6 rounded-full border-2 border-white/[0.15] group-hover:border-emerald-500/50 transition-all shrink-0 flex items-center justify-center">
-                  <Check size={12} className="text-white/0 group-hover:text-emerald-500/40 transition-all" />
+                className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50 hover:bg-emerald-50 hover:border-emerald-200 transition-all flex items-center gap-4 group">
+                <div className="w-6 h-6 rounded-full border-2 border-gray-200 group-hover:border-emerald-400 transition-all shrink-0 flex items-center justify-center">
+                  <Check size={12} className="text-transparent group-hover:text-emerald-400 transition-all" />
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-medium text-slate-400 group-hover:text-slate-200 transition-colors">¿Entrenaste hoy?</p>
-                  <p className="text-xs text-slate-700 group-hover:text-slate-500 transition-colors mt-0.5">Toca para registrar tu sesión</p>
+                  <p className="text-sm font-medium text-gray-500 group-hover:text-gray-700 transition-colors">¿Entrenaste hoy?</p>
+                  <p className="text-xs text-gray-400 group-hover:text-gray-500 transition-colors mt-0.5">Toca para registrar tu sesión</p>
                 </div>
                 <span className="ml-auto text-xl opacity-40 group-hover:opacity-70 transition-opacity">💪</span>
               </button>
             )}
 
             {/* Water tracker */}
-            <div className="p-4 rounded-2xl border border-cyan-500/15 bg-white/[0.02]">
+            <div className="p-4 rounded-2xl border border-cyan-200 bg-cyan-50">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Droplets size={16} className="text-cyan-400" />
-                  <span className="text-sm font-semibold text-white">Agua</span>
+                  <Droplets size={16} className="text-cyan-600" />
+                  <span className="text-sm font-semibold text-gray-900">Agua</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-cyan-400 tabular-nums">
+                  <span className="text-xs font-bold text-cyan-700 tabular-nums">
                     {litersToday.toFixed(1)}L / {waterConfig.goalLiters}L
                   </span>
                   <button onClick={() => { setWcGoal(String(waterConfig.goalLiters)); setWcMl(String(waterConfig.containerMl)); setWaterConfigModal(true) }}
-                    className="text-slate-600 hover:text-slate-300 transition-colors p-0.5">
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-0.5">
                     <Settings2 size={13} />
                   </button>
                 </div>
@@ -211,26 +209,26 @@ export default function PhysicalPage() {
                     onClick={() => setWater(i < waterToday ? i : i + 1)}
                     className={cn(
                       'flex-1 min-w-[32px] h-12 rounded-xl transition-all flex items-center justify-center',
-                      i < waterToday ? 'bg-cyan-500/55 hover:bg-cyan-500/40' : 'bg-white/[0.05] hover:bg-white/[0.09]'
+                      i < waterToday ? 'bg-cyan-300 hover:bg-cyan-200' : 'bg-white hover:bg-cyan-50 border border-gray-100'
                     )}
                   >
-                    <Droplets size={14} className={cn(i < waterToday ? 'text-cyan-200' : 'text-slate-700')} />
+                    <Droplets size={14} className={cn(i < waterToday ? 'text-cyan-700' : 'text-gray-300')} />
                   </button>
                 ))}
               </div>
-              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+              <div className="h-1.5 rounded-full bg-cyan-100 overflow-hidden">
                 <motion.div className="h-full rounded-full bg-cyan-500"
                   initial={{ width: 0 }} animate={{ width: `${waterPct}%` }} transition={{ duration: 0.5 }} />
               </div>
-              <p className="text-[10px] text-slate-700 mt-1.5">{waterConfig.containerMl}ml por pote · {numContainers} potes para la meta</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">{waterConfig.containerMl}ml por pote · {numContainers} potes para la meta</p>
             </div>
 
             {/* Meal counter */}
-            <div className="p-4 rounded-2xl border border-orange-500/15 bg-white/[0.02]">
+            <div className="p-4 rounded-2xl border border-orange-200 bg-orange-50">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Utensils size={16} className="text-orange-400" />
-                  <span className="text-sm font-semibold text-white">Comidas</span>
+                  <Utensils size={16} className="text-orange-500" />
+                  <span className="text-sm font-semibold text-gray-900">Comidas</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {mealGoalEdit ? (
@@ -239,12 +237,12 @@ export default function PhysicalPage() {
                       onChange={e => setMealGoalVal(e.target.value)}
                       onBlur={() => { const n = Number(mealGoalVal); if (n >= 1) setMealGoal(n); setMealGoalEdit(false) }}
                       onKeyDown={e => { if (e.key === 'Enter') { const n = Number(mealGoalVal); if (n >= 1) setMealGoal(n); setMealGoalEdit(false) } }}
-                      className="w-10 bg-transparent text-xs font-bold text-orange-400 focus:outline-none text-right tabular-nums" />
+                      className="w-10 bg-transparent text-xs font-bold text-orange-600 focus:outline-none text-right tabular-nums" />
                   ) : (
-                    <span className="text-xs font-bold text-orange-400">{mealsToday}/{mealGoal} hoy</span>
+                    <span className="text-xs font-bold text-orange-600">{mealsToday}/{mealGoal} hoy</span>
                   )}
                   <button onClick={() => { setMealGoalVal(String(mealGoal)); setMealGoalEdit(true) }}
-                    className="text-slate-600 hover:text-slate-300 transition-colors p-0.5">
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-0.5">
                     <Pencil size={12} />
                   </button>
                 </div>
@@ -256,14 +254,14 @@ export default function PhysicalPage() {
                     onClick={() => setMeals(i < mealsToday ? i : i + 1)}
                     className={cn(
                       'flex-1 h-12 rounded-xl transition-all flex items-center justify-center',
-                      i < mealsToday ? 'bg-orange-500/50 hover:bg-orange-500/35' : 'bg-white/[0.05] hover:bg-white/[0.09]'
+                      i < mealsToday ? 'bg-orange-300 hover:bg-orange-200' : 'bg-white hover:bg-orange-50 border border-gray-100'
                     )}
                   >
-                    <Utensils size={14} className={i < mealsToday ? 'text-orange-300' : 'text-slate-700'} />
+                    <Utensils size={14} className={i < mealsToday ? 'text-orange-700' : 'text-gray-300'} />
                   </button>
                 ))}
               </div>
-              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+              <div className="h-1.5 rounded-full bg-orange-100 overflow-hidden">
                 <motion.div
                   className="h-full rounded-full bg-orange-500"
                   initial={{ width: 0 }}
@@ -274,27 +272,27 @@ export default function PhysicalPage() {
             </div>
 
             {/* Weight quick add */}
-            <div className="p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+            <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Scale size={16} className="text-amber-400" />
-                  <span className="text-sm font-semibold text-white">Peso corporal</span>
+                  <Scale size={16} className="text-amber-500" />
+                  <span className="text-sm font-semibold text-gray-900">Peso corporal</span>
                 </div>
                 <button onClick={() => setWeightModal(true)}
-                  className="flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 transition-all">
+                  className="flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-800 px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 transition-all">
                   <Plus size={11} /> Registrar
                 </button>
               </div>
               {latestMeas?.weight ? (
                 <div className="mt-3 flex items-end gap-2">
-                  <p className="text-3xl font-black text-amber-400 tabular-nums">{latestMeas.weight}</p>
-                  <p className="text-sm text-slate-500 mb-1">kg</p>
-                  <p className="text-xs text-slate-600 mb-1 ml-1">
+                  <p className="text-3xl font-black text-amber-600 tabular-nums">{latestMeas.weight}</p>
+                  <p className="text-sm text-gray-500 mb-1">kg</p>
+                  <p className="text-xs text-gray-400 mb-1 ml-1">
                     {format(new Date(latestMeas.date), "d 'de' MMM", { locale: es })}
                   </p>
                 </div>
               ) : (
-                <p className="text-xs text-slate-600 mt-2">Sin registros aún</p>
+                <p className="text-xs text-gray-400 mt-2">Sin registros aún</p>
               )}
             </div>
           </motion.div>
@@ -305,8 +303,8 @@ export default function PhysicalPage() {
           <motion.div key="semana" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
 
             {/* Weekly routine builder */}
-            <div className="p-4 rounded-2xl border border-violet-500/15 bg-white/[0.02]">
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-3">Mi Rutina Semanal</p>
+            <div className="p-4 rounded-2xl border border-violet-100 bg-violet-50">
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-3">Mi Rutina Semanal</p>
               <div className="grid grid-cols-7 gap-1">
                 {DAY_LABELS.map((label, dayIdx) => {
                   const plan = weeklyPlan[dayIdx]
@@ -317,16 +315,16 @@ export default function PhysicalPage() {
                       onClick={() => { setRoutineDay(dayIdx); setRoutineType(plan?.type ?? 'push') }}
                       className={cn(
                         'flex flex-col items-center gap-1 p-1.5 rounded-xl border transition-all group',
-                        plan ? 'border-transparent' : 'border-dashed border-white/[0.08] hover:border-white/[0.18]'
+                        plan ? 'border-transparent' : 'border-dashed border-gray-200 hover:border-gray-300'
                       )}
                       style={plan && wt ? { background: `${wt.color}18`, borderColor: `${wt.color}40` } : undefined}
                     >
-                      <span className="text-[9px] text-slate-600">{label}</span>
+                      <span className="text-[9px] text-gray-400">{label}</span>
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
-                        style={{ background: wt ? `${wt.color}22` : 'rgba(255,255,255,0.03)' }}>
-                        {wt ? wt.icon : <span className="text-slate-700 text-base leading-none">+</span>}
+                        style={{ background: wt ? `${wt.color}22` : 'rgba(0,0,0,0.04)' }}>
+                        {wt ? wt.icon : <span className="text-gray-300 text-base leading-none">+</span>}
                       </div>
-                      {wt && <p className="text-[8px] text-slate-500 text-center leading-tight truncate w-full">{wt.name}</p>}
+                      {wt && <p className="text-[8px] text-gray-500 text-center leading-tight truncate w-full">{wt.name}</p>}
                     </button>
                   )
                 })}
@@ -335,7 +333,7 @@ export default function PhysicalPage() {
 
             {/* 7-day view */}
             <div>
-              <p className="text-xs text-slate-600 uppercase tracking-wider font-medium mb-2">Esta semana</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-2">Esta semana</p>
               <div className="grid grid-cols-7 gap-1.5">
                 {last7.map(day => {
                 const key     = format(day, 'yyyy-MM-dd')
@@ -349,23 +347,23 @@ export default function PhysicalPage() {
                 return (
                   <div key={key} className={cn(
                     'flex flex-col items-center gap-1.5 p-2 rounded-xl border transition-all relative',
-                    isToday ? 'border-emerald-500/30 bg-emerald-500/[0.07]' : 'border-white/[0.05] bg-white/[0.02]'
+                    isToday ? 'border-emerald-200 bg-emerald-50' : 'border-gray-100 bg-gray-50'
                   )}>
                     {matched && (
                       <div className="absolute top-1 right-1 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
                         <Check size={7} className="text-white" />
                       </div>
                     )}
-                    <span className="text-[10px] text-slate-600">{DAY_LABELS[day.getDay()]}</span>
-                    <span className={cn('text-xs font-bold', isToday ? 'text-emerald-400' : 'text-slate-500')}>
+                    <span className="text-[10px] text-gray-400">{DAY_LABELS[day.getDay()]}</span>
+                    <span className={cn('text-xs font-bold', isToday ? 'text-emerald-600' : 'text-gray-400')}>
                       {format(day, 'd')}
                     </span>
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
-                      style={{ background: wt ? `${wt.color}22` : planWt ? `${planWt.color}0F` : 'rgba(255,255,255,0.03)' }}>
-                      {wt ? wt.icon : planWt ? <span className="text-slate-700 opacity-40">{planWt.icon}</span> : <span className="text-slate-700 text-xs">—</span>}
+                      style={{ background: wt ? `${wt.color}22` : planWt ? `${planWt.color}0F` : 'rgba(0,0,0,0.04)' }}>
+                      {wt ? wt.icon : planWt ? <span className="opacity-30">{planWt.icon}</span> : <span className="text-gray-300 text-xs">—</span>}
                     </div>
-                    {wt && <p className="text-[9px] text-slate-500 text-center leading-tight">{wt.name}</p>}
-                    {!wt && planWt && <p className="text-[8px] text-slate-700 text-center leading-tight">{planWt.name}</p>}
+                    {wt && <p className="text-[9px] text-gray-400 text-center leading-tight">{wt.name}</p>}
+                    {!wt && planWt && <p className="text-[8px] text-gray-300 text-center leading-tight">{planWt.name}</p>}
                   </div>
                 )
               })}
@@ -374,11 +372,11 @@ export default function PhysicalPage() {
 
             {/* Recent sessions list */}
             <div>
-              <p className="text-xs text-slate-600 uppercase tracking-wider font-medium mb-3">Historial reciente</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Historial reciente</p>
               {workoutSessions.length === 0 ? (
                 <div className="text-center py-10">
-                  <Dumbbell size={28} className="mx-auto text-slate-700 mb-2" />
-                  <p className="text-slate-500 text-sm">Sin sesiones registradas</p>
+                  <Dumbbell size={28} className="mx-auto text-gray-300 mb-2" />
+                  <p className="text-gray-400 text-sm">Sin sesiones registradas</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -387,27 +385,27 @@ export default function PhysicalPage() {
                     const expanded = expandedSession === session.id
                     return (
                       <div key={session.id}
-                        className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+                        className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
                         <div className="flex items-center gap-3 p-3">
                           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
-                            style={{ background: wt ? `${wt.color}22` : undefined }}>
+                            style={{ background: wt ? `${wt.color}18` : undefined }}>
                             {wt?.icon ?? '💪'}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white">{session.name}</p>
-                            <p className="text-xs text-slate-600">
+                            <p className="text-sm font-semibold text-gray-900">{session.name}</p>
+                            <p className="text-xs text-gray-400">
                               {format(new Date(session.date), "d 'de' MMM", { locale: es })}
                             </p>
                           </div>
                           <div className="flex items-center gap-1">
                             {session.notes && (
                               <button onClick={() => setExpandedSession(expanded ? null : session.id)}
-                                className="text-slate-600 hover:text-slate-300 transition-colors">
+                                className="text-gray-400 hover:text-gray-600 transition-colors">
                                 {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                               </button>
                             )}
                             <button onClick={() => deleteWorkout(session.id)}
-                              className="text-slate-700 hover:text-red-400 transition-colors ml-1">
+                              className="text-gray-300 hover:text-red-500 transition-colors ml-1">
                               <Trash2 size={13} />
                             </button>
                           </div>
@@ -416,7 +414,7 @@ export default function PhysicalPage() {
                           {expanded && session.notes && (
                             <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
                               className="overflow-hidden">
-                              <p className="px-4 pb-3 text-xs text-slate-400">{session.notes}</p>
+                              <p className="px-4 pb-3 text-xs text-gray-500">{session.notes}</p>
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -436,19 +434,19 @@ export default function PhysicalPage() {
             {/* Gym streak banner */}
             <div className={cn(
               'p-4 rounded-2xl border flex items-center gap-4',
-              gymStreak >= 3 ? 'border-orange-500/30 bg-orange-500/[0.06]' : 'border-white/[0.06] bg-white/[0.02]'
+              gymStreak >= 3 ? 'border-orange-200 bg-orange-50' : 'border-gray-100 bg-gray-50'
             )}>
               <div className={cn(
                 'w-14 h-14 rounded-2xl flex items-center justify-center shrink-0',
-                gymStreak >= 3 ? 'bg-orange-500/20' : 'bg-white/[0.05]'
+                gymStreak >= 3 ? 'bg-orange-100' : 'bg-gray-100'
               )}>
-                <Flame size={28} className={gymStreak >= 3 ? 'text-orange-400' : 'text-slate-600'} />
+                <Flame size={28} className={gymStreak >= 3 ? 'text-orange-500' : 'text-gray-300'} />
               </div>
               <div>
-                <p className={cn('text-3xl font-black tabular-nums', gymStreak >= 3 ? 'text-orange-400' : 'text-slate-400')}>
+                <p className={cn('text-3xl font-black tabular-nums', gymStreak >= 3 ? 'text-orange-600' : 'text-gray-400')}>
                   {gymStreak} {gymStreak === 1 ? 'día' : 'días'}
                 </p>
-                <p className="text-xs text-slate-500 mt-0.5">Racha consecutiva en el gym</p>
+                <p className="text-xs text-gray-500 mt-0.5">Racha consecutiva en el gym</p>
               </div>
               {gymStreak >= 7 && (
                 <div className="ml-auto text-2xl">🏆</div>
@@ -457,45 +455,45 @@ export default function PhysicalPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] text-center">
-                <p className="text-2xl font-black text-emerald-400">{weekSessions.length}</p>
-                <p className="text-xs text-slate-500 mt-1">Esta semana</p>
+              <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 text-center">
+                <p className="text-2xl font-black text-emerald-600">{weekSessions.length}</p>
+                <p className="text-xs text-gray-500 mt-1">Esta semana</p>
               </div>
-              <div className="p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] text-center">
-                <p className="text-2xl font-black text-violet-400">{workoutSessions.length}</p>
-                <p className="text-xs text-slate-500 mt-1">Total entrenos</p>
+              <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 text-center">
+                <p className="text-2xl font-black text-violet-600">{workoutSessions.length}</p>
+                <p className="text-xs text-gray-500 mt-1">Total entrenos</p>
               </div>
-              <div className="p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] text-center">
-                <p className="text-2xl font-black text-amber-400">{latestMeas?.weight ?? '—'}</p>
-                <p className="text-xs text-slate-500 mt-1">Peso kg</p>
+              <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 text-center">
+                <p className="text-2xl font-black text-amber-600">{latestMeas?.weight ?? '—'}</p>
+                <p className="text-xs text-gray-500 mt-1">Peso kg</p>
               </div>
             </div>
 
             {/* Weight chart */}
             {weightChartData.length > 1 ? (
-              <div className="p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+              <div className="p-4 rounded-2xl border border-gray-100 bg-white">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm font-semibold text-white flex items-center gap-2">
-                    <TrendingUp size={14} className="text-amber-400" /> Evolución del peso
+                  <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <TrendingUp size={14} className="text-amber-500" /> Evolución del peso
                   </p>
                   <button onClick={() => setWeightModal(true)}
-                    className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 transition-all">
+                    className="text-xs text-amber-700 hover:text-amber-800 flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 transition-all">
                     <Plus size={10} /> Agregar
                   </button>
                 </div>
                 <ResponsiveContainer width="100%" height={140}>
                   <LineChart data={weightChartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                    <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#475569' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 9, fill: '#475569' }} axisLine={false} tickLine={false} domain={['auto', 'auto']} />
+                    <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} domain={['auto', 'auto']} />
                     <Tooltip {...tooltipStyle} formatter={(v) => [`${v} kg`, 'Peso']} />
                     <Line type="monotone" dataKey="weight" stroke="#F59E0B" strokeWidth={2.5} dot={{ fill: '#F59E0B', r: 3 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="p-5 rounded-2xl border border-white/[0.06] bg-white/[0.02] text-center">
-                <Scale size={28} className="mx-auto text-slate-700 mb-2" />
-                <p className="text-slate-500 text-sm mb-3">Registra al menos 2 pesajes para ver la gráfica</p>
+              <div className="p-5 rounded-2xl border border-gray-100 bg-gray-50 text-center">
+                <Scale size={28} className="mx-auto text-gray-300 mb-2" />
+                <p className="text-gray-400 text-sm mb-3">Registra al menos 2 pesajes para ver la gráfica</p>
                 <Button variant="glow" size="sm" onClick={() => setWeightModal(true)}>
                   <Plus size={14} /> Registrar peso
                 </Button>
@@ -505,13 +503,13 @@ export default function PhysicalPage() {
             {/* Weight history */}
             {measurements.length > 0 && (
               <div>
-                <p className="text-xs text-slate-600 uppercase tracking-wider font-medium mb-3">Historial de peso</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Historial de peso</p>
                 <div className="space-y-1.5">
                   {measurements.filter(m => m.weight).slice(0, 10).map(m => (
-                    <div key={m.id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                      <Scale size={14} className="text-amber-400 shrink-0" />
-                      <span className="text-sm font-bold text-white tabular-nums">{m.weight} kg</span>
-                      <span className="text-xs text-slate-600">
+                    <div key={m.id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
+                      <Scale size={14} className="text-amber-500 shrink-0" />
+                      <span className="text-sm font-bold text-gray-900 tabular-nums">{m.weight} kg</span>
+                      <span className="text-xs text-gray-400">
                         {format(new Date(m.date), "d 'de' MMMM", { locale: es })}
                       </span>
                     </div>
@@ -533,22 +531,22 @@ export default function PhysicalPage() {
               <button key={wt.type} onClick={() => setSelectedType(wt.type)}
                 className={cn(
                   'flex items-center gap-3 p-3 rounded-xl border text-left transition-all',
-                  selectedType === wt.type ? 'border-transparent' : 'bg-white/[0.03] border-white/[0.07] hover:border-white/[0.14]'
+                  selectedType === wt.type ? 'border-transparent' : 'bg-gray-50 border-gray-200 hover:border-gray-300'
                 )}
-                style={selectedType === wt.type ? { background: `${wt.color}20`, borderColor: `${wt.color}50` } : undefined}>
+                style={selectedType === wt.type ? { background: `${wt.color}18`, borderColor: `${wt.color}50` } : undefined}>
                 <span className="text-xl shrink-0">{wt.icon}</span>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white leading-tight">{wt.name}</p>
-                  <p className="text-[10px] text-slate-500 leading-tight truncate">{wt.desc}</p>
+                  <p className="text-sm font-semibold text-gray-900 leading-tight">{wt.name}</p>
+                  <p className="text-[10px] text-gray-400 leading-tight truncate">{wt.desc}</p>
                 </div>
               </button>
             ))}
           </div>
           <div>
-            <label className="text-sm text-slate-400 font-medium block mb-1.5">Notas (opcional)</label>
+            <label className="text-sm text-gray-700 font-medium block mb-1.5">Notas (opcional)</label>
             <textarea value={workoutNotes} onChange={e => setWorkoutNotes(e.target.value)}
               rows={2} placeholder="PR en press banca, 3x12 sentadilla..."
-              className="w-full rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-slate-200 placeholder-slate-700 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50 resize-none" />
+              className="w-full rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 px-3 py-2.5 focus:outline-none focus:border-emerald-400 resize-none" />
           </div>
           <div className="flex gap-3 justify-end">
             <Button variant="ghost" onClick={() => setWorkoutModal(false)}>Cancelar</Button>
@@ -571,13 +569,13 @@ export default function PhysicalPage() {
               <button key={wt.type} onClick={() => setRoutineType(wt.type)}
                 className={cn(
                   'flex items-center gap-3 p-3 rounded-xl border text-left transition-all',
-                  routineType === wt.type ? 'border-transparent' : 'bg-white/[0.03] border-white/[0.07] hover:border-white/[0.14]'
+                  routineType === wt.type ? 'border-transparent' : 'bg-gray-50 border-gray-200 hover:border-gray-300'
                 )}
-                style={routineType === wt.type ? { background: `${wt.color}20`, borderColor: `${wt.color}50` } : undefined}>
+                style={routineType === wt.type ? { background: `${wt.color}18`, borderColor: `${wt.color}50` } : undefined}>
                 <span className="text-xl shrink-0">{wt.icon}</span>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white leading-tight">{wt.name}</p>
-                  <p className="text-[10px] text-slate-500 leading-tight truncate">{wt.desc}</p>
+                  <p className="text-sm font-semibold text-gray-900 leading-tight">{wt.name}</p>
+                  <p className="text-[10px] text-gray-400 leading-tight truncate">{wt.desc}</p>
                 </div>
               </button>
             ))}
@@ -621,7 +619,7 @@ export default function PhysicalPage() {
       {/* Water config */}
       <Modal open={waterConfigModal} onClose={() => setWaterConfigModal(false)} title="Configurar Agua">
         <div className="space-y-4">
-          <p className="text-xs text-slate-500">El tamaño del pote se aplica igual a todos los registros.</p>
+          <p className="text-xs text-gray-500">El tamaño del pote se aplica igual a todos los registros.</p>
           <Input
             label="Meta diaria (litros)"
             type="number" min={0.5} max={10} step={0.1} placeholder="2.5"
@@ -637,7 +635,7 @@ export default function PhysicalPage() {
             icon={<Droplets size={14} />}
           />
           {wcGoal && wcMl && (
-            <p className="text-xs text-cyan-400">
+            <p className="text-xs text-cyan-600">
               → {Math.ceil(Number(wcGoal) / (Number(wcMl) / 1000))} potes para alcanzar la meta
             </p>
           )}

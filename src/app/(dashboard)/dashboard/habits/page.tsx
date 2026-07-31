@@ -73,10 +73,10 @@ export default function HabitsPage() {
       {/* Header */}
       <motion.div variants={fadeUp} className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-white flex items-center gap-2">
-            <Target size={24} className="text-violet-400" /> Hábitos
+          <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+            <Target size={24} className="text-violet-600" /> Hábitos
           </h1>
-          <p className="text-slate-400 text-sm mt-0.5">
+          <p className="text-gray-500 text-sm mt-0.5">
             {completedToday}/{habits.length} completados hoy · {pct}%
           </p>
         </div>
@@ -86,11 +86,11 @@ export default function HabitsPage() {
       </motion.div>
 
       {/* Progress chart */}
-      <motion.div variants={fadeUp} className="p-4 rounded-2xl border border-white/[0.06] bg-white/[0.03]">
+      <motion.div variants={fadeUp} className="p-4 rounded-2xl border border-gray-100 bg-gray-50">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-semibold text-white">Últimas 2 semanas</p>
+          <p className="text-sm font-semibold text-gray-900">Últimas 2 semanas</p>
           <div className="flex items-center gap-3">
-            <div className="w-full bg-white/[0.06] rounded-full h-1.5 w-24 overflow-hidden">
+            <div className="w-full bg-gray-100 rounded-full h-1.5 w-24 overflow-hidden">
               <motion.div
                 className="h-full rounded-full bg-violet-500"
                 initial={{ width: 0 }}
@@ -98,15 +98,15 @@ export default function HabitsPage() {
                 transition={{ duration: 0.7 }}
               />
             </div>
-            <span className="text-xs font-bold text-violet-400 shrink-0">{pct}% hoy</span>
+            <span className="text-xs font-bold text-violet-600 shrink-0">{pct}% hoy</span>
           </div>
         </div>
         <ResponsiveContainer width="100%" height={72}>
           <BarChart data={chartData} margin={{ top: 0, right: 0, left: -30, bottom: 0 }}>
-            <XAxis dataKey="day" tick={{ fontSize: 9, fill: '#475569' }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="day" tick={{ fontSize: 9, fill: '#6B7280' }} axisLine={false} tickLine={false} />
             <Bar dataKey="pct" radius={[4, 4, 0, 0]} maxBarSize={18}>
               {chartData.map((d, i) => (
-                <Cell key={i} fill={d.isToday ? '#7C3AED' : d.pct > 0 ? '#7C3AED55' : '#1E293B'} />
+                <Cell key={i} fill={d.isToday ? '#7C3AED' : d.pct > 0 ? '#7C3AED55' : '#E5E7EB'} />
               ))}
             </Bar>
           </BarChart>
@@ -117,7 +117,7 @@ export default function HabitsPage() {
       {habits.length === 0 ? (
         <motion.div variants={fadeUp} className="text-center py-16">
           <div className="text-5xl mb-3">🎯</div>
-          <p className="text-slate-500 text-sm mb-4">Aún no tienes hábitos. ¡Crea el primero!</p>
+          <p className="text-gray-500 text-sm mb-4">Aún no tienes hábitos. ¡Crea el primero!</p>
           <Button variant="glow" size="sm" onClick={() => setAddModal(true)}>
             <Plus size={14} /> Agregar hábito
           </Button>
@@ -144,7 +144,7 @@ export default function HabitsPage() {
                       'w-full flex flex-col items-center justify-center gap-2.5 p-4 rounded-2xl border transition-all duration-200 aspect-square',
                       done
                         ? 'border-transparent'
-                        : 'bg-white/[0.03] border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.06]'
+                        : 'bg-gray-50 border-gray-200 hover:border-gray-300 hover:bg-gray-100'
                     )}
                     style={done ? { background: `${color}18`, borderColor: `${color}45` } : undefined}
                   >
@@ -159,14 +159,14 @@ export default function HabitsPage() {
                     <span className="text-3xl select-none">{habit.icon}</span>
                     <p className={cn(
                       'text-xs font-semibold text-center leading-tight line-clamp-2 px-1',
-                      done ? 'text-white' : 'text-slate-300'
+                      done ? 'text-gray-900' : 'text-gray-700'
                     )}>
                       {habit.name}
                     </p>
                     {habit.streak > 0 && (
                       <div className="flex items-center gap-0.5">
-                        <Flame size={10} className="text-orange-400" />
-                        <span className="text-[10px] text-orange-400 font-bold">{habit.streak}d</span>
+                        <Flame size={10} className="text-orange-500" />
+                        <span className="text-[10px] text-orange-500 font-bold">{habit.streak}d</span>
                       </div>
                     )}
                   </motion.button>
@@ -174,7 +174,7 @@ export default function HabitsPage() {
                   {/* Delete button */}
                   <button
                     onClick={() => deleteHabit(habit.id)}
-                    className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-[#0D0D16] border border-white/[0.08] text-slate-600 hover:text-red-400 hover:border-red-400/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                    className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-red-400 hover:border-red-400/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                   >
                     <Trash2 size={10} />
                   </button>
@@ -207,7 +207,7 @@ export default function HabitsPage() {
           </div>
 
           <div>
-            <label className="text-sm text-slate-400 font-medium block mb-2">Categoría</label>
+            <label className="text-sm text-gray-500 font-medium block mb-2">Categoría</label>
             <div className="grid grid-cols-3 gap-2">
               {CATS.map(cat => (
                 <button
@@ -216,8 +216,8 @@ export default function HabitsPage() {
                   className={cn(
                     'py-2 px-3 rounded-xl text-xs font-medium transition-all border',
                     newHabit.category === cat
-                      ? 'text-white'
-                      : 'bg-white/[0.04] text-slate-500 hover:text-slate-300 border-white/[0.06]'
+                      ? 'text-gray-900'
+                      : 'bg-gray-50 text-gray-500 hover:text-gray-700 border-gray-100'
                   )}
                   style={newHabit.category === cat
                     ? { background: `${CAT_COLOR[cat]}25`, borderColor: `${CAT_COLOR[cat]}50`, color: CAT_COLOR[cat] }

@@ -43,8 +43,8 @@ export default function VaultPage() {
     <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-5">
       {/* Header */}
       <motion.div variants={fadeUp} className="flex items-center justify-between">
-        <h1 className="text-2xl font-black text-white flex items-center gap-2">
-          <FolderLock size={24} className="text-amber-400" /> Vault Personal
+        <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+          <FolderLock size={24} className="text-amber-600" /> Vault Personal
         </h1>
         <Button onClick={() => setAddModal(true)} variant="glow" size="sm">
           <Plus size={14} /> Agregar
@@ -54,12 +54,12 @@ export default function VaultPage() {
       {/* Search */}
       <motion.div variants={fadeUp}>
         <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Buscar documentos, notas, credenciales..."
-            className="w-full h-10 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white placeholder-slate-500 pl-9 pr-3 focus:outline-none focus:border-violet-500/50 transition-colors"
+            className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 pl-9 pr-3 focus:outline-none focus:border-violet-500/50 transition-colors"
           />
         </div>
       </motion.div>
@@ -68,36 +68,36 @@ export default function VaultPage() {
         {/* Folder sidebar */}
         <motion.div variants={fadeUp} className="lg:col-span-1">
           <GlassCard className="p-4" animate={false}>
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Carpetas</h3>
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Carpetas</h3>
             <div className="space-y-1">
               <button
                 onClick={() => setSelectedFolder(null)}
-                className={cn('w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all', !selectedFolder ? 'bg-violet-500/15 text-violet-300' : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200')}
+                className={cn('w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all', !selectedFolder ? 'bg-violet-100 text-violet-600' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700')}
               >
                 <FolderLock size={14} />
                 <span>Todo</span>
-                <span className="ml-auto text-xs text-slate-600">{items.length}</span>
+                <span className="ml-auto text-xs text-gray-400">{items.length}</span>
               </button>
               {folders.map(f => (
                 <button
                   key={f.id}
                   onClick={() => setSelectedFolder(f.id === selectedFolder ? null : f.id)}
-                  className={cn('w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all', selectedFolder === f.id ? 'text-white' : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200')}
+                  className={cn('w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all', selectedFolder === f.id ? 'text-gray-900' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700')}
                   style={selectedFolder === f.id ? { background: `${f.color}15` } : undefined}
                 >
                   <span>{f.icon}</span>
                   <span>{f.name}</span>
-                  <span className="ml-auto text-xs text-slate-600">{getFolderItems(f.id).length}</span>
+                  <span className="ml-auto text-xs text-gray-400">{getFolderItems(f.id).length}</span>
                 </button>
               ))}
             </div>
 
             {/* Starred */}
-            <div className="mt-4 pt-4 border-t border-white/[0.06]">
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Favoritos</h3>
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Favoritos</h3>
               {items.filter(i => i.starred).map(i => (
-                <button key={i.id} onClick={() => setNoteModal(i.id)} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-all text-left">
-                  <Star size={10} className="text-amber-400 shrink-0" />
+                <button key={i.id} onClick={() => setNoteModal(i.id)} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all text-left">
+                  <Star size={10} className="text-amber-600 shrink-0" />
                   <span className="truncate">{i.title}</span>
                 </button>
               ))}
@@ -130,19 +130,19 @@ export default function VaultPage() {
                       <div className="flex items-start gap-3">
                         <div className={cn(
                           'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
-                          item.type === 'document' ? 'bg-violet-500/20' :
-                          item.type === 'credential' ? 'bg-amber-500/20' :
-                          item.type === 'note' ? 'bg-cyan-500/20' : 'bg-slate-500/20'
+                          item.type === 'document' ? 'bg-violet-100' :
+                          item.type === 'credential' ? 'bg-amber-100' :
+                          item.type === 'note' ? 'bg-cyan-100' : 'bg-gray-100'
                         )}>
-                          {item.encrypted ? <Lock size={16} className="text-amber-400" /> : <Icon size={16} className="text-slate-400" />}
+                          {item.encrypted ? <Lock size={16} className="text-amber-600" /> : <Icon size={16} className="text-gray-500" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white truncate">{item.title}</p>
+                          <p className="text-sm font-semibold text-gray-900 truncate">{item.title}</p>
                           {item.type === 'credential' && item.username && (
-                            <p className="text-xs text-slate-500 mt-0.5">{item.username}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{item.username}</p>
                           )}
                           {item.type === 'note' && item.content && (
-                            <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{item.content}</p>
+                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.content}</p>
                           )}
                           <div className="flex items-center gap-1 flex-wrap mt-1.5">
                             {item.tags.slice(0, 2).map(t => (
@@ -151,28 +151,28 @@ export default function VaultPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/[0.04]">
-                        <span className="text-[10px] text-slate-600">
+                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                        <span className="text-[10px] text-gray-400">
                           {new Date(item.updatedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                         </span>
                         <div className="flex items-center gap-1 ml-auto">
                           {item.encrypted && (
                             <button
                               onClick={e => { e.stopPropagation(); setRevealed(r => ({ ...r, [item.id]: !r[item.id] })) }}
-                              className="p-1 text-slate-600 hover:text-amber-400 transition-colors"
+                              className="p-1 text-gray-400 hover:text-amber-600 transition-colors"
                             >
                               {isRevealed ? <EyeOff size={12} /> : <Eye size={12} />}
                             </button>
                           )}
                           <button
                             onClick={e => { e.stopPropagation(); toggleStar(item.id) }}
-                            className={cn('p-1 transition-colors', item.starred ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400')}
+                            className={cn('p-1 transition-colors', item.starred ? 'text-amber-600' : 'text-gray-400 hover:text-amber-600')}
                           >
                             {item.starred ? <Star size={12} /> : <StarOff size={12} />}
                           </button>
                           <button
                             onClick={e => { e.stopPropagation(); deleteItem(item.id) }}
-                            className="p-1 text-slate-600 hover:text-red-400 transition-colors"
+                            className="p-1 text-gray-400 hover:text-red-400 transition-colors"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -186,7 +186,7 @@ export default function VaultPage() {
           </div>
 
           {displayItems.length === 0 && (
-            <div className="text-center py-12 text-slate-600">
+            <div className="text-center py-12 text-gray-400">
               <FolderLock size={32} className="mx-auto mb-2 opacity-40" />
               <p>{query ? `Sin resultados para "${query}"` : 'Esta carpeta está vacía'}</p>
             </div>
@@ -197,7 +197,7 @@ export default function VaultPage() {
       {/* Note viewer */}
       <Modal open={!!noteModal} onClose={() => setNoteModal(null)} title={noteItem?.title} size="lg">
         <div className="min-h-32">
-          <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
             {noteItem?.content ?? 'Sin contenido'}
           </p>
         </div>
@@ -207,11 +207,11 @@ export default function VaultPage() {
       <Modal open={addModal} onClose={() => setAddModal(false)} title="Agregar al Vault">
         <div className="space-y-4">
           <div>
-            <label className="text-sm text-slate-400 font-medium block mb-1.5">Tipo</label>
+            <label className="text-sm text-gray-500 font-medium block mb-1.5">Tipo</label>
             <div className="flex gap-2">
               {(['note', 'document', 'credential'] as VaultItemType[]).map(t => (
                 <button key={t} onClick={() => setNewItem(i => ({ ...i, type: t }))}
-                  className={cn('px-3 py-1 rounded-lg text-xs capitalize transition-all', newItem.type === t ? 'bg-violet-500/30 text-violet-300 border border-violet-500/50' : 'glass text-slate-400')}>
+                  className={cn('px-3 py-1 rounded-lg text-xs capitalize transition-all', newItem.type === t ? 'bg-violet-100 text-violet-600 border border-violet-300' : 'bg-white border border-gray-200 shadow-sm text-gray-500')}>
                   {t}
                 </button>
               ))}
@@ -219,16 +219,16 @@ export default function VaultPage() {
           </div>
           <Input label="Título" value={newItem.title} onChange={e => setNewItem(i => ({ ...i, title: e.target.value }))} placeholder="Nombre del elemento..." />
           <div>
-            <label className="text-sm text-slate-400 font-medium block mb-1.5">Carpeta</label>
-            <select value={newItem.folderId} onChange={e => setNewItem(i => ({ ...i, folderId: e.target.value }))} className="w-full h-10 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white px-3 focus:outline-none">
+            <label className="text-sm text-gray-500 font-medium block mb-1.5">Carpeta</label>
+            <select value={newItem.folderId} onChange={e => setNewItem(i => ({ ...i, folderId: e.target.value }))} className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none">
               <option value="">Sin carpeta</option>
               {folders.map(f => <option key={f.id} value={f.id}>{f.icon} {f.name}</option>)}
             </select>
           </div>
           {(newItem.type === 'note') && (
             <div>
-              <label className="text-sm text-slate-400 font-medium block mb-1.5">Contenido</label>
-              <textarea value={newItem.content} onChange={e => setNewItem(i => ({ ...i, content: e.target.value }))} rows={4} className="w-full rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white placeholder-slate-600 px-3 py-2.5 focus:outline-none focus:border-violet-500/50 resize-none" placeholder="Escribe tu nota..." />
+              <label className="text-sm text-gray-500 font-medium block mb-1.5">Contenido</label>
+              <textarea value={newItem.content} onChange={e => setNewItem(i => ({ ...i, content: e.target.value }))} rows={4} className="w-full rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 px-3 py-2.5 focus:outline-none focus:border-violet-500/50 resize-none" placeholder="Escribe tu nota..." />
             </div>
           )}
           <div className="flex gap-3 justify-end">

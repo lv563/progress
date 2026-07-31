@@ -16,10 +16,10 @@ import { cn } from '@/lib/utils/cn'
 import type { PomodoroMode } from '@/types'
 
 const MODE_META: Record<PomodoroMode, { label: string; icon: React.ReactNode; color: string; bg: string; tip: string }> = {
-  'focus':       { label: 'Foco',           icon: <Zap size={14}/>,    color: '#00D4B8', bg: 'rgba(0,212,184,0.06)',   tip: 'Modo de máxima concentración' },
-  'short-break': { label: 'Descanso corto', icon: <Coffee size={14}/>, color: '#10B981', bg: 'rgba(16,185,129,0.06)',  tip: 'Descansa los ojos, estírate' },
-  'long-break':  { label: 'Descanso largo', icon: <Leaf size={14}/>,   color: '#06B6D4', bg: 'rgba(6,182,212,0.06)',   tip: 'Recarga completa · bien ganado' },
-  'deep-work':   { label: 'Deep Work',      icon: <Flame size={14}/>,  color: '#F59E0B', bg: 'rgba(245,158,11,0.06)',  tip: '90 min de trabajo profundo' },
+  'focus':       { label: 'Foco',           icon: <Zap size={14}/>,    color: '#00D4B8', bg: 'rgba(6,182,212,0.08)',   tip: 'Modo de máxima concentración' },
+  'short-break': { label: 'Descanso corto', icon: <Coffee size={14}/>, color: '#10B981', bg: 'rgba(16,185,129,0.08)',  tip: 'Descansa los ojos, estírate' },
+  'long-break':  { label: 'Descanso largo', icon: <Leaf size={14}/>,   color: '#06B6D4', bg: 'rgba(6,182,212,0.08)',   tip: 'Recarga completa · bien ganado' },
+  'deep-work':   { label: 'Deep Work',      icon: <Flame size={14}/>,  color: '#F59E0B', bg: 'rgba(245,158,11,0.08)',  tip: '90 min de trabajo profundo' },
 }
 
 const MOTIVATIONAL: Record<PomodoroMode, string[]> = {
@@ -103,24 +103,24 @@ function HistoryModal({ open, onClose }: { open: boolean; onClose: () => void })
     <Modal open={open} onClose={onClose} title="Historial de sesiones">
       <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
         {grouped.length === 0 ? (
-          <div className="text-center py-10 text-slate-500 text-sm">Sin sesiones registradas aún</div>
+          <div className="text-center py-10 text-gray-500 text-sm">Sin sesiones registradas aún</div>
         ) : grouped.map(({ date, sessions: ss, totalMinutes }) => (
           <div key={date.toDateString()}>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-slate-300 capitalize">
+              <p className="text-xs font-bold text-gray-700 capitalize">
                 {format(date, "EEEE d 'de' MMMM", { locale: es })}
               </p>
-              <span className="text-[10px] text-slate-600">{Math.round(totalMinutes / 60 * 10) / 10}h · {ss.length} ses.</span>
+              <span className="text-[10px] text-gray-400">{Math.round(totalMinutes / 60 * 10) / 10}h · {ss.length} ses.</span>
             </div>
             <div className="space-y-1">
               {ss.map(s => {
                 const m = MODE_META[s.mode ?? 'focus']
                 return (
-                  <div key={s.id} className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
+                  <div key={s.id} className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-100">
                     <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: m.color }} />
-                    <span className="text-xs text-slate-400 flex-1 truncate">{s.taskTitle ?? m.label}</span>
+                    <span className="text-xs text-gray-500 flex-1 truncate">{s.taskTitle ?? m.label}</span>
                     <span className="text-xs font-mono" style={{ color: m.color }}>{s.duration}min</span>
-                    <span className="text-[10px] text-slate-700">
+                    <span className="text-[10px] text-gray-400">
                       {new Date(s.startedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
@@ -208,7 +208,7 @@ export default function PomodoroPage() {
     return (
       <div className="flex flex-col items-center gap-5">
         {/* Mode tabs */}
-        <div className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+        <div className="flex gap-1 p-1 rounded-xl bg-gray-100 border border-gray-200">
           {(['focus', 'short-break', 'long-break', 'deep-work'] as PomodoroMode[]).map(mode => {
             const m = MODE_META[mode]
             return (
@@ -217,7 +217,7 @@ export default function PomodoroPage() {
                 onClick={() => { stopTimer(); startTimer(mode) }}
                 className={cn(
                   'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all',
-                  currentMode === mode ? 'text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
+                  currentMode === mode ? 'text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                 )}
                 style={currentMode === mode ? { background: `${m.color}25`, boxShadow: `0 0 12px ${m.color}30` } : undefined}
               >
@@ -260,7 +260,7 @@ export default function PomodoroPage() {
                   key={secondsLeft}
                   initial={{ scale: 0.96 }}
                   animate={{ scale: 1 }}
-                  className="font-mono font-black text-white tabular-nums"
+                  className="font-mono font-black text-gray-900 tabular-nums"
                   style={{ fontSize: large ? '4rem' : '3.25rem', lineHeight: 1 }}
                 >
                   {formatTime(secondsLeft)}
@@ -270,7 +270,7 @@ export default function PomodoroPage() {
                   <p className="text-xs font-medium">{meta.label}</p>
                 </div>
                 {currentTaskTitle && (
-                  <p className="text-[10px] text-slate-500 mt-1.5 max-w-[120px] text-center truncate">📌 {currentTaskTitle}</p>
+                  <p className="text-[10px] text-gray-500 mt-1.5 max-w-[120px] text-center truncate">📌 {currentTaskTitle}</p>
                 )}
               </div>
             </ProgressRing>
@@ -284,7 +284,7 @@ export default function PomodoroPage() {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="text-xs text-slate-500 text-center max-w-xs italic"
+            className="text-xs text-gray-500 text-center max-w-xs italic"
           >
             "{quote}"
           </motion.p>
@@ -297,7 +297,7 @@ export default function PomodoroPage() {
               onClick={() => startTimer(currentMode)}
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
-              className="flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-sm text-white transition-all"
+              className="flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-sm text-gray-900 transition-all"
               style={{ background: `linear-gradient(135deg, ${meta.color} 0%, ${meta.color}BB 100%)`, boxShadow: `0 0 24px ${meta.color}40` }}
             >
               <Play size={18} /> Iniciar
@@ -318,7 +318,7 @@ export default function PomodoroPage() {
               <motion.button
                 onClick={resumeTimer}
                 whileHover={{ scale: 1.04 }}
-                className="flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-sm text-white"
+                className="flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-sm text-gray-900"
                 style={{ background: `linear-gradient(135deg, ${meta.color} 0%, ${meta.color}BB 100%)`, boxShadow: `0 0 24px ${meta.color}40` }}
               >
                 <Play size={18} /> Continuar
@@ -341,13 +341,13 @@ export default function PomodoroPage() {
                 style={{
                   width: filled ? 10 : 8,
                   height: filled ? 10 : 8,
-                  background: filled ? meta.color : 'rgba(255,255,255,0.08)',
+                  background: filled ? meta.color : 'rgba(0,0,0,0.1)',
                   boxShadow: filled ? `0 0 8px ${meta.color}80` : 'none',
                 }}
               />
             )
           })}
-          <span className="text-xs text-slate-600 ml-2">
+          <span className="text-xs text-gray-400 ml-2">
             {(sessionCount % config.sessionsBeforeLong) + 1}/{config.sessionsBeforeLong}
           </span>
         </div>
@@ -364,12 +364,12 @@ export default function PomodoroPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-[#0A0A0F] flex items-center justify-center"
-            style={{ background: `radial-gradient(ellipse at 50% 50%, ${meta.bg} 0%, #0A0A0F 60%)` }}
+            className="fixed inset-0 z-40 bg-white flex items-center justify-center"
+            style={{ background: `radial-gradient(ellipse at 50% 50%, ${meta.bg} 0%, white 60%)` }}
           >
             <button
               onClick={() => setFullscreen(false)}
-              className="absolute top-6 right-6 w-10 h-10 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-white"
+              className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-gray-900"
             >
               <Minimize2 size={18} />
             </button>
@@ -382,14 +382,14 @@ export default function PomodoroPage() {
 
         {/* Header */}
         <motion.div variants={fadeUp} className="flex items-center justify-between">
-          <h1 className="text-2xl font-black text-white flex items-center gap-2">
-            <Timer size={24} className="text-cyan-400" /> Pomodoro
+          <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+            <Timer size={24} className="text-cyan-600" /> Pomodoro
           </h1>
           <div className="flex gap-2 items-center">
             {streak > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                <Flame size={14} className="text-amber-400" />
-                <span className="text-xs font-bold text-amber-400">{streak} días</span>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200">
+                <Flame size={14} className="text-amber-600" />
+                <span className="text-xs font-bold text-amber-600">{streak} días</span>
               </div>
             )}
             <Button variant="ghost" size="icon" onClick={() => setHistoryOpen(true)}>
@@ -407,7 +407,7 @@ export default function PomodoroPage() {
         {/* Main timer card */}
         <motion.div variants={fadeUp}>
           <div
-            className="rounded-2xl border border-white/[0.08] p-6 md:p-10 flex flex-col items-center transition-all duration-700"
+            className="rounded-2xl border border-gray-200 p-6 md:p-10 flex flex-col items-center transition-all duration-700"
             style={{ background: meta.bg, boxShadow: isRunning ? `0 0 60px ${meta.color}12` : 'none' }}
           >
             <TimerCore />
@@ -418,7 +418,7 @@ export default function PomodoroPage() {
                 value={currentTaskTitle}
                 onChange={e => setCurrentTask(e.target.value)}
                 placeholder="¿En qué estás trabajando? (opcional)"
-                className="w-full h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] text-sm text-slate-300 placeholder-slate-600 px-3 focus:outline-none transition-colors"
+                className="w-full h-9 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 px-3 focus:outline-none transition-colors"
                 style={{ borderColor: currentTaskTitle ? `${meta.color}30` : undefined }}
               />
             </div>
@@ -427,28 +427,28 @@ export default function PomodoroPage() {
 
         {/* Stats row */}
         <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3">
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
-            <p className="text-2xl font-black text-white tabular-nums">{todaySessions.length}</p>
-            <p className="text-[11px] text-slate-500 mt-1">Pomodoros hoy</p>
-            <div className="h-1 rounded-full bg-white/[0.06] mt-2 overflow-hidden">
+          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 text-center">
+            <p className="text-2xl font-black text-gray-900 tabular-nums">{todaySessions.length}</p>
+            <p className="text-[11px] text-gray-500 mt-1">Pomodoros hoy</p>
+            <div className="h-1 rounded-full bg-gray-100 mt-2 overflow-hidden">
               <div className="h-full rounded-full bg-cyan-500 transition-all" style={{ width: `${Math.min(100, (todaySessions.length / config.sessionsBeforeLong) * 100)}%` }} />
             </div>
           </div>
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
-            <p className="text-2xl font-black text-white tabular-nums">
+          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 text-center">
+            <p className="text-2xl font-black text-gray-900 tabular-nums">
               {Math.round(todaySessions.reduce((a, s) => a + s.duration, 0) / 60 * 10) / 10}h
             </p>
-            <p className="text-[11px] text-slate-500 mt-1">Foco hoy</p>
-            <div className="h-1 rounded-full bg-white/[0.06] mt-2 overflow-hidden">
+            <p className="text-[11px] text-gray-500 mt-1">Foco hoy</p>
+            <div className="h-1 rounded-full bg-gray-100 mt-2 overflow-hidden">
               <div className="h-full rounded-full bg-teal-500 transition-all" style={{ width: `${Math.min(100, (todaySessions.reduce((a,s)=>a+s.duration,0) / 60 / 8) * 100)}%` }} />
             </div>
           </div>
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
-            <p className="text-2xl font-black text-white tabular-nums">
+          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 text-center">
+            <p className="text-2xl font-black text-gray-900 tabular-nums">
               {Math.round(getWeekMinutes() / 60 * 10) / 10}h
             </p>
-            <p className="text-[11px] text-slate-500 mt-1">Desde el viernes</p>
-            <div className="h-1 rounded-full bg-white/[0.06] mt-2 overflow-hidden">
+            <p className="text-[11px] text-gray-500 mt-1">Desde el viernes</p>
+            <div className="h-1 rounded-full bg-gray-100 mt-2 overflow-hidden">
               <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${Math.min(100, (getWeekMinutes() / 60 / 40) * 100)}%` }} />
             </div>
           </div>
@@ -456,8 +456,8 @@ export default function PomodoroPage() {
 
         {/* Growing tree card */}
         <motion.div variants={fadeUp}>
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 flex flex-col items-center gap-2">
-            <p className="text-xs text-slate-600 font-medium uppercase tracking-wider self-start">Tu árbol de hoy</p>
+          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5 flex flex-col items-center gap-2">
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider self-start">Tu árbol de hoy</p>
             <GrowingTree count={todaySessions.length} />
             <div className="flex gap-1 mt-1">
               {Array.from({ length: 8 }, (_, i) => (
@@ -466,24 +466,24 @@ export default function PomodoroPage() {
                   className="h-1 rounded-full transition-all"
                   style={{
                     width: i < todaySessions.length ? 14 : 10,
-                    background: i < todaySessions.length ? '#22c55e' : 'rgba(255,255,255,0.07)',
+                    background: i < todaySessions.length ? '#22c55e' : 'rgba(0,0,0,0.08)',
                   }}
                 />
               ))}
             </div>
-            <p className="text-[10px] text-slate-700">{todaySessions.length}/8 sesiones hoy</p>
+            <p className="text-[10px] text-gray-400">{todaySessions.length}/8 sesiones hoy</p>
           </div>
         </motion.div>
 
         {/* Session history */}
         {todaySessions.length > 0 && (
           <motion.div variants={fadeUp}>
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+            <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-white">Sesiones de hoy</h3>
+                <h3 className="text-sm font-bold text-gray-900">Sesiones de hoy</h3>
                 <button
                   onClick={() => setHistoryOpen(true)}
-                  className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                  className="text-xs text-cyan-600 hover:text-cyan-500 transition-colors"
                 >
                   Ver todo →
                 </button>
@@ -515,9 +515,9 @@ export default function PomodoroPage() {
                   return (
                     <div key={s.id} className="flex items-center gap-3 text-sm py-1">
                       <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: m.color }} />
-                      <span className="text-slate-300 flex-1 truncate text-xs">{s.taskTitle ?? m.label}</span>
+                      <span className="text-gray-700 flex-1 truncate text-xs">{s.taskTitle ?? m.label}</span>
                       <span className="text-xs font-mono" style={{ color: m.color }}>{s.duration}min</span>
-                      <span className="text-[10px] text-slate-700">
+                      <span className="text-[10px] text-gray-400">
                         {new Date(s.startedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -543,8 +543,8 @@ export default function PomodoroPage() {
           ].map(({ key, label, unit, min, max }) => (
             <div key={key}>
               <div className="flex justify-between mb-2">
-                <label className="text-sm text-slate-400">{label}</label>
-                <span className="text-sm text-white font-mono font-bold">{(config as any)[key]}{unit}</span>
+                <label className="text-sm text-gray-500">{label}</label>
+                <span className="text-sm text-gray-900 font-mono font-bold">{(config as any)[key]}{unit}</span>
               </div>
               <input
                 type="range" min={min} max={max}
@@ -565,7 +565,7 @@ export default function PomodoroPage() {
                 className="rounded"
                 style={{ accentColor: '#00D4B8' }}
               />
-              <span className="text-sm text-slate-400">Auto-iniciar descansos</span>
+              <span className="text-sm text-gray-500">Auto-iniciar descansos</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -575,7 +575,7 @@ export default function PomodoroPage() {
                 className="rounded"
                 style={{ accentColor: '#00D4B8' }}
               />
-              <span className="text-sm text-slate-400">Auto-iniciar foco</span>
+              <span className="text-sm text-gray-500">Auto-iniciar foco</span>
             </label>
           </div>
 

@@ -44,8 +44,8 @@ export default function SettingsPage() {
   return (
     <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-5 max-w-2xl mx-auto">
       <motion.div variants={fadeUp}>
-        <h1 className="text-2xl font-black text-white flex items-center gap-2">
-          <Settings size={24} className="text-slate-400" /> Configuración
+        <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+          <Settings size={24} className="text-gray-400" /> Configuración
         </h1>
       </motion.div>
 
@@ -59,16 +59,16 @@ export default function SettingsPage() {
               </div>
             </ProgressRing>
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-white">{user?.name}</h2>
-              <p className="text-sm text-slate-400">{user?.email}</p>
+              <h2 className="text-xl font-bold text-gray-900">{user?.name}</h2>
+              <p className="text-sm text-gray-500">{user?.email}</p>
               <div className="flex items-center gap-3 mt-2">
                 <div className="flex items-center gap-1">
-                  <Crown size={12} className="text-violet-400" />
-                  <span className="text-xs text-violet-400">Lv.{user?.level} — {getLevelTitle(user?.level ?? 1)}</span>
+                  <Crown size={12} className="text-violet-600" />
+                  <span className="text-xs text-violet-600">Lv.{user?.level} — {getLevelTitle(user?.level ?? 1)}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Flame size={12} className="text-orange-400" />
-                  <span className="text-xs text-orange-400">{user?.streak}d racha</span>
+                  <Flame size={12} className="text-orange-500" />
+                  <span className="text-xs text-orange-500">{user?.streak}d racha</span>
                 </div>
               </div>
             </div>
@@ -79,18 +79,18 @@ export default function SettingsPage() {
       {/* Badges */}
       <motion.div variants={fadeUp}>
         <GlassCard className="p-5" animate={false}>
-          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-            <Star size={16} className="text-amber-400" /> Mis Badges ({user?.badges.length ?? 0})
+          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Star size={16} className="text-amber-500" /> Mis Badges ({user?.badges.length ?? 0})
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {(user?.badges ?? []).map(b => {
               const bd = BADGE_DATA[b]
               if (!bd) return null
               return (
-                <div key={b} className="flex flex-col items-center gap-2 p-3 glass rounded-xl">
+                <div key={b} className="flex flex-col items-center gap-2 p-3 bg-gray-50 border border-gray-100 rounded-xl">
                   <span className="text-2xl">{bd.icon}</span>
-                  <p className="text-xs font-semibold text-white text-center">{bd.name}</p>
-                  <p className="text-[10px] text-slate-500 text-center">{bd.desc}</p>
+                  <p className="text-xs font-semibold text-gray-900 text-center">{bd.name}</p>
+                  <p className="text-[10px] text-gray-500 text-center">{bd.desc}</p>
                 </div>
               )
             })}
@@ -101,8 +101,8 @@ export default function SettingsPage() {
       {/* Profile settings */}
       <motion.div variants={fadeUp}>
         <GlassCard className="p-5" animate={false}>
-          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-            <User size={16} className="text-cyan-400" /> Perfil
+          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <User size={16} className="text-cyan-600" /> Perfil
           </h3>
           <div className="space-y-4">
             <Input label="Nombre completo" value={name} onChange={e => setName(e.target.value)} />
@@ -126,16 +126,16 @@ export default function SettingsPage() {
             return (
               <div
                 key={item.label}
-                className={`flex items-center gap-3 p-4 hover:bg-white/[0.04] cursor-pointer transition-colors ${i > 0 ? 'border-t border-white/[0.04]' : ''}`}
+                className={`flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer transition-colors ${i > 0 ? 'border-t border-gray-100' : ''}`}
               >
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${item.color}15`, color: item.color }}>
                   <Icon size={16} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-white">{item.label}</p>
-                  <p className="text-xs text-slate-500">{item.desc}</p>
+                  <p className="text-sm font-medium text-gray-900">{item.label}</p>
+                  <p className="text-xs text-gray-500">{item.desc}</p>
                 </div>
-                <ChevronRight size={16} className="text-slate-600" />
+                <ChevronRight size={16} className="text-gray-300" />
               </div>
             )
           })}

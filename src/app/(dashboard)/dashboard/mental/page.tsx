@@ -15,9 +15,9 @@ import { es } from 'date-fns/locale'
 type Tab = 'libros' | 'temas'
 
 const STATUS_LABELS: Record<ItemStatus, { label: string; color: string; bg: string }> = {
-  active:    { label: 'Leyendo',    color: '#00D4B8', bg: 'rgba(0,212,184,0.1)'  },
-  upcoming:  { label: 'Próximo',    color: '#F59E0B', bg: 'rgba(245,158,11,0.1)' },
-  completed: { label: 'Completado', color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
+  active:    { label: 'Leyendo',    color: '#0891B2', bg: 'rgba(8,145,178,0.08)'  },
+  upcoming:  { label: 'Próximo',    color: '#D97706', bg: 'rgba(217,119,6,0.08)' },
+  completed: { label: 'Completado', color: '#059669', bg: 'rgba(5,150,105,0.08)' },
 }
 
 const BOOK_EMOJIS = ['📚', '📖', '📕', '📗', '📘', '📙', '🔖', '✍️', '🧠', '💡']
@@ -81,10 +81,10 @@ export default function MentalPage() {
       {/* Header */}
       <motion.div variants={fadeUp} className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-white flex items-center gap-2">
+          <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
             <span className="text-2xl">🧠</span> Mental
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">
+          <p className="text-gray-500 text-sm mt-0.5">
             {bookStats.active} leyendo · {bookStats.completed} libros completados
           </p>
         </div>
@@ -94,12 +94,12 @@ export default function MentalPage() {
       </motion.div>
 
       {/* Tabs */}
-      <motion.div variants={fadeUp} className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06] w-fit">
+      <motion.div variants={fadeUp} className="flex gap-1 p-1 rounded-xl bg-gray-100 border border-gray-200 w-fit">
         {([['libros', '📚 Libros'], ['temas', '🎯 Temas']] as [Tab, string][]).map(([id, label]) => (
           <button key={id} onClick={() => { setTab(id); setFilterStatus('all') }}
             className={cn(
               'px-4 py-2 rounded-lg text-sm font-medium transition-all',
-              tab === id ? 'bg-cyan-500/20 text-cyan-300' : 'text-slate-400 hover:text-slate-200'
+              tab === id ? 'bg-white text-cyan-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             )}>
             {label}
           </button>
@@ -111,12 +111,13 @@ export default function MentalPage() {
         {([['all', 'Todos'], ['active', 'Leyendo/Activos'], ['upcoming', 'Próximos'], ['completed', 'Completados']] as [ItemStatus | 'all', string][]).map(([s, label]) => (
           <button key={s} onClick={() => setFilterStatus(s)}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
-              filterStatus === s ? 'bg-white/[0.1] text-white' : 'text-slate-500 hover:text-slate-300'
+              'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
+              filterStatus === s ? 'border-transparent' : 'border-gray-200 text-gray-500 hover:text-gray-700 bg-gray-50'
             )}
-            style={filterStatus === s && s !== 'all' ? {
-              background: `${STATUS_LABELS[s as ItemStatus].bg}`,
-              color: STATUS_LABELS[s as ItemStatus].color,
+            style={filterStatus === s ? {
+              background: s === 'all' ? '#F3F4F6' : STATUS_LABELS[s as ItemStatus].bg,
+              color: s === 'all' ? '#374151' : STATUS_LABELS[s as ItemStatus].color,
+              borderColor: s === 'all' ? '#E5E7EB' : STATUS_LABELS[s as ItemStatus].color + '40',
             } : undefined}
           >
             {label}
@@ -137,7 +138,7 @@ export default function MentalPage() {
             {filteredBooks.length === 0 ? (
               <div className="text-center py-14">
                 <span className="text-4xl block mb-2">📚</span>
-                <p className="text-slate-500 text-sm mb-3">
+                <p className="text-gray-500 text-sm mb-3">
                   {filterStatus === 'all' ? 'Sin libros aún' : `Sin libros ${STATUS_LABELS[filterStatus as ItemStatus]?.label.toLowerCase()}`}
                 </p>
                 <Button variant="glow" size="sm" onClick={() => setBookModal(true)}><Plus size={14} /> Agregar libro</Button>
@@ -146,24 +147,24 @@ export default function MentalPage() {
               <motion.div key={book.id} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                 className={cn(
                   'p-4 rounded-2xl border transition-all group',
-                  book.status === 'active' ? 'border-cyan-500/20 bg-cyan-500/[0.04]' :
-                  book.status === 'completed' ? 'border-emerald-500/15 bg-white/[0.02]' :
-                  'border-white/[0.06] bg-white/[0.02]'
+                  book.status === 'active' ? 'border-cyan-200 bg-cyan-50' :
+                  book.status === 'completed' ? 'border-emerald-100 bg-gray-50' :
+                  'border-gray-100 bg-gray-50'
                 )}>
                 <div className="flex items-start gap-3">
                   <span className="text-2xl shrink-0">{book.emoji}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className={cn('text-sm font-bold', book.status === 'completed' ? 'text-slate-400' : 'text-white')}>
+                        <p className={cn('text-sm font-bold', book.status === 'completed' ? 'text-gray-400' : 'text-gray-900')}>
                           {book.title}
                         </p>
-                        {book.author && <p className="text-xs text-slate-600 mt-0.5">{book.author}</p>}
+                        {book.author && <p className="text-xs text-gray-400 mt-0.5">{book.author}</p>}
                       </div>
                       <StatusBadge status={book.status} />
                     </div>
                     {(book.startDate || book.endDate) && (
-                      <p className="text-[10px] text-slate-700 mt-1.5">
+                      <p className="text-[10px] text-gray-400 mt-1.5">
                         {book.startDate && `Inicio: ${format(new Date(book.startDate), "d MMM yyyy", { locale: es })}`}
                         {book.endDate && ` · Fin: ${format(new Date(book.endDate), "d MMM yyyy", { locale: es })}`}
                       </p>
@@ -171,18 +172,18 @@ export default function MentalPage() {
                     <div className="flex gap-2 mt-2.5">
                       {book.status === 'upcoming' && (
                         <button onClick={() => startBook(book.id)}
-                          className="flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors">
+                          className="flex items-center gap-1 text-[10px] text-cyan-600 hover:text-cyan-700 transition-colors">
                           <Play size={10} /> Empezar a leer
                         </button>
                       )}
                       {book.status === 'active' && (
                         <button onClick={() => finishBook(book.id)}
-                          className="flex items-center gap-1 text-[10px] text-emerald-400 hover:text-emerald-300 transition-colors">
+                          className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700 transition-colors">
                           <Flag size={10} /> Marcar terminado
                         </button>
                       )}
                       <button onClick={() => deleteBook(book.id)}
-                        className="flex items-center gap-1 text-[10px] text-slate-700 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 ml-auto">
+                        className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 ml-auto">
                         <Trash2 size={10} /> Eliminar
                       </button>
                     </div>
@@ -199,7 +200,7 @@ export default function MentalPage() {
             {filteredTopics.length === 0 ? (
               <div className="text-center py-14">
                 <span className="text-4xl block mb-2">🎯</span>
-                <p className="text-slate-500 text-sm mb-3">
+                <p className="text-gray-500 text-sm mb-3">
                   {filterStatus === 'all' ? 'Sin temas de estudio' : `Sin temas ${STATUS_LABELS[filterStatus as ItemStatus]?.label.toLowerCase()}`}
                 </p>
                 <Button variant="glow" size="sm" onClick={() => setTopicModal(true)}><Plus size={14} /> Agregar tema</Button>
@@ -208,24 +209,24 @@ export default function MentalPage() {
               <motion.div key={topic.id} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                 className={cn(
                   'p-4 rounded-2xl border transition-all group',
-                  topic.status === 'active' ? 'border-violet-500/20 bg-violet-500/[0.04]' :
-                  topic.status === 'completed' ? 'border-emerald-500/15 bg-white/[0.02]' :
-                  'border-white/[0.06] bg-white/[0.02]'
+                  topic.status === 'active' ? 'border-violet-200 bg-violet-50' :
+                  topic.status === 'completed' ? 'border-emerald-100 bg-gray-50' :
+                  'border-gray-100 bg-gray-50'
                 )}>
                 <div className="flex items-start gap-3">
                   <span className="text-2xl shrink-0">{topic.emoji}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className={cn('text-sm font-bold', topic.status === 'completed' ? 'text-slate-400' : 'text-white')}>
+                        <p className={cn('text-sm font-bold', topic.status === 'completed' ? 'text-gray-400' : 'text-gray-900')}>
                           {topic.name}
                         </p>
-                        {topic.description && <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{topic.description}</p>}
+                        {topic.description && <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{topic.description}</p>}
                       </div>
                       <StatusBadge status={topic.status} />
                     </div>
                     {(topic.startDate || topic.endDate) && (
-                      <p className="text-[10px] text-slate-700 mt-1.5">
+                      <p className="text-[10px] text-gray-400 mt-1.5">
                         {topic.startDate && `Inicio: ${format(new Date(topic.startDate), "d MMM yyyy", { locale: es })}`}
                         {topic.endDate && ` · Fin: ${format(new Date(topic.endDate), "d MMM yyyy", { locale: es })}`}
                       </p>
@@ -233,18 +234,18 @@ export default function MentalPage() {
                     <div className="flex gap-2 mt-2.5">
                       {topic.status === 'upcoming' && (
                         <button onClick={() => startTopic(topic.id)}
-                          className="flex items-center gap-1 text-[10px] text-violet-400 hover:text-violet-300 transition-colors">
+                          className="flex items-center gap-1 text-[10px] text-violet-600 hover:text-violet-700 transition-colors">
                           <Play size={10} /> Empezar
                         </button>
                       )}
                       {topic.status === 'active' && (
                         <button onClick={() => finishTopic(topic.id)}
-                          className="flex items-center gap-1 text-[10px] text-emerald-400 hover:text-emerald-300 transition-colors">
+                          className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700 transition-colors">
                           <Flag size={10} /> Marcar completado
                         </button>
                       )}
                       <button onClick={() => deleteTopic(topic.id)}
-                        className="flex items-center gap-1 text-[10px] text-slate-700 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 ml-auto">
+                        className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 ml-auto">
                         <Trash2 size={10} /> Eliminar
                       </button>
                     </div>
@@ -260,11 +261,11 @@ export default function MentalPage() {
       <Modal open={bookModal} onClose={() => setBookModal(false)} title="Agregar Libro">
         <div className="space-y-4">
           <div>
-            <label className="text-xs text-slate-400 mb-2 block">Emoji</label>
+            <label className="text-xs text-gray-500 mb-2 block">Emoji</label>
             <div className="flex gap-2 flex-wrap">
               {BOOK_EMOJIS.map(e => (
                 <button key={e} onClick={() => setNewBook(b => ({ ...b, emoji: e }))}
-                  className={cn('w-9 h-9 rounded-lg text-xl transition-all', newBook.emoji === e ? 'bg-cyan-500/20 ring-1 ring-cyan-500/40 scale-110' : 'bg-white/[0.04] hover:bg-white/[0.08]')}>
+                  className={cn('w-9 h-9 rounded-lg text-xl transition-all', newBook.emoji === e ? 'bg-cyan-100 ring-1 ring-cyan-300 scale-110' : 'bg-gray-100 hover:bg-gray-200')}>
                   {e}
                 </button>
               ))}
@@ -275,11 +276,11 @@ export default function MentalPage() {
           <Input label="Autor (opcional)" placeholder="James Clear..."
             value={newBook.author} onChange={e => setNewBook(b => ({ ...b, author: e.target.value }))} />
           <div>
-            <label className="text-sm text-slate-400 font-medium block mb-2">Estado inicial</label>
+            <label className="text-sm text-gray-700 font-medium block mb-2">Estado inicial</label>
             <div className="flex gap-2">
               {(['upcoming', 'active'] as ItemStatus[]).map(s => (
                 <button key={s} onClick={() => setNewBook(b => ({ ...b, status: s }))}
-                  className={cn('flex-1 py-2 rounded-xl text-xs font-medium transition-all border', newBook.status === s ? 'text-white' : 'border-white/[0.06] text-slate-500')}
+                  className={cn('flex-1 py-2 rounded-xl text-xs font-medium transition-all border', newBook.status === s ? '' : 'border-gray-200 text-gray-500 bg-gray-50')}
                   style={newBook.status === s ? { background: STATUS_LABELS[s].bg, borderColor: STATUS_LABELS[s].color + '50', color: STATUS_LABELS[s].color } : undefined}>
                   {STATUS_LABELS[s].label}
                 </button>
@@ -299,11 +300,11 @@ export default function MentalPage() {
       <Modal open={topicModal} onClose={() => setTopicModal(false)} title="Agregar Tema de Estudio">
         <div className="space-y-4">
           <div>
-            <label className="text-xs text-slate-400 mb-2 block">Emoji</label>
+            <label className="text-xs text-gray-500 mb-2 block">Emoji</label>
             <div className="flex gap-2 flex-wrap">
               {TOPIC_EMOJIS.map(e => (
                 <button key={e} onClick={() => setNewTopic(t => ({ ...t, emoji: e }))}
-                  className={cn('w-9 h-9 rounded-lg text-xl transition-all', newTopic.emoji === e ? 'bg-violet-500/20 ring-1 ring-violet-500/40 scale-110' : 'bg-white/[0.04] hover:bg-white/[0.08]')}>
+                  className={cn('w-9 h-9 rounded-lg text-xl transition-all', newTopic.emoji === e ? 'bg-violet-100 ring-1 ring-violet-300 scale-110' : 'bg-gray-100 hover:bg-gray-200')}>
                   {e}
                 </button>
               ))}
@@ -312,18 +313,18 @@ export default function MentalPage() {
           <Input label="Nombre del tema" placeholder="TypeScript, Finanzas personales, Hebreo..."
             value={newTopic.name} onChange={e => setNewTopic(t => ({ ...t, name: e.target.value }))} />
           <div>
-            <label className="text-xs text-slate-400 mb-1.5 block">Descripción (opcional)</label>
+            <label className="text-xs text-gray-500 mb-1.5 block">Descripción (opcional)</label>
             <textarea value={newTopic.description} onChange={e => setNewTopic(t => ({ ...t, description: e.target.value }))}
               placeholder="Qué quiero aprender, por qué..."
               rows={2}
-              className="w-full rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-slate-200 placeholder-slate-700 px-3 py-2.5 focus:outline-none resize-none" />
+              className="w-full rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 px-3 py-2.5 focus:outline-none resize-none" />
           </div>
           <div>
-            <label className="text-sm text-slate-400 font-medium block mb-2">Estado inicial</label>
+            <label className="text-sm text-gray-700 font-medium block mb-2">Estado inicial</label>
             <div className="flex gap-2">
               {(['upcoming', 'active'] as ItemStatus[]).map(s => (
                 <button key={s} onClick={() => setNewTopic(t => ({ ...t, status: s }))}
-                  className={cn('flex-1 py-2 rounded-xl text-xs font-medium transition-all border', newTopic.status === s ? 'text-white' : 'border-white/[0.06] text-slate-500')}
+                  className={cn('flex-1 py-2 rounded-xl text-xs font-medium transition-all border', newTopic.status === s ? '' : 'border-gray-200 text-gray-500 bg-gray-50')}
                   style={newTopic.status === s ? { background: STATUS_LABELS[s].bg, borderColor: STATUS_LABELS[s].color + '50', color: STATUS_LABELS[s].color } : undefined}>
                   {STATUS_LABELS[s].label}
                 </button>

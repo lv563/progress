@@ -5,7 +5,6 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Crown, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
-import { GlassCard } from '@/components/ui/GlassCard'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { useAppStore } from '@/stores/app.store'
@@ -56,8 +55,8 @@ export default function LoginPage() {
           <Crown size={32} className="text-white" />
         </div>
         <div className="text-center">
-          <h1 className="text-h1 text-white">Kingdom OS</h1>
-          <p className="text-body text-slate-400 mt-0.5">Tu sistema operativo de vida</p>
+          <h1 className="text-h1 text-gray-900">Kingdom OS</h1>
+          <p className="text-body text-gray-500 mt-0.5">Tu sistema operativo de vida</p>
         </div>
       </motion.div>
 
@@ -68,14 +67,14 @@ export default function LoginPage() {
         transition={{ delay: 0.1 }}
         className="w-full"
       >
-        <GlassCard className="p-6" variant="elevated">
-          <h2 className="text-h3 text-white mb-6">Iniciar sesión</h2>
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-6">
+          <h2 className="text-h3 text-gray-900 mb-6">Iniciar sesión</h2>
 
           {error && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="mb-4 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
+              className="mb-4 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm"
             >
               {error}
             </motion.div>
@@ -105,7 +104,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
-                className="absolute right-3 bottom-2.5 text-slate-500 hover:text-slate-300 transition-colors"
+                className="absolute right-3 bottom-2.5 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
@@ -114,9 +113,9 @@ export default function LoginPage() {
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" className="rounded accent-violet-500" />
-                <span className="text-xs text-slate-400">Recordarme</span>
+                <span className="text-xs text-gray-500">Recordarme</span>
               </label>
-              <button type="button" className="text-xs text-violet-400 hover:text-violet-300 transition-colors">
+              <button type="button" className="text-xs text-indigo-600 hover:text-indigo-700 transition-colors">
                 ¿Olvidaste tu contraseña?
               </button>
             </div>
@@ -128,14 +127,14 @@ export default function LoginPage() {
 
           <div className="relative my-5">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/[0.06]" />
+              <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center">
-              <span className="px-3 bg-transparent text-xs text-slate-600">o continúa con</span>
+              <span className="px-3 bg-white text-xs text-gray-400">o continúa con</span>
             </div>
           </div>
 
-          <button className="w-full h-10 rounded-xl glass border border-white/10 flex items-center justify-center gap-2 text-sm text-slate-300 hover:bg-white/[0.08] transition-colors">
+          <button className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center gap-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
             <svg viewBox="0 0 24 24" className="w-4 h-4">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -144,17 +143,17 @@ export default function LoginPage() {
             </svg>
             Continuar con Google
           </button>
-        </GlassCard>
+        </div>
       </motion.div>
 
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="text-sm text-slate-500"
+        className="text-sm text-gray-500"
       >
         ¿No tienes cuenta?{' '}
-        <Link href="/register" className="text-violet-400 hover:text-violet-300 font-medium transition-colors">
+        <Link href="/register" className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
           Regístrate gratis
         </Link>
       </motion.p>

@@ -119,15 +119,15 @@ function AchievementToast({ achievement, onDismiss }: { achievement: GoalAchieve
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 320, opacity: 0 }}
       className="fixed top-6 right-6 z-[300] flex items-center gap-3 px-4 py-3 rounded-2xl border"
-      style={{ background: 'rgba(13,18,24,0.97)', borderColor: 'rgba(245,158,11,0.4)', boxShadow: '0 0 40px rgba(245,158,11,0.2)' }}
+      style={{ background: 'rgba(255,255,255,0.97)', borderColor: 'rgba(245,158,11,0.4)', boxShadow: '0 0 40px rgba(245,158,11,0.2)' }}
     >
       <div className="text-3xl">{achievement.icon}</div>
       <div>
-        <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">¡Logro desbloqueado!</p>
-        <p className="text-sm font-bold text-white">{achievement.title}</p>
-        <p className="text-xs text-slate-400">+{achievement.xpReward} XP</p>
+        <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">¡Logro desbloqueado!</p>
+        <p className="text-sm font-bold text-gray-900">{achievement.title}</p>
+        <p className="text-xs text-gray-500">+{achievement.xpReward} XP</p>
       </div>
-      <button onClick={onDismiss} className="ml-1 text-slate-600 hover:text-slate-300 transition-colors">
+      <button onClick={onDismiss} className="ml-1 text-gray-400 hover:text-gray-700 transition-colors">
         <X size={14} />
       </button>
     </motion.div>
@@ -138,9 +138,9 @@ function AchievementToast({ achievement, onDismiss }: { achievement: GoalAchieve
 
 function StatWidget({ label, value, Icon, color }: { label: string; value: string | number; Icon: any; color: string }) {
   return (
-    <div className="flex flex-col gap-1.5 p-4 rounded-2xl border border-white/[0.06] bg-white/[0.03]">
+    <div className="flex flex-col gap-1.5 p-4 rounded-2xl border border-gray-100 bg-gray-50">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-500">{label}</span>
+        <span className="text-xs text-gray-500">{label}</span>
         <Icon size={14} style={{ color }} />
       </div>
       <p className="text-2xl font-black tabular-nums" style={{ color }}>{value}</p>
@@ -172,7 +172,7 @@ function GoalCard({
       layout
       whileHover={{ y: done ? 0 : -2 }}
       className={cn('rounded-2xl border overflow-hidden', done && 'opacity-60')}
-      style={{ background: `linear-gradient(135deg, ${cat.color}08 0%, #0E1318 70%)`, borderColor: `${cat.color}22` }}
+      style={{ background: `linear-gradient(135deg, ${cat.color}08 0%, #ffffff 70%)`, borderColor: `${cat.color}22` }}
     >
       <div className="h-0.5" style={{ background: `linear-gradient(90deg, ${cat.color}, transparent)` }} />
       <div className="p-4">
@@ -188,10 +188,10 @@ function GoalCard({
                 {sta.label}
               </span>
             </div>
-            <p className={cn('font-bold text-white leading-snug text-sm', done && 'line-through')}>{goal.title}</p>
-            {goal.description && <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{goal.description}</p>}
+            <p className={cn('font-bold text-gray-900 leading-snug text-sm', done && 'line-through')}>{goal.title}</p>
+            {goal.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{goal.description}</p>}
           </div>
-          <button onClick={() => setExpanded(v => !v)} className="text-slate-600 hover:text-slate-400 transition-colors shrink-0 mt-1">
+          <button onClick={() => setExpanded(v => !v)} className="text-gray-400 hover:text-gray-500 transition-colors shrink-0 mt-1">
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
         </div>
@@ -199,10 +199,10 @@ function GoalCard({
         {/* Progress */}
         <div className="mb-3">
           <div className="flex justify-between text-xs mb-1">
-            <span className="text-slate-500">Progreso</span>
+            <span className="text-gray-500">Progreso</span>
             <span className="font-bold" style={{ color: cat.color }}>{goal.progress}%</span>
           </div>
-          <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+          <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
             <motion.div className="h-full rounded-full"
               initial={{ width: 0 }} animate={{ width: `${goal.progress}%` }}
               transition={{ duration: 0.7, ease: 'easeOut' }}
@@ -211,7 +211,7 @@ function GoalCard({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center gap-3 text-[11px] text-slate-600">
+        <div className="flex items-center gap-3 text-[11px] text-gray-400">
           <span className="flex items-center gap-1"><Calendar size={10} />{format(new Date(goal.targetDate), 'd MMM yy', { locale: es })}</span>
           {childCount > 0 && <span className="flex items-center gap-1"><Target size={10} />{childDone}/{childCount}</span>}
           <span className="flex items-center gap-1 ml-auto"><Star size={10} className="text-amber-500" />+{GOAL_XP[goal.type]}</span>
@@ -221,10 +221,10 @@ function GoalCard({
         <AnimatePresence>
           {expanded && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-              <div className="pt-3 mt-3 border-t border-white/[0.06] space-y-3">
+              <div className="pt-3 mt-3 border-t border-gray-100 space-y-3">
                 {!done && (
                   <div>
-                    <label className="text-xs text-slate-500 mb-1.5 block">Ajustar progreso</label>
+                    <label className="text-xs text-gray-500 mb-1.5 block">Ajustar progreso</label>
                     <input type="range" min={0} max={100} value={goal.progress}
                       onChange={e => onProgressChange(Number(e.target.value))}
                       className="w-full accent-cyan-500" />
@@ -233,15 +233,15 @@ function GoalCard({
                 <div className="flex gap-2">
                   {!done && (
                     <button onClick={onComplete}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-white transition-all"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-gray-900 transition-all"
                       style={{ background: `linear-gradient(135deg, ${cat.color} 0%, ${cat.color}80 100%)` }}>
                       <CheckCircle2 size={13} /> Completar +{GOAL_XP[goal.type]} XP
                     </button>
                   )}
-                  <button onClick={onEdit} className="px-3 py-2 rounded-xl text-xs text-slate-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-all">
+                  <button onClick={onEdit} className="px-3 py-2 rounded-xl text-xs text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 transition-all">
                     <Edit3 size={13} />
                   </button>
-                  <button onClick={onDelete} className="px-3 py-2 rounded-xl text-xs text-red-400/60 hover:text-red-400 bg-white/[0.04] hover:bg-red-500/10 transition-all">
+                  <button onClick={onDelete} className="px-3 py-2 rounded-xl text-xs text-red-600/60 hover:text-red-600 bg-gray-50 hover:bg-red-500/10 transition-all">
                     <Trash2 size={13} />
                   </button>
                 </div>
@@ -265,23 +265,23 @@ function TaskItem({ task, onToggle }: { task: Goal; onToggle: () => void }) {
     <motion.div layout whileTap={{ scale: 0.98 }}
       className={cn(
         'flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group',
-        isDone ? 'opacity-40 bg-white/[0.02] border-white/[0.04]' : 'bg-white/[0.04] border-white/[0.07] hover:border-white/[0.14]'
+        isDone ? 'opacity-40 bg-gray-50 border-gray-100' : 'bg-gray-50 border-gray-200 hover:border-gray-300'
       )}
       onClick={onToggle}
     >
       <button className="shrink-0 transition-transform group-hover:scale-110">
         {isDone
           ? <CheckCircle2 size={20} style={{ color: cat.color }} />
-          : <Circle size={20} className="text-slate-600 group-hover:text-slate-300" />}
+          : <Circle size={20} className="text-gray-400 group-hover:text-gray-700" />}
       </button>
       <div className="flex-1 min-w-0">
-        <p className={cn('text-sm font-medium leading-snug', isDone ? 'text-slate-600 line-through' : 'text-white')}>
+        <p className={cn('text-sm font-medium leading-snug', isDone ? 'text-gray-400 line-through' : 'text-gray-900')}>
           {task.title}
         </p>
-        {task.time && <span className="text-xs text-slate-600 flex items-center gap-1 mt-0.5"><AlarmClock size={10} />{task.time}</span>}
+        {task.time && <span className="text-xs text-gray-400 flex items-center gap-1 mt-0.5"><AlarmClock size={10} />{task.time}</span>}
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        {task.repeat && <RotateCcw size={11} className="text-slate-700" />}
+        {task.repeat && <RotateCcw size={11} className="text-gray-400" />}
         <span className="text-sm">{cat.icon}</span>
         <div className="w-1.5 h-1.5 rounded-full" style={{ background: PRIORITY_META[task.priority].color }} />
       </div>
@@ -332,11 +332,11 @@ function AddGoalModal({ open, onClose, onSave, initialType, parentGoals }: {
     <Modal open={open} onClose={onClose} title="Nueva meta">
       <div className="space-y-4">
         {/* Type pills */}
-        <div className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+        <div className="flex gap-1 p-1 rounded-xl bg-gray-100 border border-gray-200">
           {(['annual','monthly','weekly','daily'] as GoalType[]).map(t => (
             <button key={t} onClick={() => set('type', t)}
               className={cn('flex-1 py-1.5 rounded-lg text-xs font-medium transition-all',
-                form.type === t ? 'bg-cyan-500/20 text-cyan-300' : 'text-slate-500 hover:text-slate-300')}>
+                form.type === t ? 'bg-white text-cyan-700 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
               {t === 'annual' ? 'Anual' : t === 'monthly' ? 'Mensual' : t === 'weekly' ? 'Semanal' : 'Diaria'}
             </button>
           ))}
@@ -347,24 +347,24 @@ function AddGoalModal({ open, onClose, onSave, initialType, parentGoals }: {
 
         {form.type !== 'daily' && (
           <div>
-            <label className="text-sm font-medium text-slate-300 block mb-1.5">Descripción (opcional)</label>
+            <label className="text-sm font-medium text-gray-700 block mb-1.5">Descripción (opcional)</label>
             <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={2} placeholder="¿Qué quieres lograr?"
-              className="w-full rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-slate-200 placeholder-slate-700 px-3 py-2.5 focus:outline-none focus:border-cyan-500/50 resize-none" />
+              className="w-full rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 px-3 py-2.5 focus:outline-none focus:border-cyan-500/50 resize-none" />
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-sm font-medium text-slate-300 block mb-1.5">Categoría</label>
+            <label className="text-sm font-medium text-gray-700 block mb-1.5">Categoría</label>
             <select value={form.category} onChange={e => set('category', e.target.value)}
-              className="w-full h-10 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white px-3 focus:outline-none">
+              className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none">
               {Object.entries(CAT_META).map(([v, m]) => <option key={v} value={v}>{m.icon} {m.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-300 block mb-1.5">Prioridad</label>
+            <label className="text-sm font-medium text-gray-700 block mb-1.5">Prioridad</label>
             <select value={form.priority} onChange={e => set('priority', e.target.value)}
-              className="w-full h-10 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white px-3 focus:outline-none">
+              className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none">
               {Object.entries(PRIORITY_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
             </select>
           </div>
@@ -372,9 +372,9 @@ function AddGoalModal({ open, onClose, onSave, initialType, parentGoals }: {
 
         {form.type !== 'annual' && parentGoals.length > 0 && (
           <div>
-            <label className="text-sm font-medium text-slate-300 block mb-1.5">Vincular a meta (opcional)</label>
+            <label className="text-sm font-medium text-gray-700 block mb-1.5">Vincular a meta (opcional)</label>
             <select value={form.parentId} onChange={e => set('parentId', e.target.value)}
-              className="w-full h-10 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white px-3 focus:outline-none">
+              className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none">
               <option value="">Sin vincular</option>
               {parentGoals.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
             </select>
@@ -383,25 +383,25 @@ function AddGoalModal({ open, onClose, onSave, initialType, parentGoals }: {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-sm font-medium text-slate-300 block mb-1.5">Fecha objetivo</label>
+            <label className="text-sm font-medium text-gray-700 block mb-1.5">Fecha objetivo</label>
             <input type="date" value={form.targetDate} onChange={e => set('targetDate', e.target.value)}
-              className="w-full h-10 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white px-3 focus:outline-none" />
+              className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none" />
           </div>
           {form.type === 'daily' && (
             <div>
-              <label className="text-sm font-medium text-slate-300 block mb-1.5">Hora (opcional)</label>
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Hora (opcional)</label>
               <input type="time" value={form.time} onChange={e => set('time', e.target.value)}
-                className="w-full h-10 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white px-3 focus:outline-none" />
+                className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none" />
             </div>
           )}
         </div>
 
         {form.type === 'daily' && (
-          <label className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.04] border border-white/[0.06] cursor-pointer">
+          <label className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100 cursor-pointer">
             <input type="checkbox" checked={form.repeat} onChange={e => set('repeat', e.target.checked)} className="accent-cyan-500 w-4 h-4" />
             <div>
-              <p className="text-sm font-medium text-white">Recurrente diaria</p>
-              <p className="text-xs text-slate-500">Aparece todos los días automáticamente</p>
+              <p className="text-sm font-medium text-gray-900">Recurrente diaria</p>
+              <p className="text-xs text-gray-500">Aparece todos los días automáticamente</p>
             </div>
           </label>
         )}
@@ -492,10 +492,10 @@ export default function GoalsPage() {
         {/* ── Header ── */}
         <motion.div variants={fadeUp} className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-white flex items-center gap-2">
-              <Trophy size={24} className="text-amber-400" /> Metas y Progreso
+            <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+              <Trophy size={24} className="text-amber-600" /> Metas y Progreso
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">{completed.filter(g => g.type !== 'daily').length} metas completadas · {streak}d de racha</p>
+            <p className="text-xs text-gray-500 mt-0.5">{completed.filter(g => g.type !== 'daily').length} metas completadas · {streak}d de racha</p>
           </div>
           <Button onClick={() => setAddModal(true)} variant="glow" size="sm">
             <Plus size={14} /> Nueva meta
@@ -503,11 +503,11 @@ export default function GoalsPage() {
         </motion.div>
 
         {/* ── Tabs ── */}
-        <motion.div variants={fadeUp} className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06] w-fit">
+        <motion.div variants={fadeUp} className="flex gap-1 p-1 rounded-xl bg-gray-100 border border-gray-200 w-fit">
           {([['dashboard','Resumen'],['metas','Metas'],['hoy','Hoy'],['logros','Logros']] as [Tab,string][]).map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)}
               className={cn('px-4 py-2 rounded-lg text-sm font-medium transition-all relative',
-                tab === id ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400 hover:text-slate-200')}>
+                tab === id ? 'bg-white text-amber-700 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
               {label}
               {id === 'logros' && unlockedCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[9px] text-black font-bold flex items-center justify-center">
@@ -522,17 +522,17 @@ export default function GoalsPage() {
         {tab === 'dashboard' && (
           <motion.div variants={fadeUp} className="space-y-5">
             {/* XP bar */}
-            <div className="p-4 rounded-2xl border border-amber-500/20 bg-amber-500/[0.05]">
+            <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-11 h-11 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
-                  <Crown size={20} className="text-amber-400" />
+                <div className="w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                  <Crown size={20} className="text-amber-600" />
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between mb-1">
-                    <p className="font-bold text-white">Nivel {lv.level} — {lv.title}</p>
-                    <p className="text-xs text-amber-400 font-semibold tabular-nums">{lv.current.toLocaleString()} / {lv.needed.toLocaleString()} XP</p>
+                    <p className="font-bold text-gray-900">Nivel {lv.level} — {lv.title}</p>
+                    <p className="text-xs text-amber-600 font-semibold tabular-nums">{lv.current.toLocaleString()} / {lv.needed.toLocaleString()} XP</p>
                   </div>
-                  <div className="h-2.5 rounded-full bg-white/[0.06] overflow-hidden">
+                  <div className="h-2.5 rounded-full bg-gray-200 overflow-hidden">
                     <motion.div className="h-full rounded-full"
                       style={{ background: 'linear-gradient(90deg, #F59E0B, #EF4444)' }}
                       initial={{ width: 0 }} animate={{ width: `${lv.pct}%` }}
@@ -540,8 +540,8 @@ export default function GoalsPage() {
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-slate-500 flex items-center gap-1.5">
-                <Zap size={11} className="text-amber-400" />{xp.toLocaleString()} XP total
+              <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                <Zap size={11} className="text-amber-600" />{xp.toLocaleString()} XP total
               </p>
             </div>
 
@@ -556,21 +556,21 @@ export default function GoalsPage() {
             {/* Today tasks */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-white flex items-center gap-2">
-                  <CheckSquare size={15} className="text-cyan-400" /> Tareas de hoy
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <CheckSquare size={15} className="text-cyan-600" /> Tareas de hoy
                 </h3>
-                <span className="text-xs text-slate-500">{todayDone.length}/{todayTasks.length}</span>
+                <span className="text-xs text-gray-500">{todayDone.length}/{todayTasks.length}</span>
               </div>
               {todayTasks.length === 0 ? (
                 <button onClick={() => { setGoalType('daily'); setTab('hoy'); setAddModal(true) }}
-                  className="w-full py-4 text-sm text-slate-600 border border-dashed border-white/[0.08] rounded-xl hover:text-slate-400 hover:border-white/[0.15] transition-all">
+                  className="w-full py-4 text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl hover:text-gray-500 hover:border-gray-300 transition-all">
                   + Agregar tareas para hoy
                 </button>
               ) : (
                 <div className="space-y-2">
                   {todayTasks.slice(0, 5).map(t => <TaskItem key={t.id} task={t} onToggle={() => handleToggleTask(t.id)} />)}
                   {todayTasks.length > 5 && (
-                    <button onClick={() => setTab('hoy')} className="w-full text-xs text-slate-500 hover:text-cyan-400 py-1.5 transition-colors">
+                    <button onClick={() => setTab('hoy')} className="w-full text-xs text-gray-500 hover:text-cyan-600 py-1.5 transition-colors">
                       +{todayTasks.length - 5} tareas más →
                     </button>
                   )}
@@ -581,17 +581,17 @@ export default function GoalsPage() {
             {/* Category progress */}
             {catProgress.length > 0 && (
               <div>
-                <h3 className="font-semibold text-white mb-3">Progreso por categoría</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">Progreso por categoría</h3>
                 <div className="space-y-2.5">
                   {catProgress.map(({ cat, pct }) => {
                     const m = CAT_META[cat]
                     return (
                       <div key={cat}>
                         <div className="flex justify-between text-xs mb-1">
-                          <span className="text-slate-400 flex items-center gap-1.5">{m.icon} {m.label}</span>
+                          <span className="text-gray-500 flex items-center gap-1.5">{m.icon} {m.label}</span>
                           <span className="font-bold" style={{ color: m.color }}>{pct}%</span>
                         </div>
-                        <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
                           <motion.div className="h-full rounded-full"
                             initial={{ width: 0 }} animate={{ width: `${pct}%` }}
                             transition={{ duration: 0.7, delay: 0.1 }}
@@ -608,8 +608,8 @@ export default function GoalsPage() {
             {getByType('annual').length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-white">Metas anuales</h3>
-                  <button onClick={() => setTab('metas')} className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors">
+                  <h3 className="font-semibold text-gray-900">Metas anuales</h3>
+                  <button onClick={() => setTab('metas')} className="text-xs text-cyan-600 hover:text-cyan-700 flex items-center gap-1 transition-colors">
                     Ver todas <ChevronRight size={12} />
                   </button>
                 </div>
@@ -617,11 +617,11 @@ export default function GoalsPage() {
                   {getByType('annual').slice(0, 4).map(g => {
                     const c = CAT_META[g.category]
                     return (
-                      <div key={g.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                      <div key={g.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
                         <span className="text-base shrink-0">{c.icon}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-white truncate">{g.title}</p>
-                          <div className="mt-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                          <p className="text-sm font-medium text-gray-900 truncate">{g.title}</p>
+                          <div className="mt-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
                             <div className="h-full rounded-full" style={{ width: `${g.progress}%`, background: c.color }} />
                           </div>
                         </div>
@@ -643,13 +643,13 @@ export default function GoalsPage() {
               {(['annual','monthly','weekly'] as GoalType[]).map(t => (
                 <button key={t} onClick={() => setGoalType(t)}
                   className={cn('px-4 py-2 rounded-xl text-sm font-medium border transition-all',
-                    goalType === t ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30' : 'text-slate-500 border-white/[0.06] hover:text-slate-300')}>
+                    goalType === t ? 'bg-cyan-100 text-cyan-600 border-cyan-200' : 'text-gray-500 border-gray-100 hover:text-gray-700')}>
                   {TYPE_LABELS[t]}
                   <span className="ml-1.5 text-xs opacity-60">({getByType(t).length})</span>
                 </button>
               ))}
               <button onClick={() => setAddModal(true)}
-                className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm border border-dashed border-white/[0.12] text-slate-500 hover:text-slate-300 hover:border-white/20 transition-all">
+                className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm border border-dashed border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-200 transition-all">
                 <Plus size={13} /> Agregar
               </button>
             </div>
@@ -659,7 +659,7 @@ export default function GoalsPage() {
               {[['all','Todas'],['not-started','Sin iniciar'],['in-progress','En progreso'],['completed','Completadas'],['paused','Pausadas']].map(([v,l]) => (
                 <button key={v} onClick={() => setStatus(v as any)}
                   className={cn('px-2.5 py-1 rounded-lg text-xs font-medium transition-all',
-                    statusFilter === v ? 'bg-white/[0.1] text-white' : 'text-slate-600 hover:text-slate-400')}>
+                    statusFilter === v ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-500')}>
                   {l}
                 </button>
               ))}
@@ -668,7 +668,7 @@ export default function GoalsPage() {
             {filteredGoals.length === 0 ? (
               <div className="text-center py-14 space-y-3">
                 <div className="text-5xl">🎯</div>
-                <p className="text-slate-500 text-sm">No tienes metas {TYPE_LABELS[goalType].toLowerCase()} aún.</p>
+                <p className="text-gray-500 text-sm">No tienes metas {TYPE_LABELS[goalType].toLowerCase()} aún.</p>
                 <Button variant="glow" size="sm" onClick={() => setAddModal(true)}><Plus size={14} /> Crear primera meta</Button>
               </div>
             ) : (
@@ -699,20 +699,20 @@ export default function GoalsPage() {
             {/* Date header */}
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-white text-lg capitalize">{format(new Date(), "EEEE, d 'de' MMMM", { locale: es })}</h3>
-                <p className="text-xs text-slate-500 mt-0.5">{todayDone.length} de {todayTasks.length} tareas completadas</p>
+                <h3 className="font-bold text-gray-900 text-lg capitalize">{format(new Date(), "EEEE, d 'de' MMMM", { locale: es })}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">{todayDone.length} de {todayTasks.length} tareas completadas</p>
               </div>
               {/* Circular progress */}
               <div className="w-14 h-14 relative">
                 <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                  <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
+                  <circle cx="18" cy="18" r="15" fill="none" stroke="#E5E7EB" strokeWidth="3" />
                   <motion.circle cx="18" cy="18" r="15" fill="none" stroke="#00D4B8" strokeWidth="3" strokeLinecap="round"
                     style={{ strokeDasharray: 94 }}
                     initial={{ strokeDashoffset: 94 }}
                     animate={{ strokeDashoffset: todayTasks.length > 0 ? 94 * (1 - todayDone.length / todayTasks.length) : 94 }}
                     transition={{ duration: 0.6 }} />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
+                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-900">
                   {todayTasks.length > 0 ? Math.round((todayDone.length / todayTasks.length) * 100) : 0}%
                 </span>
               </div>
@@ -720,14 +720,14 @@ export default function GoalsPage() {
 
             {/* Add quick */}
             <button onClick={() => { setGoalType('daily'); setAddModal(true) }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-white/[0.12] text-slate-500 hover:text-slate-300 hover:border-white/20 transition-all text-sm">
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-200 transition-all text-sm">
               <Plus size={16} /> Agregar tarea para hoy...
             </button>
 
             {/* Pending */}
             {todayTasks.filter(t => t.checkedDate !== todayStr).length > 0 && (
               <div>
-                <p className="text-xs text-slate-600 uppercase tracking-wider font-medium mb-2">Pendientes</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-2">Pendientes</p>
                 <div className="space-y-2">
                   {todayTasks
                     .filter(t => t.checkedDate !== todayStr)
@@ -741,7 +741,7 @@ export default function GoalsPage() {
             {/* Done */}
             {todayDone.length > 0 && (
               <div>
-                <p className="text-xs text-slate-600 uppercase tracking-wider font-medium mb-2">Completadas</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-2">Completadas</p>
                 <div className="space-y-2">
                   {todayDone.map(t => <TaskItem key={t.id} task={t} onToggle={() => handleToggleTask(t.id)} />)}
                 </div>
@@ -751,7 +751,7 @@ export default function GoalsPage() {
             {todayTasks.length === 0 && (
               <div className="text-center py-14 space-y-2">
                 <div className="text-5xl">✅</div>
-                <p className="text-slate-500 text-sm">No tienes tareas para hoy. ¡Agrega una!</p>
+                <p className="text-gray-500 text-sm">No tienes tareas para hoy. ¡Agrega una!</p>
               </div>
             )}
           </motion.div>
@@ -761,8 +761,8 @@ export default function GoalsPage() {
         {tab === 'logros' && (
           <motion.div variants={fadeUp} className="space-y-5">
             <div className="flex items-center justify-between">
-              <p className="text-slate-400 text-sm font-medium">{unlockedCount} / {achievements.length} desbloqueados</p>
-              <div className="h-1.5 w-36 rounded-full bg-white/[0.06] overflow-hidden">
+              <p className="text-gray-500 text-sm font-medium">{unlockedCount} / {achievements.length} desbloqueados</p>
+              <div className="h-1.5 w-36 rounded-full bg-gray-200 overflow-hidden">
                 <motion.div className="h-full rounded-full bg-amber-500"
                   animate={{ width: `${(unlockedCount / achievements.length) * 100}%` }} />
               </div>
@@ -770,7 +770,7 @@ export default function GoalsPage() {
 
             {unlockedCount > 0 && (
               <div>
-                <p className="text-xs text-amber-400 uppercase tracking-wider font-semibold mb-3 flex items-center gap-1.5">
+                <p className="text-xs text-amber-600 uppercase tracking-wider font-semibold mb-3 flex items-center gap-1.5">
                   <Sparkles size={11} /> Desbloqueados
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -779,11 +779,11 @@ export default function GoalsPage() {
                       className="p-4 rounded-2xl border text-center space-y-1.5"
                       style={{ background: 'rgba(245,158,11,0.06)', borderColor: 'rgba(245,158,11,0.28)' }}>
                       <div className="text-4xl">{a.icon}</div>
-                      <p className="font-bold text-white text-sm">{a.title}</p>
-                      <p className="text-xs text-slate-500 leading-snug">{a.description}</p>
+                      <p className="font-bold text-gray-900 text-sm">{a.title}</p>
+                      <p className="text-xs text-gray-500 leading-snug">{a.description}</p>
                       <div className="flex items-center justify-center gap-1 pt-0.5">
-                        <Star size={11} className="text-amber-400" />
-                        <span className="text-xs text-amber-400 font-semibold">+{a.xpReward} XP</span>
+                        <Star size={11} className="text-amber-600" />
+                        <span className="text-xs text-amber-600 font-semibold">+{a.xpReward} XP</span>
                       </div>
                     </motion.div>
                   ))}
@@ -792,18 +792,18 @@ export default function GoalsPage() {
             )}
 
             <div>
-              <p className="text-xs text-slate-700 uppercase tracking-wider font-semibold mb-3 flex items-center gap-1.5">
+              <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-3 flex items-center gap-1.5">
                 <Lock size={11} /> Por desbloquear
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {achievements.filter(a => !a.unlockedAt).map(a => (
-                  <div key={a.id} className="p-4 rounded-2xl border border-white/[0.05] bg-white/[0.02] text-center space-y-1.5 opacity-35">
+                  <div key={a.id} className="p-4 rounded-2xl border border-gray-100 bg-gray-50 text-center space-y-1.5 opacity-35">
                     <div className="text-4xl grayscale">{a.icon}</div>
-                    <p className="font-bold text-slate-400 text-sm">{a.title}</p>
-                    <p className="text-xs text-slate-600 leading-snug">{a.description}</p>
+                    <p className="font-bold text-gray-500 text-sm">{a.title}</p>
+                    <p className="text-xs text-gray-400 leading-snug">{a.description}</p>
                     <div className="flex items-center justify-center gap-1 pt-0.5">
-                      <Lock size={10} className="text-slate-700" />
-                      <span className="text-xs text-slate-700">+{a.xpReward} XP</span>
+                      <Lock size={10} className="text-gray-400" />
+                      <span className="text-xs text-gray-400">+{a.xpReward} XP</span>
                     </div>
                   </div>
                 ))}
@@ -828,15 +828,15 @@ export default function GoalsPage() {
               <Input label="Título" value={editGoal.title}
                 onChange={e => setEditGoal(p => p ? { ...p, title: e.target.value } : p)} />
               <div>
-                <label className="text-sm font-medium text-slate-300 block mb-1.5">Estado</label>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Estado</label>
                 <select value={editGoal.status}
                   onChange={e => setEditGoal(p => p ? { ...p, status: e.target.value as GoalStatus } : p)}
-                  className="w-full h-10 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white px-3 focus:outline-none">
+                  className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none">
                   {Object.entries(STATUS_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-300 block mb-1.5">Progreso: {editGoal.progress}%</label>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Progreso: {editGoal.progress}%</label>
                 <input type="range" min={0} max={100} value={editGoal.progress}
                   onChange={e => setEditGoal(p => p ? { ...p, progress: Number(e.target.value) } : p)}
                   className="w-full accent-cyan-500" />

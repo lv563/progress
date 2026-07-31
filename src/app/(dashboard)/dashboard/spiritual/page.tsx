@@ -75,23 +75,23 @@ export default function SpiritualPage() {
       {/* Header */}
       <motion.div variants={fadeUp} className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-white flex items-center gap-2">
+          <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
             <span className="text-2xl">🙏</span> Espiritual
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5 flex items-center gap-3">
-            {devStreak > 0 && <span className="flex items-center gap-1 text-violet-400"><Flame size={12} />{devStreak}d devoción</span>}
-            {prayStreak > 0 && <span className="flex items-center gap-1 text-amber-400"><Flame size={12} />{prayStreak}d oración</span>}
+          <p className="text-gray-500 text-sm mt-0.5 flex items-center gap-3">
+            {devStreak > 0 && <span className="flex items-center gap-1 text-violet-600"><Flame size={12} />{devStreak}d devoción</span>}
+            {prayStreak > 0 && <span className="flex items-center gap-1 text-amber-600"><Flame size={12} />{prayStreak}d oración</span>}
           </p>
         </div>
       </motion.div>
 
       {/* Tabs */}
-      <motion.div variants={fadeUp} className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06] w-fit">
+      <motion.div variants={fadeUp} className="flex gap-1 p-1 rounded-xl bg-gray-100 border border-gray-200 w-fit">
         {([['devocional', '📖 Devocional'], ['oracion', '🤲 Oración'], ['ayuno', '✨ Ayuno']] as [Tab, string][]).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)}
             className={cn(
               'px-4 py-2 rounded-lg text-sm font-medium transition-all',
-              tab === id ? 'bg-violet-500/20 text-violet-300' : 'text-slate-400 hover:text-slate-200'
+              tab === id ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             )}>
             {label}
           </button>
@@ -108,34 +108,34 @@ export default function SpiritualPage() {
             <div className={cn(
               'p-5 rounded-2xl border transition-all',
               todayDevotion?.completed
-                ? 'border-violet-500/30 bg-violet-500/[0.07]'
-                : 'border-white/[0.06] bg-white/[0.02]'
+                ? 'border-violet-200 bg-violet-50'
+                : 'border-gray-100 bg-gray-50'
             )}>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-sm font-bold text-white">Devocional de hoy</p>
-                  <p className="text-xs text-slate-500 capitalize mt-0.5">{format(new Date(), "EEEE d 'de' MMMM", { locale: es })}</p>
+                  <p className="text-sm font-bold text-gray-900">Devocional de hoy</p>
+                  <p className="text-xs text-gray-400 capitalize mt-0.5">{format(new Date(), "EEEE d 'de' MMMM", { locale: es })}</p>
                 </div>
                 {devStreak > 0 && (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-500/10 border border-violet-500/20">
-                    <Flame size={13} className="text-violet-400" />
-                    <span className="text-xs font-bold text-violet-400">{devStreak} días</span>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-50 border border-violet-200">
+                    <Flame size={13} className="text-violet-600" />
+                    <span className="text-xs font-bold text-violet-600">{devStreak} días</span>
                   </div>
                 )}
               </div>
 
               {todayDevotion?.completed ? (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-violet-500/10">
-                    <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center">
-                      <Check size={16} className="text-violet-400" />
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-violet-100">
+                    <div className="w-8 h-8 rounded-full bg-violet-200 flex items-center justify-center">
+                      <Check size={16} className="text-violet-700" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-violet-300">¡Completado hoy!</p>
-                      {todayDevotion.notes && <p className="text-xs text-slate-500 mt-0.5">{todayDevotion.notes}</p>}
+                      <p className="text-sm font-semibold text-violet-700">¡Completado hoy!</p>
+                      {todayDevotion.notes && <p className="text-xs text-gray-500 mt-0.5">{todayDevotion.notes}</p>}
                     </div>
                   </div>
-                  <button onClick={() => unmarkDevotional(today)} className="text-xs text-slate-700 hover:text-slate-500 transition-colors">
+                  <button onClick={() => unmarkDevotional(today)} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
                     Desmarcar
                   </button>
                 </div>
@@ -146,7 +146,7 @@ export default function SpiritualPage() {
                     onChange={e => setDevNotes(e.target.value)}
                     placeholder="Reflexión del día (opcional)..."
                     rows={3}
-                    className="w-full rounded-xl bg-white/[0.04] border border-white/[0.07] text-sm text-slate-300 placeholder-slate-700 px-3 py-2.5 focus:outline-none focus:border-violet-500/40 resize-none transition-colors"
+                    className="w-full rounded-xl bg-white border border-gray-200 text-sm text-gray-800 placeholder-gray-400 px-3 py-2.5 focus:outline-none focus:border-violet-400 resize-none transition-colors"
                   />
                   <Button variant="glow" className="w-full" onClick={handleMarkDevotional}
                     style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)' }}>
@@ -157,8 +157,8 @@ export default function SpiritualPage() {
             </div>
 
             {/* 14-day history */}
-            <div className="p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
-              <p className="text-xs text-slate-600 uppercase tracking-wider font-medium mb-3">Últimos 14 días</p>
+            <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50">
+              <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Últimos 14 días</p>
               <div className="grid grid-cols-7 gap-1.5">
                 {last14.map(day => {
                   const key = format(day, 'yyyy-MM-dd')
@@ -167,17 +167,17 @@ export default function SpiritualPage() {
                   return (
                     <div key={key} className={cn(
                       'flex flex-col items-center gap-1 p-1.5 rounded-xl border',
-                      isToday ? 'border-violet-500/40' : 'border-white/[0.04]'
+                      isToday ? 'border-violet-300' : 'border-gray-100'
                     )}>
-                      <span className="text-[9px] text-slate-700">{format(day, 'EEE', { locale: es }).slice(0, 2)}</span>
-                      <span className="text-[10px] font-bold text-slate-600">{format(day, 'd')}</span>
+                      <span className="text-[9px] text-gray-400">{format(day, 'EEE', { locale: es }).slice(0, 2)}</span>
+                      <span className="text-[10px] font-bold text-gray-500">{format(day, 'd')}</span>
                       <div className={cn(
                         'w-5 h-5 rounded-md flex items-center justify-center',
-                        log?.completed ? 'bg-violet-500/25' : 'bg-white/[0.03]'
+                        log?.completed ? 'bg-violet-100' : 'bg-gray-100'
                       )}>
                         {log?.completed
-                          ? <Check size={10} className="text-violet-400" />
-                          : <span className="text-slate-800 text-[9px]">—</span>}
+                          ? <Check size={10} className="text-violet-600" />
+                          : <span className="text-gray-300 text-[9px]">—</span>}
                       </div>
                     </div>
                   )
@@ -188,12 +188,12 @@ export default function SpiritualPage() {
             {/* Notes history */}
             {devotionals.filter(d => d.completed && d.notes).slice(0, 5).length > 0 && (
               <div>
-                <p className="text-xs text-slate-600 uppercase tracking-wider font-medium mb-2">Reflexiones recientes</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-2">Reflexiones recientes</p>
                 <div className="space-y-2">
                   {devotionals.filter(d => d.completed && d.notes).slice(-5).reverse().map(d => (
-                    <div key={d.date} className="p-3 rounded-xl border border-white/[0.05] bg-white/[0.02]">
-                      <p className="text-[10px] text-violet-400/70 mb-1">{format(new Date(d.date), "d 'de' MMMM", { locale: es })}</p>
-                      <p className="text-xs text-slate-400 leading-relaxed">{d.notes}</p>
+                    <div key={d.date} className="p-3 rounded-xl border border-gray-100 bg-gray-50">
+                      <p className="text-[10px] text-violet-500 mb-1">{format(new Date(d.date), "d 'de' MMMM", { locale: es })}</p>
+                      <p className="text-xs text-gray-600 leading-relaxed">{d.notes}</p>
                     </div>
                   ))}
                 </div>
@@ -207,13 +207,13 @@ export default function SpiritualPage() {
           <motion.div key="pray" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
 
             {/* Today counter */}
-            <div className="p-6 rounded-2xl border border-amber-500/20 bg-amber-500/[0.05] flex flex-col items-center gap-4">
-              <p className="text-xs text-slate-500 uppercase tracking-wider">Oraciones de hoy</p>
+            <div className="p-6 rounded-2xl border border-amber-200 bg-amber-50 flex flex-col items-center gap-4">
+              <p className="text-xs text-gray-500 uppercase tracking-wider">Oraciones de hoy</p>
               <motion.p
                 key={todayPrayers}
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="text-7xl font-black text-white tabular-nums"
+                className="text-7xl font-black text-gray-900 tabular-nums"
               >
                 {todayPrayers}
               </motion.p>
@@ -223,29 +223,29 @@ export default function SpiritualPage() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.93 }}
                   className="flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-sm text-white"
-                  style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', boxShadow: '0 0 24px rgba(245,158,11,0.3)' }}
+                  style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', boxShadow: '0 0 24px rgba(245,158,11,0.2)' }}
                 >
                   🤲 +1 Oración
                 </motion.button>
                 {todayPrayers > 0 && (
                   <button
                     onClick={() => setPrayerCount(today, Math.max(0, todayPrayers - 1))}
-                    className="px-4 py-3 rounded-2xl text-slate-500 hover:text-slate-300 bg-white/[0.05] border border-white/[0.07] text-sm transition-all"
+                    className="px-4 py-3 rounded-2xl text-gray-500 hover:text-gray-700 bg-white border border-gray-200 text-sm transition-all"
                   >
                     −
                   </button>
                 )}
               </div>
               {prayStreak > 0 && (
-                <div className="flex items-center gap-1.5 text-amber-400">
+                <div className="flex items-center gap-1.5 text-amber-600">
                   <Flame size={14} /> <span className="text-sm font-bold">{prayStreak} días seguidos</span>
                 </div>
               )}
             </div>
 
             {/* 14-day prayer history */}
-            <div className="p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
-              <p className="text-xs text-slate-600 uppercase tracking-wider font-medium mb-3">Últimos 14 días</p>
+            <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50">
+              <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Últimos 14 días</p>
               <div className="grid grid-cols-7 gap-1.5">
                 {last14.map(day => {
                   const key = format(day, 'yyyy-MM-dd')
@@ -255,13 +255,13 @@ export default function SpiritualPage() {
                   return (
                     <div key={key} className={cn(
                       'flex flex-col items-center gap-1 p-1.5 rounded-xl border',
-                      isToday ? 'border-amber-500/40' : 'border-white/[0.04]'
+                      isToday ? 'border-amber-300' : 'border-gray-100'
                     )}>
-                      <span className="text-[9px] text-slate-700">{format(day, 'EEE', { locale: es }).slice(0, 2)}</span>
-                      <span className="text-[10px] font-bold text-slate-600">{format(day, 'd')}</span>
+                      <span className="text-[9px] text-gray-400">{format(day, 'EEE', { locale: es }).slice(0, 2)}</span>
+                      <span className="text-[10px] font-bold text-gray-500">{format(day, 'd')}</span>
                       <div className={cn(
                         'w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold',
-                        count > 0 ? 'bg-amber-500/20 text-amber-400' : 'bg-white/[0.03] text-slate-800'
+                        count > 0 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-300'
                       )}>
                         {count > 0 ? count : '—'}
                       </div>
@@ -281,11 +281,11 @@ export default function SpiritualPage() {
             <div className={cn(
               'p-5 rounded-2xl border transition-all',
               thisWeekFast
-                ? thisWeekFast.completed ? 'border-emerald-500/30 bg-emerald-500/[0.06]' : 'border-cyan-500/25 bg-cyan-500/[0.04]'
-                : 'border-dashed border-white/[0.10]'
+                ? thisWeekFast.completed ? 'border-emerald-200 bg-emerald-50' : 'border-cyan-200 bg-cyan-50'
+                : 'border-dashed border-gray-200'
             )}>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-bold text-white">Ayuno de esta semana</p>
+                <p className="text-sm font-bold text-gray-900">Ayuno de esta semana</p>
                 {!thisWeekFast && (
                   <Button size="sm" variant="glow" onClick={() => setFastModal(true)}
                     style={{ background: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)' }}>
@@ -307,26 +307,26 @@ export default function SpiritualPage() {
                   <div className="flex items-center gap-3">
                     <div className={cn(
                       'w-11 h-11 rounded-xl flex items-center justify-center text-2xl shrink-0',
-                      thisWeekFast.completed ? 'bg-emerald-500/20' : 'bg-cyan-500/15'
+                      thisWeekFast.completed ? 'bg-emerald-100' : 'bg-cyan-100'
                     )}>
                       {tinfo.icon}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className={cn('text-sm font-semibold', thisWeekFast.completed ? 'text-emerald-300' : 'text-white')}>
+                        <p className={cn('text-sm font-semibold', thisWeekFast.completed ? 'text-emerald-700' : 'text-gray-900')}>
                           {tinfo.label}
                         </p>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 font-medium">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 font-medium">
                           {days === 1 ? '1 día' : `${days} días`}
                         </span>
-                        {thisWeekFast.completed && <span className="text-[10px] text-emerald-400 font-medium">✓ Completado</span>}
+                        {thisWeekFast.completed && <span className="text-[10px] text-emerald-600 font-medium">✓ Completado</span>}
                         {isActive && !thisWeekFast.completed && daysLeft > 0 && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-medium">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
                             {daysLeft === 1 ? 'Último día' : `${daysLeft} días restantes`}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-gray-400 mt-0.5">
                         {format(start, "d MMM", { locale: es })}
                         {days > 1 && ` → ${format(end, "d MMM", { locale: es })}`}
                       </p>
@@ -346,7 +346,7 @@ export default function SpiritualPage() {
                         autoFocus
                         value={editPurpose}
                         onChange={e => setEditPurpose(e.target.value)}
-                        className="flex-1 h-8 rounded-lg bg-white/[0.06] border border-cyan-500/30 text-sm text-white px-3 focus:outline-none"
+                        className="flex-1 h-8 rounded-lg bg-white border border-cyan-300 text-sm text-gray-900 px-3 focus:outline-none"
                         onKeyDown={e => {
                           if (e.key === 'Enter') { updateFastPurpose(thisWeekFast.id, editPurpose); setEditFast(null) }
                           if (e.key === 'Escape') setEditFast(null)
@@ -357,27 +357,27 @@ export default function SpiritualPage() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                      <p className="text-xs text-slate-400 flex-1 leading-relaxed">
-                        <span className="text-slate-600 text-[10px] uppercase tracking-wider block mb-1">Propósito</span>
+                    <div className="flex items-start gap-2 p-3 rounded-xl bg-white border border-gray-100">
+                      <p className="text-xs text-gray-600 flex-1 leading-relaxed">
+                        <span className="text-gray-400 text-[10px] uppercase tracking-wider block mb-1">Propósito</span>
                         {thisWeekFast.purpose}
                       </p>
                       <button onClick={() => { setEditFast(thisWeekFast.id); setEditPurpose(thisWeekFast.purpose) }}
-                        className="text-slate-700 hover:text-slate-400 transition-colors shrink-0">
+                        className="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
                         <Edit2 size={12} />
                       </button>
                     </div>
                   )}
 
-                  <button onClick={() => deleteFast(thisWeekFast.id)} className="text-xs text-slate-700 hover:text-red-400 transition-colors flex items-center gap-1">
+                  <button onClick={() => deleteFast(thisWeekFast.id)} className="text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1">
                     <Trash2 size={11} /> Eliminar
                   </button>
                 </div>
                 )})() : (
                 <div className="text-center py-4">
                   <p className="text-4xl mb-2">✨</p>
-                  <p className="text-sm text-slate-500">No hay ayuno programado esta semana</p>
-                  <p className="text-xs text-slate-700 mt-1">Programa uno con un propósito específico</p>
+                  <p className="text-sm text-gray-500">No hay ayuno programado esta semana</p>
+                  <p className="text-xs text-gray-400 mt-1">Programa uno con un propósito específico</p>
                 </div>
               )}
             </div>
@@ -385,21 +385,21 @@ export default function SpiritualPage() {
             {/* Past fasts */}
             {fasts.filter(f => f.completed).length > 0 && (
               <div>
-                <p className="text-xs text-slate-600 uppercase tracking-wider font-medium mb-2">Ayunos completados</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-2">Ayunos completados</p>
                 <div className="space-y-2">
                   {fasts.filter(f => f.completed).slice(-5).reverse().map(f => {
                     const ti = FAST_TYPES.find(t => t.id === f.type) ?? FAST_TYPES[1]
                     return (
-                      <div key={f.id} className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.04] bg-white/[0.02]">
+                      <div key={f.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
                         <span className="text-base shrink-0">{ti.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-xs text-slate-400 truncate">{f.purpose}</p>
-                            {(f.days ?? 1) > 1 && <span className="text-[10px] text-cyan-400 shrink-0">{f.days}d</span>}
+                            <p className="text-xs text-gray-600 truncate">{f.purpose}</p>
+                            {(f.days ?? 1) > 1 && <span className="text-[10px] text-cyan-600 shrink-0">{f.days}d</span>}
                           </div>
-                          <p className="text-[10px] text-slate-700">{ti.label} · {format(new Date(f.weekDate), "d 'de' MMM", { locale: es })}</p>
+                          <p className="text-[10px] text-gray-400">{ti.label} · {format(new Date(f.weekDate), "d 'de' MMM", { locale: es })}</p>
                         </div>
-                        <Check size={13} className="text-emerald-400 shrink-0" />
+                        <Check size={13} className="text-emerald-600 shrink-0" />
                       </div>
                     )
                   })}
@@ -416,19 +416,19 @@ export default function SpiritualPage() {
 
           {/* Type */}
           <div>
-            <label className="text-xs text-slate-500 uppercase tracking-wider font-medium block mb-2.5">Tipo de ayuno</label>
+            <label className="text-xs text-gray-500 uppercase tracking-wider font-medium block mb-2.5">Tipo de ayuno</label>
             <div className="grid grid-cols-3 gap-2">
               {FAST_TYPES.map(t => (
                 <button key={t.id} onClick={() => setFastType(t.id)}
                   className={cn(
                     'p-3 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5',
                     fastType === t.id
-                      ? 'border-cyan-500/50 bg-cyan-500/[0.10]'
-                      : 'border-white/[0.07] bg-white/[0.03] hover:bg-white/[0.06]'
+                      ? 'border-cyan-300 bg-cyan-50'
+                      : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                   )}>
                   <span className="text-2xl">{t.icon}</span>
-                  <p className={cn('text-xs font-semibold leading-tight', fastType === t.id ? 'text-cyan-300' : 'text-slate-300')}>{t.label}</p>
-                  <p className="text-[10px] text-slate-600 leading-tight">{t.desc}</p>
+                  <p className={cn('text-xs font-semibold leading-tight', fastType === t.id ? 'text-cyan-700' : 'text-gray-700')}>{t.label}</p>
+                  <p className="text-[10px] text-gray-400 leading-tight">{t.desc}</p>
                 </button>
               ))}
             </div>
@@ -436,22 +436,22 @@ export default function SpiritualPage() {
 
           {/* Duration */}
           <div>
-            <label className="text-xs text-slate-500 uppercase tracking-wider font-medium block mb-2.5">Duración</label>
+            <label className="text-xs text-gray-500 uppercase tracking-wider font-medium block mb-2.5">Duración</label>
             <div className="flex gap-2 flex-wrap">
               {FAST_DURATIONS.map(d => (
                 <button key={d} onClick={() => setFastDays(d)}
                   className={cn(
                     'px-4 py-2 rounded-xl text-sm font-medium border transition-all',
                     fastDays === d
-                      ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300'
-                      : 'border-white/[0.08] bg-white/[0.04] text-slate-500 hover:text-slate-300'
+                      ? 'bg-cyan-100 border-cyan-300 text-cyan-700'
+                      : 'border-gray-200 bg-gray-50 text-gray-500 hover:text-gray-700'
                   )}>
                   {d === 1 ? '1 día' : `${d} días`}
                 </button>
               ))}
             </div>
             {fastDays > 1 && (
-              <p className="text-[10px] text-slate-600 mt-2">
+              <p className="text-[10px] text-gray-400 mt-2">
                 Termina el {format(addDays(new Date(), fastDays - 1), "EEEE d 'de' MMMM", { locale: es })}
               </p>
             )}
@@ -459,14 +459,14 @@ export default function SpiritualPage() {
 
           {/* Purpose */}
           <div>
-            <label className="text-xs text-slate-500 uppercase tracking-wider font-medium block mb-2.5">Propósito</label>
+            <label className="text-xs text-gray-500 uppercase tracking-wider font-medium block mb-2.5">Propósito</label>
             <textarea
               autoFocus
               value={fastPurpose}
               onChange={e => setFastPurpose(e.target.value)}
               placeholder="Por sanidad, por dirección, intercesión por..."
               rows={3}
-              className="w-full rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-slate-200 placeholder-slate-700 px-3 py-2.5 focus:outline-none focus:border-cyan-500/40 resize-none transition-colors"
+              className="w-full rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 px-3 py-2.5 focus:outline-none focus:border-cyan-400 resize-none transition-colors"
             />
           </div>
 

@@ -78,13 +78,13 @@ function HabitCard({ habit }: { habit: DetoxHabit }) {
             {habit.icon}
           </div>
           <div>
-            <h3 className="font-bold text-white leading-tight">{habit.name}</h3>
+            <h3 className="font-bold text-gray-900 leading-tight">{habit.name}</h3>
             {habit.description && (
-              <p className="text-xs text-slate-500 mt-0.5 leading-snug">{habit.description}</p>
+              <p className="text-xs text-gray-500 mt-0.5 leading-snug">{habit.description}</p>
             )}
           </div>
         </div>
-        <button onClick={() => deleteHabit(habit.id)} className="text-slate-600 hover:text-red-400 transition-colors p-1 shrink-0">
+        <button onClick={() => deleteHabit(habit.id)} className="text-gray-400 hover:text-red-600 transition-colors p-1 shrink-0">
           <Trash2 size={14} />
         </button>
       </div>
@@ -93,12 +93,12 @@ function HabitCard({ habit }: { habit: DetoxHabit }) {
       <div className="rounded-2xl py-5 px-4 text-center" style={{ background: `${habit.color}12` }}>
         {achieved && (
           <div className="flex items-center justify-center gap-1.5 mb-2">
-            <Trophy size={13} className="text-yellow-400" />
-            <span className="text-xs font-bold text-yellow-400 uppercase tracking-wide">Meta alcanzada</span>
+            <Trophy size={13} className="text-yellow-600" />
+            <span className="text-xs font-bold text-yellow-600 uppercase tracking-wide">Meta alcanzada</span>
           </div>
         )}
-        <div className="text-4xl font-black text-white tracking-tight">{elapsed.primary}</div>
-        <div className="text-xs text-slate-500 mt-1">{elapsed.secondary}</div>
+        <div className="text-4xl font-black text-gray-900 tracking-tight">{elapsed.primary}</div>
+        <div className="text-xs text-gray-500 mt-1">{elapsed.secondary}</div>
         <div className="text-xs font-medium mt-2" style={{ color: habit.color }}>
           sin {habit.name.toLowerCase()}
         </div>
@@ -108,10 +108,10 @@ function HabitCard({ habit }: { habit: DetoxHabit }) {
       {progress !== null && (
         <div>
           <div className="flex justify-between text-xs mb-1.5">
-            <span className="text-slate-500">Meta: {habit.targetDays} días</span>
+            <span className="text-gray-500">Meta: {habit.targetDays} días</span>
             <span className="font-semibold" style={{ color: habit.color }}>{Math.round(progress)}%</span>
           </div>
-          <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+          <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
@@ -125,13 +125,13 @@ function HabitCard({ habit }: { habit: DetoxHabit }) {
 
       {/* Stats row */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-xl bg-white/[0.04] px-3 py-2 text-center">
-          <div className="text-base font-bold text-white">{habit.relapses.length}</div>
-          <div className="text-xs text-slate-600">recaídas</div>
+        <div className="rounded-xl bg-gray-50 px-3 py-2 text-center">
+          <div className="text-base font-bold text-gray-900">{habit.relapses.length}</div>
+          <div className="text-xs text-gray-400">recaídas</div>
         </div>
-        <div className="rounded-xl bg-white/[0.04] px-3 py-2 text-center">
-          <div className="text-base font-bold text-white">{bestStreak}d</div>
-          <div className="text-xs text-slate-600">racha actual</div>
+        <div className="rounded-xl bg-gray-50 px-3 py-2 text-center">
+          <div className="text-base font-bold text-gray-900">{bestStreak}d</div>
+          <div className="text-xs text-gray-400">racha actual</div>
         </div>
       </div>
 
@@ -140,7 +140,7 @@ function HabitCard({ habit }: { habit: DetoxHabit }) {
         <div>
           <button
             onClick={() => setShowHistory(!showHistory)}
-            className="text-xs text-slate-500 hover:text-slate-300 flex items-center gap-1.5 transition-colors w-full"
+            className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1.5 transition-colors w-full"
           >
             <Clock size={11} />
             Historial de recaídas ({habit.relapses.length})
@@ -156,11 +156,11 @@ function HabitCard({ habit }: { habit: DetoxHabit }) {
               >
                 <div className="mt-2 space-y-1 max-h-28 overflow-y-auto pr-1">
                   {[...habit.relapses].reverse().map((r, i) => (
-                    <div key={r.id} className="flex items-start gap-2 text-xs py-1 border-b border-white/[0.04] last:border-0">
-                      <span className="text-slate-600 shrink-0">
+                    <div key={r.id} className="flex items-start gap-2 text-xs py-1 border-b border-gray-100 last:border-0">
+                      <span className="text-gray-400 shrink-0">
                         {new Date(r.date).toLocaleDateString('es', { day: 'numeric', month: 'short', year: '2-digit' })}
                       </span>
-                      {r.note && <span className="text-slate-500 truncate">{r.note}</span>}
+                      {r.note && <span className="text-gray-500 truncate">{r.note}</span>}
                     </div>
                   ))}
                 </div>
@@ -179,7 +179,7 @@ function HabitCard({ habit }: { habit: DetoxHabit }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setConfirmRelapse(true)}
-            className="w-full py-2.5 rounded-xl border border-red-500/20 text-red-400 text-sm hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-xl border border-red-500/20 text-red-600 text-sm hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
           >
             <RotateCcw size={13} /> Recaída — reiniciar contador
           </motion.button>
@@ -191,7 +191,7 @@ function HabitCard({ habit }: { habit: DetoxHabit }) {
             exit={{ opacity: 0 }}
             className="space-y-2.5"
           >
-            <p className="text-xs text-amber-400 flex items-center gap-1.5">
+            <p className="text-xs text-amber-600 flex items-center gap-1.5">
               <AlertTriangle size={12} />
               El contador se reiniciará a 0. ¿Seguro?
             </p>
@@ -199,18 +199,18 @@ function HabitCard({ habit }: { habit: DetoxHabit }) {
               value={relapseNote}
               onChange={e => setRelapseNote(e.target.value)}
               placeholder="Nota opcional (ej: estrés laboral)"
-              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-300 placeholder:text-slate-600 outline-none focus:border-white/20"
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 placeholder:text-gray-400 outline-none focus:border-gray-200"
             />
             <div className="flex gap-2">
               <button
                 onClick={handleRelapse}
-                className="flex-1 py-2 rounded-xl bg-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/30 transition-colors"
+                className="flex-1 py-2 rounded-xl bg-red-500/20 text-red-600 text-xs font-bold hover:bg-red-500/30 transition-colors"
               >
                 Confirmar recaída
               </button>
               <button
                 onClick={() => { setConfirmRelapse(false); setRelapseNote('') }}
-                className="px-3 py-2 rounded-xl bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] transition-colors"
+                className="px-3 py-2 rounded-xl bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors"
               >
                 <X size={13} />
               </button>
@@ -254,10 +254,10 @@ export default function DetoxPage() {
         {/* Header */}
         <motion.div variants={fadeUp} className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-white flex items-center gap-2">
-              <Ban size={22} className="text-red-400" /> Desintoxicación
+            <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+              <Ban size={22} className="text-red-600" /> Desintoxicación
             </h1>
-            <p className="text-sm text-slate-500 mt-0.5">Registra malos hábitos y lleva tu racha limpia</p>
+            <p className="text-sm text-gray-500 mt-0.5">Registra malos hábitos y lleva tu racha limpia</p>
           </div>
           <Button variant="glow" onClick={() => setShowModal(true)}>
             <Plus size={14} /> Agregar
@@ -268,16 +268,16 @@ export default function DetoxPage() {
         {habits.length > 0 && (
           <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3">
             <GlassCard className="p-4 text-center">
-              <div className="text-2xl font-black text-white">{habits.length}</div>
-              <div className="text-xs text-slate-500 mt-0.5">En detox</div>
+              <div className="text-2xl font-black text-gray-900">{habits.length}</div>
+              <div className="text-xs text-gray-500 mt-0.5">En detox</div>
             </GlassCard>
             <GlassCard className="p-4 text-center">
-              <div className="text-2xl font-black text-red-400">{totalRelapses}</div>
-              <div className="text-xs text-slate-500 mt-0.5">Recaídas totales</div>
+              <div className="text-2xl font-black text-red-600">{totalRelapses}</div>
+              <div className="text-xs text-gray-500 mt-0.5">Recaídas totales</div>
             </GlassCard>
             <GlassCard className="p-4 text-center">
-              <div className="text-2xl font-black text-emerald-400">{achieved}</div>
-              <div className="text-xs text-slate-500 mt-0.5">Metas logradas</div>
+              <div className="text-2xl font-black text-emerald-600">{achieved}</div>
+              <div className="text-xs text-gray-500 mt-0.5">Metas logradas</div>
             </GlassCard>
           </motion.div>
         )}
@@ -287,11 +287,11 @@ export default function DetoxPage() {
           <motion.div variants={fadeUp}>
             <GlassCard className="p-14 flex flex-col items-center gap-4 text-center">
               <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
-                <Ban size={28} className="text-red-400" />
+                <Ban size={28} className="text-red-600" />
               </div>
               <div>
-                <p className="font-semibold text-white">Sin hábitos registrados</p>
-                <p className="text-sm text-slate-500 mt-1 max-w-xs">
+                <p className="font-semibold text-gray-900">Sin hábitos registrados</p>
+                <p className="text-sm text-gray-500 mt-1 max-w-xs">
                   Agrega un mal hábito que quieras eliminar y empieza a registrar tu racha limpia
                 </p>
               </div>
@@ -314,7 +314,7 @@ export default function DetoxPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25 backdrop-blur-sm"
             onClick={e => e.target === e.currentTarget && setShowModal(false)}
           >
             <motion.div
@@ -325,35 +325,35 @@ export default function DetoxPage() {
             >
               <GlassCard className="p-6" variant="elevated">
                 <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-lg font-bold text-white">Nuevo hábito a eliminar</h3>
-                  <button onClick={() => setShowModal(false)} className="text-slate-500 hover:text-slate-300 transition-colors">
+                  <h3 className="text-lg font-bold text-gray-900">Nuevo hábito a eliminar</h3>
+                  <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700 transition-colors">
                     <X size={18} />
                   </button>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs text-slate-400 mb-1.5 block">Nombre del hábito *</label>
+                    <label className="text-xs text-gray-500 mb-1.5 block">Nombre del hábito *</label>
                     <input
                       value={form.name}
                       onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                       placeholder="Ej: Fumar, Redes sociales, Comida chatarra..."
-                      className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-violet-500/50 transition-colors"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-violet-500/50 transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs text-slate-400 mb-1.5 block">¿Por qué quieres dejarlo? (opcional)</label>
+                    <label className="text-xs text-gray-500 mb-1.5 block">¿Por qué quieres dejarlo? (opcional)</label>
                     <input
                       value={form.description}
                       onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                       placeholder="Ej: Mejora mi salud, gasto mucho dinero..."
-                      className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-violet-500/50 transition-colors"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-violet-500/50 transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs text-slate-400 mb-2 block">Ícono</label>
+                    <label className="text-xs text-gray-500 mb-2 block">Ícono</label>
                     <div className="grid grid-cols-6 gap-1.5">
                       {ICONS.map(icon => (
                         <button
@@ -362,7 +362,7 @@ export default function DetoxPage() {
                           className={`h-9 rounded-xl text-lg flex items-center justify-center transition-all ${
                             form.icon === icon
                               ? 'bg-violet-500/30 ring-1 ring-violet-500/60 scale-110'
-                              : 'bg-white/[0.04] hover:bg-white/[0.08]'
+                              : 'bg-gray-50 hover:bg-gray-100'
                           }`}
                         >
                           {icon}
@@ -372,7 +372,7 @@ export default function DetoxPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs text-slate-400 mb-2 block">Color</label>
+                    <label className="text-xs text-gray-500 mb-2 block">Color</label>
                     <div className="flex gap-2.5 flex-wrap">
                       {COLORS.map(c => (
                         <button
@@ -390,14 +390,14 @@ export default function DetoxPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs text-slate-400 mb-1.5 block">Meta en días (opcional)</label>
+                    <label className="text-xs text-gray-500 mb-1.5 block">Meta en días (opcional)</label>
                     <input
                       type="number"
                       min="1"
                       value={form.targetDays}
                       onChange={e => setForm(f => ({ ...f, targetDays: e.target.value }))}
                       placeholder="Ej: 30, 90, 365..."
-                      className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-violet-500/50 transition-colors"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-violet-500/50 transition-colors"
                     />
                   </div>
 

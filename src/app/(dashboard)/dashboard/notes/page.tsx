@@ -41,7 +41,6 @@ const NOTE_ACCENTS: Record<string, string> = {
   '#0D1F3C': '#60A5FA',
   '#2D1B00': '#F59E0B',
   '#2D0D0D': '#EF4444',
-  // backward compat
   '#1E1E2E': '#00D4B8',
   '#2D1B4E': '#A78BFA',
 }
@@ -70,17 +69,17 @@ function NoteItem({ note, active, onClick }: { note: Note; active: boolean; onCl
       className={cn(
         'w-full text-left p-3 rounded-xl border transition-all',
         active
-          ? 'border-cyan-500/40 bg-cyan-500/[0.08]'
-          : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05]'
+          ? 'border-cyan-200 bg-cyan-50'
+          : 'border-gray-100 bg-gray-50 hover:bg-gray-100'
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-semibold text-white truncate leading-snug">
+        <p className="text-sm font-semibold text-gray-900 truncate leading-snug">
           {note.title || 'Sin título'}
         </p>
         {note.pinned && <Pin size={11} className="shrink-0 mt-0.5" style={{ color: accent }} />}
       </div>
-      <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-snug">
+      <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-snug">
         {preview || 'Nota vacía'}
       </p>
       {note.tags.length > 0 && (
@@ -92,14 +91,14 @@ function NoteItem({ note, active, onClick }: { note: Note; active: boolean; onCl
           ))}
         </div>
       )}
-      <p className="text-[10px] text-slate-700 mt-1.5">
+      <p className="text-[10px] text-gray-400 mt-1.5">
         {format(new Date(note.updatedAt), "d MMM, HH:mm", { locale: es })}
       </p>
     </motion.button>
   )
 }
 
-/* ── Toolbar button ───────────────────────────────────────── */
+/* ── Toolbar button (stays dark — renders on dark note bg) ── */
 function TBtn({
   active, onClick, title, children, className,
 }: {
@@ -133,7 +132,6 @@ export default function NotesPage() {
   const [showFontSize, setShowFontSize] = useState(false)
   const titleRef = useRef<HTMLInputElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
-  // saveRef always holds the latest save function — no stale closures
   const saveRef = useRef<(html: string) => void>(() => {})
 
   const [fmt, setFmt] = useState({
@@ -149,20 +147,16 @@ export default function NotesPage() {
   const activeNote = notes.find(n => n.id === activeId)
   const accent = activeNote ? (NOTE_ACCENTS[activeNote.color] ?? '#00D4B8') : '#00D4B8'
 
-  // Keep saveRef fresh every render so listeners never use stale state
   saveRef.current = (html: string) => {
     if (activeNote) updateNote(activeNote.id, { content: html })
   }
 
-  // useLayoutEffect: runs synchronously after DOM commit so editorRef points to the NEW editor
-  // (useEffect would run too late with AnimatePresence because the new element might not be mounted)
   useLayoutEffect(() => {
     const editor = editorRef.current
     if (!editor || !activeNote) return
     editor.innerHTML = activeNote.content || ''
   }, [activeId]) // eslint-disable-line
 
-  // Attach native input listener — captures local `editor` so cleanup hits the right element
   useEffect(() => {
     const editor = editorRef.current
     if (!editor) return
@@ -171,7 +165,6 @@ export default function NotesPage() {
     return () => editor.removeEventListener('input', handler)
   }, [activeId]) // eslint-disable-line
 
-  // Auto-select first note
   useEffect(() => {
     if (!activeId && displayed.length > 0) setActiveId(displayed[0].id)
   }, [notes.length]) // eslint-disable-line
@@ -193,22 +186,16 @@ export default function NotesPage() {
   const exec = useCallback((cmd: string, value?: string) => {
     const editor = editorRef.current
     if (!editor) return
-
-    // Save the current selection — editor.focus() resets it in some browsers
     const sel = window.getSelection()
     let savedRange: Range | null = null
     if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
       savedRange = sel.getRangeAt(0).cloneRange()
     }
-
     editor.focus()
-
-    // Restore selection so execCommand has the right range
     if (savedRange && sel) {
       sel.removeAllRanges()
       sel.addRange(savedRange)
     }
-
     document.execCommand(cmd, false, value ?? undefined)
     saveRef.current(editor.innerHTML)
     updateFormatState()
@@ -243,8 +230,8 @@ export default function NotesPage() {
       {/* ── Sidebar ── */}
       <div className={cn('flex flex-col gap-3 w-full md:w-72 shrink-0', activeNote ? 'hidden md:flex' : 'flex')}>
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-black text-white flex items-center gap-2">
-            <NotebookPen size={20} className="text-cyan-400" /> Notas
+          <h1 className="text-xl font-black text-gray-900 flex items-center gap-2">
+            <NotebookPen size={20} className="text-cyan-600" /> Notas
           </h1>
           <Button variant="glow" size="sm" onClick={handleNew}>
             <Plus size={14} />
@@ -252,21 +239,21 @@ export default function NotesPage() {
         </div>
 
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Buscar notas..."
-            className="w-full bg-white/[0.04] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder:text-slate-600 outline-none focus:border-cyan-500/40"
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-cyan-400"
           />
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
           {displayed.length === 0 ? (
             <div className="text-center py-10">
-              <NotebookPen size={28} className="mx-auto text-slate-700 mb-2" />
-              <p className="text-sm text-slate-600">No hay notas</p>
-              <button onClick={handleNew} className="text-xs text-cyan-400 mt-1 hover:text-cyan-300 transition-colors">
+              <NotebookPen size={28} className="mx-auto text-gray-300 mb-2" />
+              <p className="text-sm text-gray-400">No hay notas</p>
+              <button onClick={handleNew} className="text-xs text-cyan-600 mt-1 hover:text-cyan-700 transition-colors">
                 Crear primera nota
               </button>
             </div>
@@ -277,12 +264,12 @@ export default function NotesPage() {
           )}
         </div>
 
-        <div className="text-[10px] text-slate-700 text-center">
+        <div className="text-[10px] text-gray-400 text-center">
           {notes.length} nota{notes.length !== 1 ? 's' : ''}
         </div>
       </div>
 
-      {/* ── Editor ── */}
+      {/* ── Editor (keeps dark note background color) ── */}
       <AnimatePresence>
         {activeNote ? (
           <motion.div
@@ -338,7 +325,6 @@ export default function NotesPage() {
 
             {/* ── Formatting toolbar ── */}
             <div className="flex items-center gap-0.5 px-3 py-2 border-b border-white/[0.05] flex-wrap">
-              {/* Text style */}
               <TBtn active={fmt.bold}         onClick={() => exec('bold')}         title="Negrita (Ctrl+B)"><Bold size={13}/></TBtn>
               <TBtn active={fmt.italic}       onClick={() => exec('italic')}       title="Cursiva (Ctrl+I)"><Italic size={13}/></TBtn>
               <TBtn active={fmt.underline}    onClick={() => exec('underline')}    title="Subrayado (Ctrl+U)"><Underline size={13}/></TBtn>
@@ -348,7 +334,6 @@ export default function NotesPage() {
 
               <div className="w-px h-5 bg-white/[0.08] mx-1" />
 
-              {/* Headings */}
               <TBtn onClick={() => exec('formatBlock', 'h1')} title="Título 1">
                 <span className="text-[10px] font-black">H1</span>
               </TBtn>
@@ -364,14 +349,12 @@ export default function NotesPage() {
 
               <div className="w-px h-5 bg-white/[0.08] mx-1" />
 
-              {/* Alignment */}
               <TBtn active={fmt.justifyLeft}   onClick={() => exec('justifyLeft')}   title="Izquierda"><AlignLeft size={12}/></TBtn>
               <TBtn active={fmt.justifyCenter} onClick={() => exec('justifyCenter')} title="Centro"><AlignCenter size={12}/></TBtn>
               <TBtn active={fmt.justifyRight}  onClick={() => exec('justifyRight')}  title="Derecha"><AlignRight size={12}/></TBtn>
 
               <div className="w-px h-5 bg-white/[0.08] mx-1" />
 
-              {/* Lists */}
               <TBtn onClick={() => exec('insertUnorderedList')} title="Lista con viñetas"><List size={13}/></TBtn>
               <TBtn onClick={() => exec('insertOrderedList')}   title="Lista numerada"><ListOrdered size={13}/></TBtn>
               <TBtn onClick={() => exec('formatBlock', 'blockquote')} title="Cita"><Quote size={13}/></TBtn>
@@ -478,10 +461,10 @@ export default function NotesPage() {
 
             {/* ── Footer ── */}
             <div className="px-5 py-2 border-t border-white/[0.05] flex items-center justify-between">
-              <span className="text-[10px] text-slate-700">
+              <span className="text-[10px] text-slate-600">
                 {charCount} caracteres · {wordCount} palabras
               </span>
-              <span className="text-[10px] text-slate-700">
+              <span className="text-[10px] text-slate-600">
                 {format(new Date(activeNote.updatedAt), "d MMM, HH:mm", { locale: es })}
               </span>
             </div>
@@ -494,10 +477,10 @@ export default function NotesPage() {
             className="hidden md:flex flex-1 items-center justify-center"
           >
             <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-4">
-                <NotebookPen size={28} className="text-cyan-400" />
+              <div className="w-16 h-16 rounded-2xl bg-cyan-50 border border-cyan-200 flex items-center justify-center mx-auto mb-4">
+                <NotebookPen size={28} className="text-cyan-600" />
               </div>
-              <p className="text-slate-500 text-sm">Selecciona una nota o crea una nueva</p>
+              <p className="text-gray-500 text-sm">Selecciona una nota o crea una nueva</p>
               <Button variant="glow" size="sm" className="mt-4" onClick={handleNew}>
                 <Plus size={14} /> Nueva nota
               </Button>

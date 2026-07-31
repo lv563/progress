@@ -184,7 +184,7 @@ function PersonDrawer({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4"
-      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+      style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <motion.div
@@ -192,12 +192,12 @@ function PersonDrawer({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 60, opacity: 0 }}
         transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-        className="w-full md:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-3xl md:rounded-2xl bg-[#0D1218] border border-white/[0.08] shadow-2xl"
+        className="w-full md:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-3xl md:rounded-2xl bg-white border border-gray-200 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
 
         {/* ── Header ── */}
-        <div className="flex items-center gap-3 p-4 border-b border-white/[0.06] sticky top-0 bg-[#0D1218] z-10">
+        <div className="flex items-center gap-3 p-4 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div
             className="w-11 h-11 rounded-full flex items-center justify-center text-lg font-black text-white shrink-0"
             style={{ background: LEVEL_COLORS[person.level] }}
@@ -205,7 +205,7 @@ function PersonDrawer({
             {person.name[0]}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-white text-base leading-tight truncate">{person.name}</p>
+            <p className="font-bold text-gray-900 text-base leading-tight truncate">{person.name}</p>
             <span className="text-xs px-2 py-0.5 rounded-full inline-block mt-0.5"
               style={{ background: `${LEVEL_COLORS[person.level]}20`, color: LEVEL_COLORS[person.level] }}>
               {LEVEL_LABELS[person.level]}
@@ -213,15 +213,15 @@ function PersonDrawer({
           </div>
           {confirmDelete ? (
             <div className="flex gap-2">
-              <button onClick={() => setConfirmDelete(false)} className="text-xs text-slate-500 px-2 py-1 rounded-lg hover:bg-white/[0.05] transition-all">Cancelar</button>
-              <button onClick={handleDelete} className="text-xs text-red-400 px-2 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-all">Eliminar</button>
+              <button onClick={() => setConfirmDelete(false)} className="text-xs text-gray-500 px-2 py-1 rounded-lg hover:bg-gray-50 transition-all">Cancelar</button>
+              <button onClick={handleDelete} className="text-xs text-red-600 px-2 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-all">Eliminar</button>
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
-              <button onClick={() => setConfirmDelete(true)} className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all">
+              <button onClick={() => setConfirmDelete(true)} className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-500/10 transition-all">
                 <Trash2 size={14} />
               </button>
-              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/[0.05] text-slate-400 hover:text-white transition-all">
+              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-100 text-gray-500 hover:text-gray-900 transition-all">
                 <X size={16} />
               </button>
             </div>
@@ -237,8 +237,8 @@ function PersonDrawer({
               {/* Discipleship stages */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">Progreso de discipulado</p>
-                  <span className="text-xs text-slate-600">{DISC_STAGES[stage]?.label}</span>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">Progreso de discipulado</p>
+                  <span className="text-xs text-gray-400">{DISC_STAGES[stage]?.label}</span>
                 </div>
                 <div className="flex gap-1">
                   {DISC_STAGES.map((s, i) => (
@@ -256,7 +256,7 @@ function PersonDrawer({
                     </button>
                   ))}
                 </div>
-                <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden mt-2">
+                <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden mt-2">
                   <motion.div className="h-full rounded-full"
                     initial={{ width: 0 }}
                     animate={{ width: `${((stage + 1) / 8) * 100}%` }}
@@ -269,31 +269,31 @@ function PersonDrawer({
               {/* Info grid */}
               <div className="grid grid-cols-2 gap-2">
                 {person.phone && (
-                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                    <p className="text-[10px] text-slate-600 mb-0.5">Teléfono</p>
-                    <p className="text-sm text-white font-medium">{person.phone}</p>
+                  <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <p className="text-[10px] text-gray-400 mb-0.5">Teléfono</p>
+                    <p className="text-sm text-gray-900 font-medium">{person.phone}</p>
                   </div>
                 )}
                 {person.conversionDate && (
-                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                    <p className="text-[10px] text-slate-600 mb-0.5">Conversión</p>
-                    <p className="text-sm text-white font-medium">
+                  <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <p className="text-[10px] text-gray-400 mb-0.5">Conversión</p>
+                    <p className="text-sm text-gray-900 font-medium">
                       {format(new Date(person.conversionDate), 'd MMM yyyy', { locale: es })}
                     </p>
                   </div>
                 )}
                 {person.lastContact && (
-                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                    <p className="text-[10px] text-slate-600 mb-0.5">Último contacto</p>
-                    <p className="text-sm text-white font-medium">
+                  <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <p className="text-[10px] text-gray-400 mb-0.5">Último contacto</p>
+                    <p className="text-sm text-gray-900 font-medium">
                       {formatDistanceToNow(new Date(person.lastContact), { locale: es, addSuffix: true })}
                     </p>
                   </div>
                 )}
                 {person.nextFollowUp && (
-                  <div className={cn('p-3 rounded-xl border', pendingFollowUp ? 'bg-amber-500/[0.07] border-amber-500/20' : 'bg-white/[0.03] border-white/[0.05]')}>
-                    <p className="text-[10px] text-slate-600 mb-0.5">Próximo contacto</p>
-                    <p className={cn('text-sm font-medium', pendingFollowUp ? 'text-amber-400' : 'text-white')}>
+                  <div className={cn('p-3 rounded-xl border', pendingFollowUp ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-100')}>
+                    <p className="text-[10px] text-gray-400 mb-0.5">Próximo contacto</p>
+                    <p className={cn('text-sm font-medium', pendingFollowUp ? 'text-amber-600' : 'text-gray-900')}>
                       {format(new Date(person.nextFollowUp), 'd MMM', { locale: es })}
                     </p>
                   </div>
@@ -304,12 +304,12 @@ function PersonDrawer({
               {person.phone && (
                 <div className="flex gap-2">
                   <a href={`tel:${person.phone}`}
-                    className="flex-1 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center gap-2 text-sm text-slate-300 hover:bg-white/[0.07] transition-all">
-                    <Phone size={14} className="text-emerald-400" /> Llamar
+                    className="flex-1 py-2.5 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center gap-2 text-sm text-gray-700 hover:bg-gray-100 transition-all">
+                    <Phone size={14} className="text-emerald-600" /> Llamar
                   </a>
                   <a href={`https://wa.me/${person.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer"
-                    className="flex-1 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center gap-2 text-sm text-slate-300 hover:bg-white/[0.07] transition-all">
-                    <MessageCircle size={14} className="text-emerald-400" /> WhatsApp
+                    className="flex-1 py-2.5 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center gap-2 text-sm text-gray-700 hover:bg-gray-100 transition-all">
+                    <MessageCircle size={14} className="text-emerald-600" /> WhatsApp
                   </a>
                 </div>
               )}
@@ -326,8 +326,8 @@ function PersonDrawer({
               {/* Notes */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">Notas</p>
-                  <button onClick={() => setShowNoteBox(v => !v)} className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors">
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">Notas</p>
+                  <button onClick={() => setShowNoteBox(v => !v)} className="text-xs text-cyan-600 hover:text-cyan-600 transition-colors">
                     + Agregar
                   </button>
                 </div>
@@ -340,23 +340,23 @@ function PersonDrawer({
                         onChange={e => setNoteText(e.target.value)}
                         placeholder="Escribe una nota..."
                         rows={3}
-                        className="w-full rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-slate-200 placeholder-slate-700 px-3 py-2 focus:outline-none focus:border-cyan-500/50 resize-none"
+                        className="w-full rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 px-3 py-2 focus:outline-none focus:border-cyan-500/50 resize-none"
                       />
                       <div className="flex gap-2 mt-1.5">
-                        <button onClick={() => { setShowNoteBox(false); setNoteText('') }} className="text-xs text-slate-600 hover:text-slate-400 px-2 py-1">Cancelar</button>
-                        <button onClick={handleAddNote} className="text-xs text-cyan-400 hover:text-cyan-300 px-2 py-1">Guardar</button>
+                        <button onClick={() => { setShowNoteBox(false); setNoteText('') }} className="text-xs text-gray-400 hover:text-gray-500 px-2 py-1">Cancelar</button>
+                        <button onClick={handleAddNote} className="text-xs text-cyan-600 hover:text-cyan-600 px-2 py-1">Guardar</button>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
                 {person.notes.length === 0 ? (
-                  <p className="text-xs text-slate-700 py-2">Sin notas aún</p>
+                  <p className="text-xs text-gray-400 py-2">Sin notas aún</p>
                 ) : (
                   <div className="space-y-1.5">
                     {[...person.notes].reverse().map(n => (
-                      <div key={n.id} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                        <p className="text-sm text-slate-300 leading-snug">{n.content}</p>
-                        <p className="text-[10px] text-slate-700 mt-1">{format(new Date(n.createdAt), 'd MMM, HH:mm', { locale: es })}</p>
+                      <div key={n.id} className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                        <p className="text-sm text-gray-700 leading-snug">{n.content}</p>
+                        <p className="text-[10px] text-gray-400 mt-1">{format(new Date(n.createdAt), 'd MMM, HH:mm', { locale: es })}</p>
                       </div>
                     ))}
                   </div>
@@ -366,16 +366,16 @@ function PersonDrawer({
               {/* Follow-up history */}
               {history.length > 0 && (
                 <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-2">Historial de seguimientos</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-2">Historial de seguimientos</p>
                   <div className="space-y-1.5">
                     {history.map(r => (
-                      <div key={r.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                      <div key={r.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-gray-50 border border-gray-100">
                         <div className={cn('w-2 h-2 rounded-full shrink-0', r.status === 'sent' ? 'bg-emerald-500' : 'bg-red-500')} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-white">{templates.find(t => t.id === r.templateId)?.icon} {r.templateName}</p>
-                          <p className="text-[10px] text-slate-600">{r.medium} · {format(new Date(r.date), 'd MMM, HH:mm', { locale: es })}</p>
+                          <p className="text-xs font-medium text-gray-900">{templates.find(t => t.id === r.templateId)?.icon} {r.templateName}</p>
+                          <p className="text-[10px] text-gray-400">{r.medium} · {format(new Date(r.date), 'd MMM, HH:mm', { locale: es })}</p>
                         </div>
-                        <span className={cn('text-[10px] font-medium', r.status === 'sent' ? 'text-emerald-400' : 'text-red-400')}>
+                        <span className={cn('text-[10px] font-medium', r.status === 'sent' ? 'text-emerald-600' : 'text-red-600')}>
                           {r.status === 'sent' ? 'Enviado' : 'Falló'}
                         </span>
                       </div>
@@ -391,12 +391,12 @@ function PersonDrawer({
             <motion.div key="templates" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="p-4 space-y-3">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setStep('detail')} className="text-slate-500 hover:text-slate-300 transition-colors"><X size={16} /></button>
-                  <p className="text-sm font-semibold text-white">Selecciona una plantilla</p>
+                  <button onClick={() => setStep('detail')} className="text-gray-500 hover:text-gray-700 transition-colors"><X size={16} /></button>
+                  <p className="text-sm font-semibold text-gray-900">Selecciona una plantilla</p>
                 </div>
                 <button
                   onClick={onEditTemplates}
-                  className="flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 px-2.5 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/15 transition-all"
+                  className="flex items-center gap-1.5 text-xs text-cyan-600 hover:text-cyan-600 px-2.5 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 transition-all"
                 >
                   <Pencil size={11} /> Editar / Nueva
                 </button>
@@ -405,14 +405,14 @@ function PersonDrawer({
                 <button
                   key={tpl.id}
                   onClick={() => { setSelectedTpl(tpl); setStep('preview') }}
-                  className="w-full p-3.5 rounded-2xl border border-white/[0.07] bg-white/[0.03] hover:bg-white/[0.06] hover:border-cyan-500/25 text-left transition-all flex items-center gap-3"
+                  className="w-full p-3.5 rounded-2xl border border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-cyan-200 text-left transition-all flex items-center gap-3"
                 >
                   <span className="text-2xl shrink-0">{tpl.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white">{tpl.name}</p>
-                    <p className="text-xs text-slate-500 mt-0.5 truncate">{personalize(tpl.body.split('\n')[0], person)}</p>
+                    <p className="text-sm font-semibold text-gray-900">{tpl.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 truncate">{personalize(tpl.body.split('\n')[0], person)}</p>
                   </div>
-                  <ChevronRight size={14} className="text-slate-600 shrink-0" />
+                  <ChevronRight size={14} className="text-gray-400 shrink-0" />
                 </button>
               ))}
             </motion.div>
@@ -422,20 +422,20 @@ function PersonDrawer({
           {step === 'preview' && selectedTpl && (
             <motion.div key="preview" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="p-4 space-y-4">
               <div className="flex items-center gap-2">
-                <button onClick={() => setStep('templates')} className="text-slate-500 hover:text-slate-300 transition-colors"><X size={16} /></button>
-                <p className="text-sm font-semibold text-white">{selectedTpl.icon} {selectedTpl.name}</p>
+                <button onClick={() => setStep('templates')} className="text-gray-500 hover:text-gray-700 transition-colors"><X size={16} /></button>
+                <p className="text-sm font-semibold text-gray-900">{selectedTpl.icon} {selectedTpl.name}</p>
               </div>
 
               {/* Message preview bubble */}
-              <div className="p-4 rounded-2xl bg-emerald-500/[0.07] border border-emerald-500/15">
-                <p className="text-[10px] text-emerald-400 font-medium mb-2 uppercase tracking-wider">Vista previa</p>
-                <p className="text-sm text-slate-200 whitespace-pre-line leading-relaxed">
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+                <p className="text-[10px] text-emerald-600 font-medium mb-2 uppercase tracking-wider">Vista previa</p>
+                <p className="text-sm text-gray-800 whitespace-pre-line leading-relaxed">
                   {personalize(selectedTpl.body, person)}
                 </p>
               </div>
 
               {!person.phone && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/[0.07] border border-amber-500/20 text-xs text-amber-400">
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-600">
                   <AlertTriangle size={13} /> Esta persona no tiene número guardado
                 </div>
               )}
@@ -456,38 +456,38 @@ function PersonDrawer({
           {step === 'schedule' && (
             <motion.div key="schedule" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="p-4 space-y-4">
               <div className="text-center py-3">
-                <CheckCircle2 size={36} className="text-emerald-400 mx-auto mb-2" />
-                <p className="text-base font-bold text-white">Mensaje enviado</p>
-                <p className="text-sm text-slate-500 mt-1">¿Cuándo deseas volver a contactar?</p>
+                <CheckCircle2 size={36} className="text-emerald-600 mx-auto mb-2" />
+                <p className="text-base font-bold text-gray-900">Mensaje enviado</p>
+                <p className="text-sm text-gray-500 mt-1">¿Cuándo deseas volver a contactar?</p>
               </div>
 
               <div className="space-y-2">
                 {SNOOZE_OPTIONS.map(opt => (
                   <button key={opt.days} onClick={() => handleSchedule(opt.days)}
-                    className="w-full py-3 rounded-xl border border-white/[0.07] bg-white/[0.03] hover:bg-white/[0.06] hover:border-cyan-500/25 text-sm text-white font-medium flex items-center justify-between px-4 transition-all">
+                    className="w-full py-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-cyan-200 text-sm text-gray-900 font-medium flex items-center justify-between px-4 transition-all">
                     {opt.label}
-                    <span className="text-xs text-slate-600">
+                    <span className="text-xs text-gray-400">
                       {format(new Date(Date.now() + opt.days * 86400000), 'EEEE d/MM', { locale: es })}
                     </span>
                   </button>
                 ))}
                 <button onClick={() => setShowCustomDate(v => !v)}
-                  className="w-full py-3 rounded-xl border border-white/[0.07] bg-white/[0.03] hover:bg-white/[0.06] text-sm text-slate-400 flex items-center justify-between px-4 transition-all">
+                  className="w-full py-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-sm text-gray-500 flex items-center justify-between px-4 transition-all">
                   Elegir fecha <Calendar size={14} />
                 </button>
                 {showCustomDate && (
                   <div className="flex gap-2">
                     <input type="date" value={customDate} onChange={e => setCustomDate(e.target.value)}
-                      className="flex-1 h-10 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white px-3 focus:outline-none" />
+                      className="flex-1 h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none" />
                     <button onClick={handleCustomSchedule} disabled={!customDate}
-                      className="px-4 rounded-xl bg-cyan-500/20 text-cyan-300 text-sm disabled:opacity-40 hover:bg-cyan-500/30 transition-all">
+                      className="px-4 rounded-xl bg-cyan-100 text-cyan-600 text-sm disabled:opacity-40 hover:bg-cyan-100 transition-all">
                       OK
                     </button>
                   </div>
                 )}
               </div>
 
-              <button onClick={() => setStep('detail')} className="w-full text-xs text-slate-600 hover:text-slate-400 transition-colors py-1">
+              <button onClick={() => setStep('detail')} className="w-full text-xs text-gray-400 hover:text-gray-500 transition-colors py-1">
                 Omitir
               </button>
             </motion.div>
@@ -588,26 +588,26 @@ function BulkMessageModal({
         {step === 'recipients' && (
           <motion.div key="recipients" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-500">{selected.size} de {withPhone.length} seleccionados</p>
-              <button onClick={toggleAll} className="text-xs text-cyan-400 hover:text-cyan-300 font-medium transition-colors">
+              <p className="text-xs text-gray-500">{selected.size} de {withPhone.length} seleccionados</p>
+              <button onClick={toggleAll} className="text-xs text-cyan-600 hover:text-cyan-600 font-medium transition-colors">
                 {allSelected ? 'Deseleccionar todos' : 'Seleccionar todos'}
               </button>
             </div>
 
             <div className="max-h-64 overflow-y-auto space-y-1.5 pr-0.5">
               {withPhone.length === 0 ? (
-                <p className="text-sm text-slate-600 text-center py-6">Ninguna persona tiene teléfono guardado</p>
+                <p className="text-sm text-gray-400 text-center py-6">Ninguna persona tiene teléfono guardado</p>
               ) : withPhone.map(p => (
                 <button key={p.id} onClick={() => togglePerson(p.id)}
                   className={cn(
                     'w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition-all',
                     selected.has(p.id)
-                      ? 'border-cyan-500/30 bg-cyan-500/[0.07]'
-                      : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'
+                      ? 'border-cyan-200 bg-cyan-50'
+                      : 'border-gray-100 bg-gray-50 hover:bg-gray-50'
                   )}>
                   <div className={cn(
                     'w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-all',
-                    selected.has(p.id) ? 'bg-cyan-500 border-cyan-500' : 'border-white/20 bg-white/[0.04]'
+                    selected.has(p.id) ? 'bg-cyan-500 border-cyan-500' : 'border-gray-200 bg-gray-50'
                   )}>
                     {selected.has(p.id) && <Check size={12} className="text-white" />}
                   </div>
@@ -616,14 +616,14 @@ function BulkMessageModal({
                     {p.name[0]}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{p.name}</p>
-                    <p className="text-[10px] text-slate-600">{p.phone}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
+                    <p className="text-[10px] text-gray-400">{p.phone}</p>
                   </div>
                 </button>
               ))}
             </div>
 
-            <div className="flex gap-3 justify-end pt-1 border-t border-white/[0.06]">
+            <div className="flex gap-3 justify-end pt-1 border-t border-gray-100">
               <Button variant="ghost" onClick={onClose}>Cancelar</Button>
               <Button variant="glow" disabled={selected.size === 0}
                 onClick={() => setStep('template')}>
@@ -637,10 +637,10 @@ function BulkMessageModal({
         {step === 'template' && (
           <motion.div key="template" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-500">Elige qué mensaje enviar a {recipients.length} persona{recipients.length !== 1 ? 's' : ''}</p>
+              <p className="text-xs text-gray-500">Elige qué mensaje enviar a {recipients.length} persona{recipients.length !== 1 ? 's' : ''}</p>
               <button
                 onClick={onEditTemplates}
-                className="flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 px-2.5 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/15 transition-all"
+                className="flex items-center gap-1.5 text-xs text-cyan-600 hover:text-cyan-600 px-2.5 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 transition-all"
               >
                 <Pencil size={11} /> Editar / Nueva
               </button>
@@ -650,18 +650,18 @@ function BulkMessageModal({
                 className={cn(
                   'w-full p-3.5 rounded-2xl border text-left transition-all flex items-center gap-3',
                   template?.id === tpl.id
-                    ? 'border-cyan-500/40 bg-cyan-500/[0.08]'
-                    : 'border-white/[0.07] bg-white/[0.03] hover:bg-white/[0.06]'
+                    ? 'border-cyan-300 bg-cyan-50'
+                    : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                 )}>
                 <span className="text-2xl shrink-0">{tpl.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white">{tpl.name}</p>
-                  <p className="text-xs text-slate-500 mt-0.5 truncate">{tpl.body.split('\n')[0]}</p>
+                  <p className="text-sm font-semibold text-gray-900">{tpl.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 truncate">{tpl.body.split('\n')[0]}</p>
                 </div>
-                {template?.id === tpl.id && <Check size={16} className="text-cyan-400 shrink-0" />}
+                {template?.id === tpl.id && <Check size={16} className="text-cyan-600 shrink-0" />}
               </button>
             ))}
-            <div className="flex gap-3 justify-between pt-1 border-t border-white/[0.06]">
+            <div className="flex gap-3 justify-between pt-1 border-t border-gray-100">
               <Button variant="ghost" onClick={() => setStep('recipients')}>← Atrás</Button>
               <Button variant="glow" disabled={!template} onClick={() => setStep('preview')}>
                 Previsualizar
@@ -673,27 +673,27 @@ function BulkMessageModal({
         {/* ── PREVIEW ── */}
         {step === 'preview' && template && (
           <motion.div key="preview" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-            <div className="p-4 rounded-2xl bg-emerald-500/[0.07] border border-emerald-500/15">
-              <p className="text-[10px] text-emerald-400 font-medium mb-2 uppercase tracking-wider">Ejemplo · {recipients[0]?.name.split(' ')[0]}</p>
-              <p className="text-sm text-slate-200 whitespace-pre-line leading-relaxed">
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+              <p className="text-[10px] text-emerald-600 font-medium mb-2 uppercase tracking-wider">Ejemplo · {recipients[0]?.name.split(' ')[0]}</p>
+              <p className="text-sm text-gray-800 whitespace-pre-line leading-relaxed">
                 {recipients[0] ? personalize(template.body, recipients[0]) : template.body}
               </p>
             </div>
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-1.5">
-              <p className="text-xs text-slate-500 font-medium">Se enviará a {recipients.length} persona{recipients.length !== 1 ? 's' : ''}</p>
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 space-y-1.5">
+              <p className="text-xs text-gray-500 font-medium">Se enviará a {recipients.length} persona{recipients.length !== 1 ? 's' : ''}</p>
               <div className="flex flex-wrap gap-1.5">
                 {recipients.map(p => (
-                  <span key={p.id} className="text-[11px] px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-400">
+                  <span key={p.id} className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
                     {p.name.split(' ')[0]}
                   </span>
                 ))}
               </div>
             </div>
-            <div className="p-3 rounded-xl bg-amber-500/[0.07] border border-amber-500/20 text-xs text-amber-400 flex items-start gap-2">
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-600 flex items-start gap-2">
               <AlertTriangle size={13} className="shrink-0 mt-0.5" />
               Habrá 1.5s de pausa entre cada envío para no bloquear tu número. No cierres la ventana.
             </div>
-            <div className="flex gap-3 justify-between pt-1 border-t border-white/[0.06]">
+            <div className="flex gap-3 justify-between pt-1 border-t border-gray-100">
               <Button variant="ghost" onClick={() => setStep('template')}>← Atrás</Button>
               <Button variant="glow" onClick={startSend}>
                 <RadioTower size={14} /> Enviar a todos
@@ -706,15 +706,15 @@ function BulkMessageModal({
         {step === 'sending' && (
           <motion.div key="sending" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-5 py-2">
             <div className="text-center">
-              <Loader2 size={32} className="animate-spin text-cyan-400 mx-auto mb-3" />
-              <p className="text-base font-bold text-white">Enviando mensajes...</p>
-              <p className="text-sm text-slate-500 mt-1">
-                {currentIdx} de {recipients.length} · <span className="text-cyan-400">{currentName}</span>
+              <Loader2 size={32} className="animate-spin text-cyan-600 mx-auto mb-3" />
+              <p className="text-base font-bold text-gray-900">Enviando mensajes...</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {currentIdx} de {recipients.length} · <span className="text-cyan-600">{currentName}</span>
               </p>
             </div>
 
             {/* Progress bar */}
-            <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+            <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
               <motion.div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-violet-500"
                 animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} />
             </div>
@@ -725,17 +725,17 @@ function BulkMessageModal({
                 {[...results].reverse().map((r, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs py-1">
                     {r.status === 'sent'
-                      ? <Check size={12} className="text-emerald-400 shrink-0" />
-                      : <XCircle size={12} className="text-red-400 shrink-0" />}
-                    <span className={r.status === 'sent' ? 'text-slate-300' : 'text-red-300'}>{r.person.name.split(' ')[0]}</span>
-                    {r.error && <span className="text-slate-600 truncate">{r.error}</span>}
+                      ? <Check size={12} className="text-emerald-600 shrink-0" />
+                      : <XCircle size={12} className="text-red-600 shrink-0" />}
+                    <span className={r.status === 'sent' ? 'text-gray-700' : 'text-red-600'}>{r.person.name.split(' ')[0]}</span>
+                    {r.error && <span className="text-gray-400 truncate">{r.error}</span>}
                   </div>
                 ))}
               </div>
             )}
 
             <button onClick={() => { abortRef.current = true }}
-              className="w-full text-xs text-slate-600 hover:text-red-400 transition-colors py-1">
+              className="w-full text-xs text-gray-400 hover:text-red-600 transition-colors py-1">
               Detener envío
             </button>
           </motion.div>
@@ -745,11 +745,11 @@ function BulkMessageModal({
         {step === 'done' && (
           <motion.div key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4 py-2">
             <div className="text-center">
-              <CheckCircle2 size={36} className="text-emerald-400 mx-auto mb-2" />
-              <p className="text-base font-bold text-white">Envío completado</p>
+              <CheckCircle2 size={36} className="text-emerald-600 mx-auto mb-2" />
+              <p className="text-base font-bold text-gray-900">Envío completado</p>
               <div className="flex items-center justify-center gap-4 mt-3">
-                <span className="text-sm font-bold text-emerald-400">{sent} enviados</span>
-                {failed > 0 && <span className="text-sm font-bold text-red-400">{failed} fallaron</span>}
+                <span className="text-sm font-bold text-emerald-600">{sent} enviados</span>
+                {failed > 0 && <span className="text-sm font-bold text-red-600">{failed} fallaron</span>}
               </div>
             </div>
 
@@ -757,13 +757,13 @@ function BulkMessageModal({
               {results.map((r, i) => (
                 <div key={i} className={cn(
                   'flex items-center gap-2.5 p-2.5 rounded-xl border text-sm',
-                  r.status === 'sent' ? 'border-emerald-500/15 bg-emerald-500/[0.05]' : 'border-red-500/15 bg-red-500/[0.05]'
+                  r.status === 'sent' ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'
                 )}>
                   {r.status === 'sent'
-                    ? <Check size={14} className="text-emerald-400 shrink-0" />
-                    : <XCircle size={14} className="text-red-400 shrink-0" />}
-                  <span className="text-white">{r.person.name}</span>
-                  {r.error && <span className="text-xs text-red-400 ml-auto shrink-0 truncate max-w-24">{r.error}</span>}
+                    ? <Check size={14} className="text-emerald-600 shrink-0" />
+                    : <XCircle size={14} className="text-red-600 shrink-0" />}
+                  <span className="text-gray-900">{r.person.name}</span>
+                  {r.error && <span className="text-xs text-red-600 ml-auto shrink-0 truncate max-w-24">{r.error}</span>}
                 </div>
               ))}
             </div>
@@ -780,13 +780,13 @@ function BulkMessageModal({
 
 function StatTile({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
   return (
-    <div className="p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] flex items-center gap-3 min-w-[140px]">
+    <div className="p-3.5 rounded-2xl border border-gray-100 bg-gray-50 flex items-center gap-3 min-w-[140px]">
       <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${color}18` }}>
         <span style={{ color }}>{icon}</span>
       </div>
       <div className="min-w-0">
-        <p className="text-xl font-black text-white leading-none">{value}</p>
-        <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">{label}</p>
+        <p className="text-xl font-black text-gray-900 leading-none">{value}</p>
+        <p className="text-[10px] text-gray-500 mt-0.5 leading-tight">{label}</p>
       </div>
     </div>
   )
@@ -853,8 +853,8 @@ export default function MinistryPage() {
 
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-black text-white flex items-center gap-2">
-          <Church size={24} className="text-pink-400" /> Ministerio
+        <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+          <Church size={24} className="text-pink-600" /> Ministerio
         </h1>
         <div className="flex items-center gap-2">
           <button
@@ -862,8 +862,8 @@ export default function MinistryPage() {
             className={cn(
               'w-9 h-9 rounded-xl flex items-center justify-center border transition-all',
               isConfigured
-                ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20'
-                : 'bg-white/[0.04] border-white/[0.08] text-slate-500 hover:text-slate-300'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100'
+                : 'bg-gray-50 border-gray-200 text-gray-500 hover:text-gray-700'
             )}
             title={isConfigured ? 'WhatsApp configurado' : 'Configurar WhatsApp'}
           >
@@ -871,7 +871,7 @@ export default function MinistryPage() {
           </button>
           <button
             onClick={() => setTplModal(true)}
-            className="w-9 h-9 rounded-xl flex items-center justify-center border border-white/[0.08] bg-white/[0.04] text-slate-500 hover:text-slate-300 transition-all"
+            className="w-9 h-9 rounded-xl flex items-center justify-center border border-gray-200 bg-gray-50 text-gray-500 hover:text-gray-700 transition-all"
             title="Editar plantillas"
           >
             <Pencil size={15} />
@@ -880,7 +880,7 @@ export default function MinistryPage() {
             onClick={() => setBulkModal(true)}
             variant="ghost"
             size="sm"
-            className="flex items-center gap-1.5 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/10"
+            className="flex items-center gap-1.5 border border-emerald-200 text-emerald-600 hover:bg-emerald-50"
             title="Mensaje masivo"
           >
             <RadioTower size={14} /> Masivo
@@ -892,15 +892,15 @@ export default function MinistryPage() {
       </div>
 
       {/* ── Ministry selector ── */}
-      <div className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06] w-fit">
+      <div className="flex gap-1 p-1 rounded-xl bg-gray-100 border border-gray-200 w-fit">
         <button onClick={() => setMinistry('seguimiento')}
           className={cn('px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5',
-            ministry === 'seguimiento' ? 'bg-pink-500/25 text-pink-300' : 'text-slate-400 hover:text-slate-200')}>
+            ministry === 'seguimiento' ? 'bg-white text-pink-700 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
           <Users size={14} /> Seguimiento
         </button>
         <button onClick={() => setMinistry('television')}
           className={cn('px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5',
-            ministry === 'television' ? 'bg-pink-500/25 text-pink-300' : 'text-slate-400 hover:text-slate-200')}>
+            ministry === 'television' ? 'bg-white text-pink-700 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
           <Tv2 size={14} /> Televisión
         </button>
       </div>
@@ -908,8 +908,8 @@ export default function MinistryPage() {
       {/* ── Televisión placeholder ── */}
       {ministry === 'television' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-          <Tv2 size={40} className="mx-auto text-slate-700 mb-3" />
-          <p className="text-slate-500 text-sm">El módulo Televisión estará disponible pronto</p>
+          <Tv2 size={40} className="mx-auto text-gray-400 mb-3" />
+          <p className="text-gray-500 text-sm">El módulo Televisión estará disponible pronto</p>
         </motion.div>
       )}
 
@@ -928,32 +928,32 @@ export default function MinistryPage() {
 
           {/* Today's pending follow-ups */}
           {pending.length > 0 && (
-            <div className="p-4 rounded-2xl border border-amber-500/20 bg-amber-500/[0.05]">
-              <p className="text-xs text-amber-400 font-semibold uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50">
+              <p className="text-xs text-amber-600 font-semibold uppercase tracking-wider mb-3 flex items-center gap-1.5">
                 <Bell size={12} /> Seguimientos para hoy · {pending.length}
               </p>
               <div className="space-y-2">
                 {pending.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.04]">
+                  <div key={p.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-gray-50">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
                       style={{ background: LEVEL_COLORS[p.level] }}>
                       {p.name[0]}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{p.name}</p>
-                      <p className="text-xs text-slate-500">{LEVEL_LABELS[p.level]}</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{p.name}</p>
+                      <p className="text-xs text-gray-500">{LEVEL_LABELS[p.level]}</p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       {p.phone && (
                         <button
                           onClick={() => setSelectedId(p.id)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-all flex items-center gap-1">
+                          className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-600 hover:bg-emerald-100 transition-all flex items-center gap-1">
                           <Send size={10} /> Contactar
                         </button>
                       )}
                       <button
                         onClick={() => { updatePerson(p.id, { lastContact: new Date().toISOString(), nextFollowUp: new Date(Date.now() + 7 * 86400000).toISOString() }); addXP(20, `Seguimiento: ${p.name}`) }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-medium bg-white/[0.06] text-slate-400 hover:text-white transition-all flex items-center gap-1">
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-500 hover:text-gray-900 transition-all flex items-center gap-1">
                         <CheckCircle2 size={10} /> Hecho
                       </button>
                     </div>
@@ -970,8 +970,8 @@ export default function MinistryPage() {
                 <button key={f} onClick={() => setLevelFilter(f)}
                   className={cn('px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border',
                     levelFilter === f
-                      ? 'border-transparent text-white'
-                      : 'border-white/[0.08] text-slate-500 hover:text-slate-300 bg-white/[0.02]'
+                      ? 'border-transparent text-gray-900'
+                      : 'border-gray-200 text-gray-500 hover:text-gray-700 bg-gray-50'
                   )}
                   style={levelFilter === f ? { background: f === 'all' ? '#374151' : `${LEVEL_COLORS[f as SpiritualLevel]}30`, color: f === 'all' ? 'white' : LEVEL_COLORS[f as SpiritualLevel] } : undefined}>
                   {f === 'all' ? 'Todos' : LEVEL_LABELS[f as SpiritualLevel]}
@@ -983,8 +983,8 @@ export default function MinistryPage() {
                 <button key={f} onClick={() => setStatusFilter(f)}
                   className={cn('px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border',
                     statusFilter === f
-                      ? 'bg-pink-500/20 border-pink-500/30 text-pink-300'
-                      : 'border-white/[0.08] text-slate-500 hover:text-slate-300 bg-white/[0.02]'
+                      ? 'bg-pink-100 border-pink-200 text-pink-600'
+                      : 'border-gray-200 text-gray-500 hover:text-gray-700 bg-gray-50'
                   )}>
                   {label}
                 </button>
@@ -994,9 +994,9 @@ export default function MinistryPage() {
 
           {/* People list */}
           <div className="space-y-2">
-            <p className="text-xs text-slate-600 font-medium">{filtered.length} persona{filtered.length !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-gray-400 font-medium">{filtered.length} persona{filtered.length !== 1 ? 's' : ''}</p>
             {filtered.length === 0 ? (
-              <div className="text-center py-12 text-slate-600 text-sm">No hay personas con estos filtros</div>
+              <div className="text-center py-12 text-gray-400 text-sm">No hay personas con estos filtros</div>
             ) : filtered.map(p => {
               const stage = stageOf(p)
               const stageInfo = DISC_STAGES[stage]
@@ -1005,7 +1005,7 @@ export default function MinistryPage() {
                 <button
                   key={p.id}
                   onClick={() => setSelectedId(p.id)}
-                  className="w-full p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all text-left"
+                  className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50 hover:bg-gray-50 hover:border-gray-200 transition-all text-left"
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative shrink-0">
@@ -1017,15 +1017,15 @@ export default function MinistryPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-white truncate">{p.name}</p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">{p.name}</p>
                         {isOverdue && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />}
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">{LEVEL_LABELS[p.level]} · {stageInfo?.label}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{LEVEL_LABELS[p.level]} · {stageInfo?.label}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      {p.phone && <p className="text-xs text-slate-600">{p.phone}</p>}
+                      {p.phone && <p className="text-xs text-gray-400">{p.phone}</p>}
                       {p.lastContact ? (
-                        <p className="text-[10px] text-slate-700 mt-0.5">
+                        <p className="text-[10px] text-gray-400 mt-0.5">
                           {formatDistanceToNow(new Date(p.lastContact), { locale: es, addSuffix: true })}
                         </p>
                       ) : (
@@ -1092,10 +1092,10 @@ export default function MinistryPage() {
           <Input label="Teléfono (sin +, ej: 18299036540)" value={newPerson.phone}
             onChange={e => setNewPerson(p => ({ ...p, phone: e.target.value }))} placeholder="18299036540" />
           <div>
-            <label className="text-sm text-slate-400 font-medium block mb-1.5">Nivel espiritual</label>
+            <label className="text-sm text-gray-500 font-medium block mb-1.5">Nivel espiritual</label>
             <select value={newPerson.level}
               onChange={e => setNewPerson(p => ({ ...p, level: e.target.value as SpiritualLevel }))}
-              className="w-full h-10 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white px-3 focus:outline-none">
+              className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none">
               {Object.entries(LEVEL_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
@@ -1162,20 +1162,20 @@ function EditTemplatesModal({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-500">{templates.length} plantilla{templates.length !== 1 ? 's' : ''} · Usa <span className="text-slate-300 font-mono">{`{{nombre}}`}</span> para personalizar</p>
+        <p className="text-xs text-gray-500">{templates.length} plantilla{templates.length !== 1 ? 's' : ''} · Usa <span className="text-gray-700 font-mono">{`{{nombre}}`}</span> para personalizar</p>
         <button onClick={() => setConfirmReset(v => !v)}
-          className="text-[10px] text-slate-700 hover:text-amber-400 transition-colors flex items-center gap-1">
+          className="text-[10px] text-gray-400 hover:text-amber-600 transition-colors flex items-center gap-1">
           <RotateCcw size={10} /> Restaurar
         </button>
       </div>
 
       {confirmReset && (
-        <div className="p-3 rounded-xl bg-amber-500/[0.08] border border-amber-500/20 flex items-center justify-between">
-          <p className="text-xs text-amber-400">¿Restaurar las 5 plantillas originales?</p>
+        <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between">
+          <p className="text-xs text-amber-600">¿Restaurar las 5 plantillas originales?</p>
           <div className="flex gap-2">
-            <button onClick={() => setConfirmReset(false)} className="text-xs text-slate-500 hover:text-slate-300 px-2 py-1">No</button>
+            <button onClick={() => setConfirmReset(false)} className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1">No</button>
             <button onClick={() => { onReset(); setConfirmReset(false); setEditingId(null) }}
-              className="text-xs text-amber-400 px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 transition-all">
+              className="text-xs text-amber-600 px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 transition-all">
               Sí, restaurar
             </button>
           </div>
@@ -1184,32 +1184,32 @@ function EditTemplatesModal({
 
       <div className="max-h-[55vh] overflow-y-auto space-y-2 pr-0.5">
         {templates.map(t => (
-          <div key={t.id} className="rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+          <div key={t.id} className="rounded-2xl border border-gray-200 bg-gray-50 overflow-hidden">
             {editingId === t.id ? (
               /* ── Edit mode ── */
               <div className="p-3.5 space-y-3">
                 <div className="flex gap-2">
                   <div className="w-12">
-                    <label className="text-[10px] text-slate-600 block mb-1">Emoji</label>
+                    <label className="text-[10px] text-gray-400 block mb-1">Emoji</label>
                     <input value={draftIcon} onChange={e => setDraftIcon(e.target.value)}
-                      className="w-full h-9 text-center text-xl rounded-lg bg-white/[0.05] border border-white/[0.08] focus:outline-none focus:border-cyan-500/50"
+                      className="w-full h-9 text-center text-xl rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:border-cyan-500/50"
                       maxLength={2} />
                   </div>
                   <div className="flex-1">
-                    <label className="text-[10px] text-slate-600 block mb-1">Nombre</label>
+                    <label className="text-[10px] text-gray-400 block mb-1">Nombre</label>
                     <input value={draftName} onChange={e => setDraftName(e.target.value)}
-                      className="w-full h-9 px-3 rounded-lg bg-white/[0.05] border border-white/[0.08] text-sm text-white focus:outline-none focus:border-cyan-500/50" />
+                      className="w-full h-9 px-3 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-cyan-500/50" />
                   </div>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-600 block mb-1">Mensaje</label>
+                  <label className="text-[10px] text-gray-400 block mb-1">Mensaje</label>
                   <textarea value={draftBody} onChange={e => setDraftBody(e.target.value)} rows={6}
-                    className="w-full px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.08] text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-cyan-500/50 resize-none leading-relaxed" />
+                    className="w-full px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 resize-none leading-relaxed" />
                 </div>
                 <div className="flex gap-2 justify-end">
-                  <button onClick={cancelEdit} className="text-xs text-slate-500 hover:text-slate-300 px-3 py-1.5 rounded-lg hover:bg-white/[0.05] transition-all">Cancelar</button>
+                  <button onClick={cancelEdit} className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-all">Cancelar</button>
                   <button onClick={saveEdit}
-                    className="text-xs text-white px-3 py-1.5 rounded-lg bg-cyan-500/25 hover:bg-cyan-500/35 transition-all flex items-center gap-1">
+                    className="text-xs text-gray-900 px-3 py-1.5 rounded-lg bg-cyan-100 hover:bg-cyan-200 transition-all flex items-center gap-1">
                     <Check size={11} /> Guardar
                   </button>
                 </div>
@@ -1219,17 +1219,17 @@ function EditTemplatesModal({
               <div className="flex items-start gap-3 p-3.5">
                 <span className="text-xl shrink-0 mt-0.5">{t.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white">{t.name}</p>
-                  <p className="text-xs text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">{t.body.replace(/\n/g, ' ')}</p>
+                  <p className="text-sm font-semibold text-gray-900">{t.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-relaxed">{t.body.replace(/\n/g, ' ')}</p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button onClick={() => startEdit(t)}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all">
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 transition-all">
                     <Pencil size={13} />
                   </button>
                   {templates.length > 1 && (
                     <button onClick={() => onDelete(t.id)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-red-400 hover:bg-red-500/10 transition-all">
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all">
                       <Trash2 size={13} />
                     </button>
                   )}
@@ -1241,7 +1241,7 @@ function EditTemplatesModal({
       </div>
 
       <button onClick={onAdd}
-        className="w-full py-2.5 rounded-xl border border-dashed border-white/[0.10] text-xs text-slate-600 hover:text-slate-400 hover:border-white/[0.18] transition-all flex items-center justify-center gap-1.5">
+        className="w-full py-2.5 rounded-xl border border-dashed border-gray-200 text-xs text-gray-400 hover:text-gray-500 hover:border-gray-300 transition-all flex items-center justify-center gap-1.5">
         <Plus size={13} /> Nueva plantilla
       </button>
     </div>
@@ -1258,20 +1258,20 @@ function WhatsAppConfigModal({ onSave, onClose }: { onSave: (c: UltraConfig) => 
   }, [])
   return (
     <div className="space-y-4">
-      <div className="p-3.5 rounded-xl bg-cyan-500/[0.07] border border-cyan-500/20 space-y-2">
-        <p className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Pasos (5 min)</p>
-        <ol className="list-decimal list-inside space-y-1.5 text-xs text-slate-400">
-          <li>Ve a <span className="text-slate-200 font-medium">ultramsg.com</span> y crea cuenta gratis</li>
+      <div className="p-3.5 rounded-xl bg-cyan-50 border border-cyan-200 space-y-2">
+        <p className="text-xs font-semibold text-cyan-600 uppercase tracking-wider">Pasos (5 min)</p>
+        <ol className="list-decimal list-inside space-y-1.5 text-xs text-gray-500">
+          <li>Ve a <span className="text-gray-700 font-medium">ultramsg.com</span> y crea cuenta gratis</li>
           <li>Crea una instancia → escanea el QR con tu WhatsApp</li>
-          <li>Copia el <span className="text-slate-200">Instance ID</span> y <span className="text-slate-200">Token</span></li>
+          <li>Copia el <span className="text-gray-700">Instance ID</span> y <span className="text-gray-700">Token</span></li>
           <li>Pégalos aquí y guarda</li>
         </ol>
       </div>
       <Input label="Instance ID" value={instance} onChange={e => setInstance(e.target.value)} placeholder="instance12345" />
       <div>
-        <label className="text-sm font-medium text-slate-300 block mb-1.5">Token</label>
+        <label className="text-sm font-medium text-gray-700 block mb-1.5">Token</label>
         <input type="password" value={token} onChange={e => setToken(e.target.value)} placeholder="••••••••••••••••••••"
-          className="w-full h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-slate-200 placeholder-slate-700 px-3 focus:outline-none focus:border-cyan-500/50" />
+          className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 px-3 focus:outline-none focus:border-cyan-500/50" />
       </div>
       <div className="flex gap-3 justify-end pt-1">
         <Button variant="ghost" onClick={onClose}>Cancelar</Button>

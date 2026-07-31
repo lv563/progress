@@ -74,33 +74,33 @@ function BlockForm({
       />
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-sm text-slate-400 font-medium block mb-1.5">Inicio</label>
+          <label className="text-sm text-gray-500 font-medium block mb-1.5">Inicio</label>
           <input
             type="time"
             value={value.startTime}
             onChange={e => onChange({ startTime: e.target.value })}
-            className="w-full h-10 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white px-3 focus:outline-none focus:border-cyan-500/50"
+            className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 px-3 focus:outline-none focus:border-cyan-500/50"
           />
         </div>
         <div>
-          <label className="text-sm text-slate-400 font-medium block mb-1.5">Fin</label>
+          <label className="text-sm text-gray-500 font-medium block mb-1.5">Fin</label>
           <input
             type="time"
             value={value.endTime}
             onChange={e => onChange({ endTime: e.target.value })}
-            className="w-full h-10 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white px-3 focus:outline-none focus:border-cyan-500/50"
+            className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 px-3 focus:outline-none focus:border-cyan-500/50"
           />
         </div>
       </div>
 
       <div>
-        <label className="text-sm text-slate-400 font-medium block mb-2">Categoría</label>
+        <label className="text-sm text-gray-500 font-medium block mb-2">Categoría</label>
         <div className="grid grid-cols-3 gap-2">
           {(Object.entries(CATEGORY_LABELS) as [RoutineBlock['category'], string][]).map(([cat, label]) => (
             <button
               key={cat}
               onClick={() => onChange({ category: cat })}
-              className={cn('px-2 py-2 rounded-xl text-xs font-medium transition-all border flex items-center gap-1.5', value.category === cat ? '' : 'text-slate-400 border-white/[0.06] hover:text-slate-200')}
+              className={cn('px-2 py-2 rounded-xl text-xs font-medium transition-all border flex items-center gap-1.5', value.category === cat ? '' : 'text-gray-500 border-gray-100 hover:text-gray-700')}
               style={value.category === cat ? { background: `${CATEGORY_COLORS[cat]}18`, borderColor: `${CATEGORY_COLORS[cat]}50`, color: CATEGORY_COLORS[cat] } : undefined}
             >
               <span>{CATEGORY_ICONS[cat]}</span> {label}
@@ -110,13 +110,13 @@ function BlockForm({
       </div>
 
       <div>
-        <label className="text-sm text-slate-400 font-medium block mb-2">Ícono</label>
+        <label className="text-sm text-gray-500 font-medium block mb-2">Ícono</label>
         <div className="flex flex-wrap gap-1.5">
           {BLOCK_ICONS.map(icon => (
             <button
               key={icon}
               onClick={() => onChange({ icon })}
-              className={cn('w-9 h-9 rounded-xl text-lg flex items-center justify-center transition-all border', value.icon === icon ? 'border-cyan-500/40 bg-cyan-500/15 scale-110' : 'bg-white/[0.04] border-white/[0.06] hover:bg-white/[0.08]')}
+              className={cn('w-9 h-9 rounded-xl text-lg flex items-center justify-center transition-all border', value.icon === icon ? 'border-cyan-300 bg-cyan-100 scale-110' : 'bg-gray-50 border-gray-100 hover:bg-gray-100')}
             >
               {icon}
             </button>
@@ -231,20 +231,20 @@ export default function RoutinePage() {
       {/* Header */}
       <motion.div variants={fadeUp} className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-black text-white flex items-center gap-2">
-            <Calendar size={24} className="text-cyan-400" /> Rutina
+          <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+            <Calendar size={24} className="text-cyan-600" /> Rutina
           </h1>
-          <p className="text-slate-500 text-sm capitalize mt-0.5">{dayLabel}</p>
+          <p className="text-gray-500 text-sm capitalize mt-0.5">{dayLabel}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
-            <button onClick={() => setViewDate(d => subDays(d, 1))} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-all">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-gray-100 border border-gray-200">
+            <button onClick={() => setViewDate(d => subDays(d, 1))} className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all">
               <ChevronLeft size={16} />
             </button>
-            <button onClick={() => setViewDate(new Date())} className={cn('px-2.5 py-1 rounded-lg text-xs font-medium transition-all', isToday ? 'bg-cyan-500/20 text-cyan-300' : 'text-slate-400 hover:text-slate-200')}>
+            <button onClick={() => setViewDate(new Date())} className={cn('px-2.5 py-1 rounded-lg text-xs font-medium transition-all', isToday ? 'bg-white text-cyan-700 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
               Hoy
             </button>
-            <button onClick={() => setViewDate(d => addDays(d, 1))} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-all">
+            <button onClick={() => setViewDate(d => addDays(d, 1))} className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all">
               <ChevronRight size={16} />
             </button>
           </div>
@@ -258,7 +258,7 @@ export default function RoutinePage() {
 
       {/* Weekly mini calendar */}
       <motion.div variants={fadeUp}>
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+        <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
           <div className="grid grid-cols-7 gap-1.5">
             {weekDays.map(({ d, ds, total, done, pct }) => {
               const isSelected   = ds === dateStr
@@ -270,21 +270,21 @@ export default function RoutinePage() {
                   onClick={() => setViewDate(d)}
                   className={cn(
                     'flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl transition-all',
-                    isSelected   ? 'bg-cyan-500/15 ring-1 ring-cyan-500/40' :
-                    isCurrentDay ? 'bg-white/[0.05]' :
-                    'hover:bg-white/[0.04]'
+                    isSelected   ? 'bg-cyan-50 ring-1 ring-cyan-300' :
+                    isCurrentDay ? 'bg-gray-100' :
+                    'hover:bg-gray-50'
                   )}
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-slate-600">
+                  <span className="text-[9px] uppercase tracking-wider text-gray-400">
                     {format(d, 'EEEEE', { locale: es })}
                   </span>
-                  <span className={cn('text-sm font-bold tabular-nums', isCurrentDay && !isSelected ? 'text-white' : 'text-slate-400', isSelected && 'text-cyan-300')}>
+                  <span className={cn('text-sm font-bold tabular-nums', isCurrentDay && !isSelected ? 'text-gray-900' : 'text-gray-500', isSelected && 'text-cyan-700')}>
                     {format(d, 'd')}
                   </span>
                   {/* Tiny SVG ring */}
                   <div className="relative w-6 h-6">
                     <svg className="w-6 h-6 -rotate-90" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="9" fill="none" strokeWidth="2" stroke="rgba(255,255,255,0.06)" />
+                      <circle cx="12" cy="12" r="9" fill="none" strokeWidth="2" stroke="rgba(0,0,0,0.1)" />
                       {total > 0 && (
                         <circle
                           cx="12" cy="12" r="9"
@@ -296,7 +296,7 @@ export default function RoutinePage() {
                       )}
                     </svg>
                     {total > 0 && (
-                      <span className="absolute inset-0 flex items-center justify-center text-[7px] text-slate-600">
+                      <span className="absolute inset-0 flex items-center justify-center text-[7px] text-gray-400">
                         {pct >= 1 ? '✓' : `${done}`}
                       </span>
                     )}
@@ -311,14 +311,14 @@ export default function RoutinePage() {
       {/* Empty state */}
       {!currentRoutine ? (
         <motion.div variants={fadeUp} className="space-y-3">
-          <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/[0.04] p-6">
+          <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-6">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 flex items-center justify-center shrink-0">
-                <Plus size={22} className="text-cyan-400" />
+              <div className="w-12 h-12 rounded-2xl bg-cyan-100 flex items-center justify-center shrink-0">
+                <Plus size={22} className="text-cyan-600" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-white mb-1">Crear rutina para este día</h3>
-                <p className="text-sm text-slate-500 mb-4">Empieza en blanco o usa una plantilla para ahorrar tiempo.</p>
+                <h3 className="font-bold text-gray-900 mb-1">Crear rutina para este día</h3>
+                <p className="text-sm text-gray-500 mb-4">Empieza en blanco o usa una plantilla para ahorrar tiempo.</p>
                 <Button variant="glow" size="sm" onClick={() => { createEmptyRoutine(dateStr); setTimeout(() => setAddOpen(true), 100) }}>
                   <Plus size={14} /> Empezar en blanco
                 </Button>
@@ -328,22 +328,22 @@ export default function RoutinePage() {
 
           {templates.length > 0 && (
             <div>
-              <p className="text-xs text-slate-600 uppercase tracking-wider mb-2 px-1">Plantillas</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 px-1">Plantillas</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {templates.map(tpl => (
                   <button
                     key={tpl.id}
                     onClick={() => applyTemplate(tpl.id, dateStr)}
-                    className="flex items-center gap-3 p-4 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-cyan-500/20 hover:bg-cyan-500/[0.03] transition-all text-left"
+                    className="flex items-center gap-3 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:border-cyan-200 hover:bg-cyan-50 transition-all text-left"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0">
-                      <Layers size={18} className="text-cyan-400" />
+                    <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center shrink-0">
+                      <Layers size={18} className="text-cyan-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{tpl.name}</p>
-                      <p className="text-xs text-slate-500">{tpl.blocks.length} bloques predefinidos</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{tpl.name}</p>
+                      <p className="text-xs text-gray-500">{tpl.blocks.length} bloques predefinidos</p>
                     </div>
-                    <RefreshCw size={14} className="text-slate-600" />
+                    <RefreshCw size={14} className="text-gray-400" />
                   </button>
                 ))}
               </div>
@@ -355,12 +355,12 @@ export default function RoutinePage() {
 
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] text-slate-500 uppercase tracking-wider">Progreso</span>
-                <span className="text-xs font-bold text-cyan-400">{completedBlocks}/{totalBlocks}</span>
+                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Progreso</span>
+                <span className="text-xs font-bold text-cyan-600">{completedBlocks}/{totalBlocks}</span>
               </div>
-              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+              <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
                 <motion.div
                   className="h-full rounded-full"
                   initial={{ width: 0 }}
@@ -370,19 +370,19 @@ export default function RoutinePage() {
                 />
               </div>
             </div>
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
               <div className="flex items-center gap-1.5 mb-1">
-                <Clock size={10} className="text-slate-600" />
-                <span className="text-[10px] text-slate-500 uppercase tracking-wider">Planificado</span>
+                <Clock size={10} className="text-gray-400" />
+                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Planificado</span>
               </div>
-              <p className="text-sm font-bold text-white">{(totalMinutes / 60).toFixed(1)}h</p>
+              <p className="text-sm font-bold text-gray-900">{(totalMinutes / 60).toFixed(1)}h</p>
             </div>
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
               <div className="flex items-center gap-1.5 mb-1">
-                <Zap size={10} className="text-slate-600" />
-                <span className="text-[10px] text-slate-500 uppercase tracking-wider">Completado</span>
+                <Zap size={10} className="text-gray-400" />
+                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Completado</span>
               </div>
-              <p className="text-sm font-bold text-white">{(completedMinutes / 60).toFixed(1)}h</p>
+              <p className="text-sm font-bold text-gray-900">{(completedMinutes / 60).toFixed(1)}h</p>
             </div>
           </div>
 
@@ -395,9 +395,9 @@ export default function RoutinePage() {
                   <div key={cat} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs" style={{ borderColor: `${color}30`, background: `${color}0A` }}>
                     <span>{CATEGORY_ICONS[cat]}</span>
                     <span style={{ color }}>{CATEGORY_LABELS[cat]}</span>
-                    <span className="text-slate-600">{done}/{total}</span>
-                    <span className="text-slate-700 mx-0.5">·</span>
-                    <span className="text-slate-600">{minutes}m</span>
+                    <span className="text-gray-400">{done}/{total}</span>
+                    <span className="text-gray-400 mx-0.5">·</span>
+                    <span className="text-gray-400">{minutes}m</span>
                   </div>
                 )
               })}
@@ -432,8 +432,8 @@ export default function RoutinePage() {
                   />
                   <span className="text-xl">{active.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-white">Ahora: {active.title}</p>
-                    <p className="text-xs text-slate-500">{remaining} min restantes · {active.startTime} — {active.endTime}</p>
+                    <p className="text-sm font-bold text-gray-900">Ahora: {active.title}</p>
+                    <p className="text-xs text-gray-500">{remaining} min restantes · {active.startTime} — {active.endTime}</p>
                   </div>
                   <button
                     onClick={() => { toggleBlock(currentRoutine.id, active.id); addXP(5, `Bloque: ${active.title}`) }}
@@ -470,7 +470,7 @@ export default function RoutinePage() {
             )
             return (
               <div className="relative">
-                <div className="absolute left-[4.25rem] top-0 bottom-0 w-px bg-white/[0.05]" />
+                <div className="absolute left-[4.25rem] top-0 bottom-0 w-px bg-gray-200" />
                 <div className="space-y-1">
                   {sorted.map((block, i) => {
                     const status = blockStatus(block)
@@ -489,7 +489,7 @@ export default function RoutinePage() {
                         >
                           {/* Time */}
                           <div className="w-14 shrink-0 text-right pt-3.5">
-                            <span className="text-[11px] text-slate-600 font-mono">{block.startTime}</span>
+                            <span className="text-[11px] text-gray-400 font-mono">{block.startTime}</span>
                           </div>
                           {/* Dot */}
                           <div className="relative flex flex-col items-center">
@@ -499,7 +499,7 @@ export default function RoutinePage() {
                                 status === 'completed' ? { background: '#10B981', borderColor: '#10B981', boxShadow: '0 0 6px rgba(16,185,129,0.5)' } :
                                 status === 'active'    ? { background: color, borderColor: color, boxShadow: `0 0 8px ${color}80` } :
                                 status === 'overdue'   ? { background: 'transparent', borderColor: 'rgba(239,68,68,0.25)' } :
-                                { background: 'transparent', borderColor: 'rgba(255,255,255,0.12)' }
+                                { background: 'transparent', borderColor: 'rgba(0,0,0,0.15)' }
                               }
                             />
                           </div>
@@ -507,9 +507,9 @@ export default function RoutinePage() {
                           <div
                             className={cn(
                               'flex-1 rounded-xl border transition-all mb-1.5 group overflow-hidden',
-                              status === 'completed' ? 'border-emerald-500/15 bg-emerald-500/[0.03]' :
-                              status === 'overdue'   ? 'border-white/[0.04] opacity-45' :
-                              'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'
+                              status === 'completed' ? 'border-emerald-200 bg-emerald-50' :
+                              status === 'overdue'   ? 'border-gray-100 opacity-45' :
+                              'border-gray-100 bg-gray-50 hover:bg-gray-100'
                             )}
                             style={status === 'active' ? { borderColor: `${color}40`, background: `${color}08`, boxShadow: `0 0 20px ${color}0C` } : undefined}
                           >
@@ -518,7 +518,7 @@ export default function RoutinePage() {
                               <div
                                 className="w-0.5 shrink-0"
                                 style={{
-                                  background: status === 'completed' ? '#10B981' : status === 'overdue' ? 'rgba(255,255,255,0.04)' : color,
+                                  background: status === 'completed' ? '#10B981' : status === 'overdue' ? 'rgba(0,0,0,0.06)' : color,
                                   opacity: status === 'upcoming' ? 0.35 : 1,
                                 }}
                               />
@@ -527,7 +527,7 @@ export default function RoutinePage() {
                                   <span className="text-base select-none">{block.icon}</span>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                      <p className={cn('text-sm font-semibold truncate', status === 'completed' ? 'text-slate-500 line-through' : 'text-white')}>
+                                      <p className={cn('text-sm font-semibold truncate', status === 'completed' ? 'text-gray-500 line-through' : 'text-gray-900')}>
                                         {block.title}
                                       </p>
                                       {status === 'active' && (
@@ -539,7 +539,7 @@ export default function RoutinePage() {
                                         />
                                       )}
                                     </div>
-                                    <p className="text-[11px] text-slate-600 font-mono">
+                                    <p className="text-[11px] text-gray-400 font-mono">
                                       {block.startTime} — {block.endTime} · {dur}min
                                     </p>
                                   </div>
@@ -553,19 +553,19 @@ export default function RoutinePage() {
                                   <div className="flex items-center gap-0.5 shrink-0">
                                     <button
                                       onClick={e => { e.stopPropagation(); openEdit(block) }}
-                                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-700 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
+                                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 transition-all"
                                     >
                                       <Pencil size={11} />
                                     </button>
                                     <button
                                       onClick={e => { e.stopPropagation(); removeBlock(currentRoutine.id, block.id) }}
-                                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-700 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
                                     >
                                       <Trash2 size={11} />
                                     </button>
                                     <button
                                       onClick={() => { toggleBlock(currentRoutine.id, block.id); if (!block.completed) addXP(5, `Bloque: ${block.title}`) }}
-                                      className="p-1 text-slate-600 hover:text-emerald-400 transition-colors"
+                                      className="p-1 text-gray-400 hover:text-emerald-500 transition-colors"
                                     >
                                       {status === 'completed'
                                         ? <CheckCircle2 size={18} className="text-emerald-400" />
@@ -596,10 +596,10 @@ export default function RoutinePage() {
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
-                <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/[0.03] p-5">
+                <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-5">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-white">Nuevo bloque</h3>
-                    <button onClick={() => setAddOpen(false)} className="text-slate-500 hover:text-slate-300 transition-colors">
+                    <h3 className="text-sm font-bold text-gray-900">Nuevo bloque</h3>
+                    <button onClick={() => setAddOpen(false)} className="text-gray-500 hover:text-gray-700 transition-colors">
                       <X size={16} />
                     </button>
                   </div>
@@ -617,7 +617,7 @@ export default function RoutinePage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 onClick={() => setAddOpen(true)}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-white/[0.07] text-slate-600 hover:text-cyan-400 hover:border-cyan-500/30 transition-all text-sm"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-gray-200 text-gray-400 hover:text-cyan-600 hover:border-cyan-200 transition-all text-sm"
               >
                 <Plus size={14} /> Agregar bloque
               </motion.button>
@@ -629,12 +629,12 @@ export default function RoutinePage() {
       {/* Tomorrow CTA */}
       {isToday && !routines.find(r => r.date === format(addDays(new Date(), 1), 'yyyy-MM-dd')) && (
         <motion.div variants={fadeUp}>
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
             <div className="flex items-start gap-3">
               <span className="text-2xl">🌅</span>
               <div className="flex-1">
-                <p className="font-semibold text-white mb-1">¿Cuál será tu rutina mañana?</p>
-                <p className="text-sm text-slate-500 mb-3">Planifica con anticipación para empezar el día sin fricciones.</p>
+                <p className="font-semibold text-gray-900 mb-1">¿Cuál será tu rutina mañana?</p>
+                <p className="text-sm text-gray-500 mb-3">Planifica con anticipación para empezar el día sin fricciones.</p>
                 <div className="flex gap-2 flex-wrap">
                   <Button variant="glow" size="sm" onClick={() => { createEmptyRoutine(format(addDays(new Date(), 1), 'yyyy-MM-dd')); setViewDate(addDays(new Date(), 1)) }}>
                     <Plus size={14} /> Desde cero

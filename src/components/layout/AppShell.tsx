@@ -42,12 +42,10 @@ export function AppShell({ children }: AppShellProps) {
     if (!user) router.replace('/login')
   }, [user, router])
 
-  // Daily reset: runs once per day on app load
   useEffect(() => {
     if (!user) return
     const today = new Date().toISOString().slice(0, 10)
     if (lastResetDate && lastResetDate !== today) {
-      // Save yesterday's performance log before resetting
       const todayLogs = getTodayLogs()
       const completedHabits = habits.filter(h => todayLogs[h.id]?.completed).length
       const sessions = getTodaySessions()
@@ -58,7 +56,7 @@ export function AppShell({ children }: AppShellProps) {
         (habits.length > 0 ? (completedHabits / habits.length) * 30 : 0) +
         (Math.min(sessions.length, 4) / 4) * 25 +
         (getWaterTarget() > 0 ? Math.min(waterLitersToday, getWaterTarget()) / getWaterTarget() : 0) * 20 +
-        0 +  // meals metric removed
+        0 +
         (completedTasks > 0 ? 10 : 0)
       )
       saveLog({
@@ -68,7 +66,7 @@ export function AppShell({ children }: AppShellProps) {
         pomodoroSessions: sessions.length,
         focusMinutes: sessions.reduce((a, s) => a + s.duration, 0),
         tasksCompleted: completedTasks,
-        waterGlasses: waterToday,  // container count for the day
+        waterGlasses: waterToday,
         mealsEaten: getTodayMacros().calories > 0 ? 3 : 0,
         mealsTarget: 3,
         gymDone: false,
@@ -94,7 +92,7 @@ export function AppShell({ children }: AppShellProps) {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F]">
+    <div className="min-h-screen bg-[#F7F8FA]">
       <Sidebar />
       <TopBar />
 
@@ -104,10 +102,10 @@ export function AppShell({ children }: AppShellProps) {
         className="pt-16 pb-20 md:pb-0 min-h-screen"
       >
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: [0.0, 0.0, 0.2, 1] }}
-          className="p-4 md:p-6 max-w-[1600px] mx-auto"
+          transition={{ duration: 0.25, ease: [0.0, 0.0, 0.2, 1] }}
+          className="p-5 md:p-7 max-w-[1600px] mx-auto"
         >
           {children}
         </motion.div>

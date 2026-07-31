@@ -5,7 +5,6 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Crown, User, Mail, Lock, ArrowRight, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
-import { GlassCard } from '@/components/ui/GlassCard'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { useAppStore } from '@/stores/app.store'
@@ -61,11 +60,11 @@ export default function RegisterPage() {
             <Crown size={24} className="text-white" />
           </div>
           <div>
-            <h1 className="text-h2 text-white">Kingdom OS</h1>
-            <p className="text-xs text-slate-500">Sistema operativo de vida</p>
+            <h1 className="text-h2 text-gray-900">Kingdom OS</h1>
+            <p className="text-xs text-gray-500">Sistema operativo de vida</p>
           </div>
         </div>
-        <p className="text-slate-300 text-body-lg leading-relaxed">
+        <p className="text-gray-700 text-body-lg leading-relaxed">
           Todo lo que necesitas para vivir con propósito, disciplina y orden — en un solo lugar.
         </p>
         <div className="space-y-3">
@@ -77,8 +76,8 @@ export default function RegisterPage() {
               transition={{ delay: 0.1 + i * 0.07 }}
               className="flex items-center gap-3"
             >
-              <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-              <span className="text-sm text-slate-300">{perk}</span>
+              <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+              <span className="text-sm text-gray-700">{perk}</span>
             </motion.div>
           ))}
         </div>
@@ -90,18 +89,18 @@ export default function RegisterPage() {
           <div className="w-14 h-14 rounded-2xl gradient-hero flex items-center justify-center shadow-[0_0_32px_rgba(124,58,237,0.5)]">
             <Crown size={28} className="text-white" />
           </div>
-          <h1 className="text-h2 text-white">Empieza tu Kingdom</h1>
+          <h1 className="text-h2 text-gray-900">Empieza tu Kingdom</h1>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <GlassCard className="p-6" variant="elevated">
-            <h2 className="text-h3 text-white mb-5">Crear cuenta gratuita</h2>
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-6">
+            <h2 className="text-h3 text-gray-900 mb-5">Crear cuenta gratuita</h2>
 
             {error && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="mb-4 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
+                className="mb-4 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm"
               >
                 {error}
               </motion.div>
@@ -138,30 +137,30 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 bottom-2.5 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute right-3 bottom-2.5 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-gray-500">
                 Al registrarte aceptas los{' '}
-                <span className="text-violet-400 cursor-pointer hover:text-violet-300 transition-colors">Términos de servicio</span>.
+                <span className="text-indigo-600 cursor-pointer hover:text-indigo-700 transition-colors">Términos de servicio</span>.
               </p>
               <Button type="submit" variant="glow" className="w-full mt-1" loading={loading}>
                 Crear mi Kingdom <ArrowRight size={14} />
               </Button>
             </form>
-          </GlassCard>
+          </div>
         </motion.div>
 
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-sm text-slate-500 text-center"
+          className="text-sm text-gray-500 text-center"
         >
           ¿Ya tienes cuenta?{' '}
-          <Link href="/login" className="text-violet-400 hover:text-violet-300 font-medium transition-colors">
+          <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
             Inicia sesión
           </Link>
         </motion.p>

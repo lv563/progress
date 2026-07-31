@@ -17,7 +17,8 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-[#0D0D16]/95 backdrop-blur-xl border-t border-white/[0.06]">
+      <nav className="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-white/95 backdrop-blur-xl border-t border-black/[0.06]"
+        style={{ boxShadow: '0 -1px 0 rgba(0,0,0,0.05)' }}>
         <div className="flex items-center justify-around py-1 px-2">
           {BOTTOM_TABS.map((tab) => {
             const Icon = tab.icon
@@ -25,16 +26,16 @@ export function BottomNav() {
             return (
               <Link key={tab.id} href={tab.href} className="flex-1">
                 <motion.div
-                  whileTap={{ scale: 0.9 }}
+                  whileTap={{ scale: 0.88 }}
                   className="flex flex-col items-center gap-0.5 py-1.5"
                 >
                   <div className={cn(
                     'w-10 h-8 rounded-xl flex items-center justify-center transition-all duration-200',
-                    active ? 'bg-violet-500/20' : 'bg-transparent'
+                    active ? 'bg-indigo-50' : 'bg-transparent'
                   )}>
-                    <Icon size={20} className={cn('transition-colors duration-200', active ? 'text-violet-400' : 'text-slate-500')} />
+                    <Icon size={20} className={cn('transition-colors duration-200', active ? 'text-indigo-600' : 'text-gray-400')} />
                   </div>
-                  <span className={cn('text-[10px] font-medium transition-colors duration-200', active ? 'text-violet-400' : 'text-slate-600')}>
+                  <span className={cn('text-[10px] font-medium transition-colors duration-200', active ? 'text-indigo-600' : 'text-gray-400')}>
                     {tab.label}
                   </span>
                 </motion.div>
@@ -42,19 +43,17 @@ export function BottomNav() {
             )
           })}
 
-          {/* Más button */}
           <button className="flex-1" onClick={() => setMoreOpen(true)}>
             <div className="flex flex-col items-center gap-0.5 py-1.5">
-              <div className={cn('w-10 h-8 rounded-xl flex items-center justify-center transition-all', moreOpen ? 'bg-violet-500/20' : '')}>
-                <MoreHorizontal size={20} className={cn('transition-colors', moreOpen ? 'text-violet-400' : 'text-slate-500')} />
+              <div className={cn('w-10 h-8 rounded-xl flex items-center justify-center transition-all', moreOpen ? 'bg-indigo-50' : '')}>
+                <MoreHorizontal size={20} className={cn('transition-colors', moreOpen ? 'text-indigo-600' : 'text-gray-400')} />
               </div>
-              <span className={cn('text-[10px] font-medium', moreOpen ? 'text-violet-400' : 'text-slate-600')}>Más</span>
+              <span className={cn('text-[10px] font-medium', moreOpen ? 'text-indigo-600' : 'text-gray-400')}>Más</span>
             </div>
           </button>
         </div>
       </nav>
 
-      {/* More drawer */}
       <AnimatePresence>
         {moreOpen && (
           <>
@@ -62,7 +61,7 @@ export function BottomNav() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/60 md:hidden"
+              className="fixed inset-0 z-40 bg-black/20 md:hidden"
               onClick={() => setMoreOpen(false)}
             />
             <motion.div
@@ -70,15 +69,16 @@ export function BottomNav() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#0D0D16] border-t border-white/[0.06] rounded-t-2xl"
+              className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-black/[0.06] rounded-t-2xl"
+              style={{ boxShadow: '0 -4px 24px rgba(0,0,0,0.08)' }}
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
-                <span className="text-sm font-bold text-white">Todos los módulos</span>
-                <button onClick={() => setMoreOpen(false)} className="w-7 h-7 rounded-lg bg-white/[0.06] flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <span className="text-sm font-bold text-gray-900">Todos los módulos</span>
+                <button onClick={() => setMoreOpen(false)} className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors">
                   <X size={14} />
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-3 p-4 pb-8">
+              <div className="grid grid-cols-3 gap-2 p-4 pb-8">
                 {MORE_ITEMS.map((item) => {
                   const Icon = item.icon
                   const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
@@ -88,13 +88,13 @@ export function BottomNav() {
                         whileTap={{ scale: 0.95 }}
                         className={cn(
                           'flex flex-col items-center gap-2 p-3 rounded-2xl transition-all',
-                          active ? 'bg-violet-500/15' : 'bg-white/[0.04]'
+                          active ? 'bg-indigo-50' : 'bg-gray-50 hover:bg-gray-100'
                         )}
                       >
-                        <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center', active ? 'bg-violet-500/20' : 'bg-white/[0.06]')}>
-                          <Icon size={20} className={active ? 'text-violet-400' : 'text-slate-400'} />
+                        <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center', active ? 'bg-indigo-100' : 'bg-white shadow-sm border border-gray-100')}>
+                          <Icon size={20} className={active ? 'text-indigo-600' : 'text-gray-500'} />
                         </div>
-                        <span className={cn('text-xs font-medium text-center leading-tight', active ? 'text-violet-400' : 'text-slate-400')}>
+                        <span className={cn('text-xs font-medium text-center leading-tight', active ? 'text-indigo-700' : 'text-gray-600')}>
                           {item.label}
                         </span>
                       </motion.div>

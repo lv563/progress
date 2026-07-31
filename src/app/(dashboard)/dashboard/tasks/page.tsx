@@ -21,7 +21,7 @@ import {
 
 const STATUS_COLS: { id: TaskStatus; label: string; color: string; icon: string }[] = [
   { id: 'todo',        label: 'Por hacer',   color: '#475569', icon: '○' },
-  { id: 'in-progress', label: 'En progreso', color: '#00D4B8', icon: '◐' },
+  { id: 'in-progress', label: 'En progreso', color: '#0891B2', icon: '◐' },
   { id: 'review',      label: 'En revisión', color: '#F59E0B', icon: '◑' },
   { id: 'done',        label: 'Completado',  color: '#10B981', icon: '●' },
 ]
@@ -71,37 +71,37 @@ function TaskCard({ task, onDelete, onMove, isDragOverlay = false }: {
       <div
         className={cn(
           'group rounded-xl p-3 border transition-all cursor-default',
-          overdue  ? 'border-red-500/30 bg-red-500/[0.04]' :
-          dueToday ? 'border-amber-500/30 bg-amber-500/[0.04]' :
-          task.status === 'done' ? 'border-white/[0.04] bg-white/[0.01]' :
-          'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]',
+          overdue  ? 'border-red-200 bg-red-50' :
+          dueToday ? 'border-amber-200 bg-amber-50' :
+          task.status === 'done' ? 'border-gray-100 bg-gray-50' :
+          'border-gray-100 bg-gray-50 hover:bg-gray-50',
         )}
         style={isDragOverlay ? { boxShadow: '0 20px 60px rgba(0,0,0,0.6)' } : undefined}
       >
         <div className="flex items-start gap-2">
           <button
             {...listeners}
-            className="mt-0.5 text-slate-700 hover:text-slate-500 transition-colors cursor-grab active:cursor-grabbing shrink-0"
+            className="mt-0.5 text-gray-400 hover:text-gray-500 transition-colors cursor-grab active:cursor-grabbing shrink-0"
           >
             <GripVertical size={13} />
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-1">
-              <p className={cn('text-sm font-medium leading-snug', task.status === 'done' ? 'text-slate-600 line-through' : 'text-white')}>
+              <p className={cn('text-sm font-medium leading-snug', task.status === 'done' ? 'text-gray-400 line-through' : 'text-gray-900')}>
                 {task.title}
               </p>
-              <button onClick={onDelete} className="text-slate-700 hover:text-red-400 transition-colors shrink-0 opacity-0 group-hover:opacity-100">
+              <button onClick={onDelete} className="text-gray-400 hover:text-red-400 transition-colors shrink-0 opacity-0 group-hover:opacity-100">
                 <Trash2 size={11} />
               </button>
             </div>
             {task.description && (
-              <p className="text-xs text-slate-500 mt-1 leading-snug line-clamp-2">{task.description}</p>
+              <p className="text-xs text-gray-500 mt-1 leading-snug line-clamp-2">{task.description}</p>
             )}
             {/* Tags */}
             {task.tags && task.tags.length > 0 && (
               <div className="flex gap-1 mt-1.5 flex-wrap">
                 {task.tags.map(tag => (
-                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-slate-500">
+                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
                     #{tag}
                   </span>
                 ))}
@@ -114,7 +114,7 @@ function TaskCard({ task, onDelete, onMove, isDragOverlay = false }: {
                 <span className="text-[10px]" style={{ color: pm.color }}>{pm.label}</span>
               </div>
               {task.dueDate && (
-                <span className={cn('text-[10px] flex items-center gap-0.5', overdue ? 'text-red-400' : dueToday ? 'text-amber-400' : 'text-slate-500')}>
+                <span className={cn('text-[10px] flex items-center gap-0.5', overdue ? 'text-red-400' : dueToday ? 'text-amber-400' : 'text-gray-500')}>
                   {overdue ? <AlertTriangle size={9} /> : <Calendar size={9} />}
                   {overdue ? 'Vencido · ' : dueToday ? 'Hoy · ' : ''}
                   {new Date(task.dueDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
@@ -125,17 +125,17 @@ function TaskCard({ task, onDelete, onMove, isDragOverlay = false }: {
             {task.status !== 'done' && (
               <div className="flex gap-2 mt-2">
                 {task.status === 'todo' && (
-                  <button onClick={() => onMove('in-progress')} className="text-[10px] text-slate-600 hover:text-cyan-400 transition-colors">
+                  <button onClick={() => onMove('in-progress')} className="text-[10px] text-gray-400 hover:text-cyan-600 transition-colors">
                     → Iniciar
                   </button>
                 )}
                 {task.status === 'in-progress' && (
-                  <button onClick={() => onMove('review')} className="text-[10px] text-slate-600 hover:text-amber-400 transition-colors">
+                  <button onClick={() => onMove('review')} className="text-[10px] text-gray-400 hover:text-amber-600 transition-colors">
                     → Revisión
                   </button>
                 )}
                 {(task.status === 'in-progress' || task.status === 'review') && (
-                  <button onClick={() => onMove('done')} className="text-[10px] text-slate-600 hover:text-emerald-400 transition-colors">
+                  <button onClick={() => onMove('done')} className="text-[10px] text-gray-400 hover:text-emerald-600 transition-colors">
                     ✓ Completar
                   </button>
                 )}
@@ -156,8 +156,8 @@ function DroppableColumn({ id, color, label, icon, count, children }: {
     <div>
       <div className="flex items-center gap-2 mb-3 px-1">
         <span className="text-sm font-bold" style={{ color }}>{icon}</span>
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{label}</span>
-        <span className="ml-auto text-xs font-mono px-1.5 py-0.5 rounded-md bg-white/[0.04] text-slate-600">{count}</span>
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{label}</span>
+        <span className="ml-auto text-xs font-mono px-1.5 py-0.5 rounded-md bg-gray-50 text-gray-400">{count}</span>
       </div>
       <div
         ref={setNodeRef}
@@ -276,15 +276,15 @@ export default function TasksPage() {
 
       {/* Header */}
       <motion.div variants={fadeUp} className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-black text-white flex items-center gap-2">
-          <CheckSquare size={24} className="text-cyan-400" /> Tareas
+        <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+          <CheckSquare size={24} className="text-cyan-600" /> Tareas
         </h1>
         <div className="flex items-center gap-2">
-          <div className="flex gap-1 p-1 rounded-lg bg-white/[0.04] border border-white/[0.06]">
-            <button onClick={() => setView('kanban')} className={cn('p-1.5 rounded-md transition-all', view === 'kanban' ? 'bg-cyan-500/25 text-cyan-300' : 'text-slate-500 hover:text-slate-300')}>
+          <div className="flex gap-1 p-1 rounded-lg bg-gray-100 border border-gray-200">
+            <button onClick={() => setView('kanban')} className={cn('p-1.5 rounded-md transition-all', view === 'kanban' ? 'bg-white text-cyan-700 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
               <Kanban size={14} />
             </button>
-            <button onClick={() => setView('list')} className={cn('p-1.5 rounded-md transition-all', view === 'list' ? 'bg-cyan-500/25 text-cyan-300' : 'text-slate-500 hover:text-slate-300')}>
+            <button onClick={() => setView('list')} className={cn('p-1.5 rounded-md transition-all', view === 'list' ? 'bg-white text-cyan-700 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
               <List size={14} />
             </button>
           </div>
@@ -302,13 +302,13 @@ export default function TasksPage() {
           { label: 'Completadas', value: stats.done,       color: '#10B981', icon: <CheckSquare size={14}/> },
           { label: 'Vencidas',    value: stats.overdue,    color: '#EF4444', icon: <AlertTriangle size={14}/> },
         ].map(s => (
-          <div key={s.label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 flex items-center gap-3">
+          <div key={s.label} className="rounded-xl border border-gray-100 bg-gray-50 p-3 flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${s.color}15`, color: s.color }}>
               {s.icon}
             </div>
             <div>
-              <p className="text-xl font-black text-white tabular-nums">{s.value}</p>
-              <p className="text-[10px] text-slate-500">{s.label}</p>
+              <p className="text-xl font-black text-gray-900 tabular-nums">{s.value}</p>
+              <p className="text-[10px] text-gray-500">{s.label}</p>
             </div>
           </div>
         ))}
@@ -322,7 +322,7 @@ export default function TasksPage() {
             onClick={() => setTaskFilter(f.id)}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
-              taskFilter === f.id ? 'text-white border' : 'glass text-slate-400 hover:text-slate-200'
+              taskFilter === f.id ? 'text-gray-900 border' : 'bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-700'
             )}
             style={taskFilter === f.id ? { background: `${f.color}18`, borderColor: `${f.color}40`, color: f.color } : undefined}
           >
@@ -335,11 +335,11 @@ export default function TasksPage() {
           </button>
         ))}
 
-        <div className="w-px h-5 bg-white/[0.08]" />
+        <div className="w-px h-5 bg-gray-200" />
 
         <button
           onClick={() => setSelectedProject('all')}
-          className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-all', selectedProject === 'all' ? 'bg-white/[0.08] text-white' : 'text-slate-500 hover:text-slate-300')}
+          className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-all', selectedProject === 'all' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700')}
         >
           <Folder size={11} className="inline mr-1" /> Todos
         </button>
@@ -347,7 +347,7 @@ export default function TasksPage() {
           <button
             key={p.id}
             onClick={() => setSelectedProject(p.id)}
-            className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all', selectedProject === p.id ? 'text-white border' : 'glass text-slate-400 hover:text-slate-200')}
+            className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all', selectedProject === p.id ? 'text-gray-900 border' : 'bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-700')}
             style={selectedProject === p.id ? { background: `${p.color}20`, borderColor: `${p.color}40`, color: p.color } : undefined}
           >
             {p.icon} {p.name}
@@ -382,7 +382,7 @@ export default function TasksPage() {
                       ))}
                     </AnimatePresence>
                     {colTasks.length === 0 && (
-                      <div className="py-8 text-center text-slate-700 text-xs rounded-xl border border-dashed border-white/[0.06]">
+                      <div className="py-8 text-center text-gray-400 text-xs rounded-xl border border-dashed border-gray-100">
                         Arrastra aquí
                       </div>
                     )}
@@ -406,7 +406,7 @@ export default function TasksPage() {
           {/* Done history view */}
           {taskFilter === 'done' ? (
             groupedDone.length === 0 ? (
-              <div className="text-center py-14 text-slate-600">
+              <div className="text-center py-14 text-gray-400">
                 <CheckSquare size={32} className="mx-auto mb-2 opacity-30" />
                 <p className="text-sm">Sin tareas completadas</p>
               </div>
@@ -414,27 +414,27 @@ export default function TasksPage() {
               <div className="space-y-5">
                 {groupedDone.map(({ dateStr, date, tasks: doneTasks }) => (
                   <div key={dateStr}>
-                    <p className="text-xs text-slate-600 uppercase tracking-wider font-medium mb-2 px-1">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-2 px-1">
                       {date ? date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) : dateStr}
                       <span className="ml-2 font-bold text-emerald-500/70">{doneTasks.length}</span>
                     </p>
                     <div className="space-y-1.5">
                       {doneTasks.map(task => (
-                        <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.04] bg-white/[0.01]">
+                        <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
                           <div className="w-5 h-5 rounded-full border-2 border-emerald-500/40 bg-emerald-500/10 flex items-center justify-center shrink-0">
-                            <span className="text-[8px] text-emerald-400">✓</span>
+                            <span className="text-[8px] text-emerald-600">✓</span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-slate-500 line-through truncate">{task.title}</p>
+                            <p className="text-sm text-gray-500 line-through truncate">{task.title}</p>
                             {task.completedAt && (
-                              <p className="text-[10px] text-slate-700 mt-0.5">
+                              <p className="text-[10px] text-gray-400 mt-0.5">
                                 {new Date(task.completedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                               </p>
                             )}
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <div className="w-1.5 h-1.5 rounded-full" style={{ background: PRIORITY_META[task.priority].dot }} />
-                            <button onClick={() => deleteTask(task.id)} className="text-slate-800 hover:text-red-400 transition-colors">
+                            <button onClick={() => deleteTask(task.id)} className="text-gray-400 hover:text-red-400 transition-colors">
                               <Trash2 size={11} />
                             </button>
                           </div>
@@ -456,9 +456,9 @@ export default function TasksPage() {
                     key={task.id}
                     className={cn(
                       'flex items-center gap-3 p-3 rounded-xl border transition-all',
-                      overdue  ? 'border-red-500/25 bg-red-500/[0.03]' :
-                      dueToday ? 'border-amber-500/25 bg-amber-500/[0.03]' :
-                      'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'
+                      overdue  ? 'border-red-200 bg-red-50' :
+                      dueToday ? 'border-amber-200 bg-amber-50' :
+                      'border-gray-100 bg-gray-50 hover:bg-gray-50'
                     )}
                   >
                     <button
@@ -467,12 +467,12 @@ export default function TasksPage() {
                       style={{ borderColor: pm.color }}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white">{task.title}</p>
-                      {task.description && <p className="text-xs text-slate-500 mt-0.5 truncate">{task.description}</p>}
+                      <p className="text-sm text-gray-900">{task.title}</p>
+                      {task.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{task.description}</p>}
                       {task.tags && task.tags.length > 0 && (
                         <div className="flex gap-1 mt-1">
                           {task.tags.map(tag => (
-                            <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-slate-600">#{tag}</span>
+                            <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">#{tag}</span>
                           ))}
                         </div>
                       )}
@@ -480,12 +480,12 @@ export default function TasksPage() {
                     <div className="flex items-center gap-2 shrink-0">
                       <div className="w-1.5 h-1.5 rounded-full" style={{ background: pm.dot }} />
                       {task.dueDate && (
-                        <span className={cn('text-[10px] flex items-center gap-0.5', overdue ? 'text-red-400' : dueToday ? 'text-amber-400' : 'text-slate-500')}>
+                        <span className={cn('text-[10px] flex items-center gap-0.5', overdue ? 'text-red-400' : dueToday ? 'text-amber-400' : 'text-gray-500')}>
                           {overdue && <AlertTriangle size={9} />}
                           {new Date(task.dueDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                         </span>
                       )}
-                      <button onClick={() => deleteTask(task.id)} className="text-slate-700 hover:text-red-400 transition-colors">
+                      <button onClick={() => deleteTask(task.id)} className="text-gray-400 hover:text-red-400 transition-colors">
                         <Trash2 size={12} />
                       </button>
                     </div>
@@ -495,14 +495,14 @@ export default function TasksPage() {
               {/* Compact completed section */}
               {filteredTasks.filter(t => t.status === 'done').length > 0 && (
                 <div className="pt-2">
-                  <p className="text-xs text-slate-700 uppercase tracking-wider mb-2 px-1">Completadas</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 px-1">Completadas</p>
                   {filteredTasks.filter(t => t.status === 'done').slice(0, 5).map(task => (
-                    <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.03] bg-transparent mb-1.5">
+                    <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-transparent mb-1.5">
                       <div className="w-5 h-5 rounded-full border-2 border-emerald-500/40 bg-emerald-500/10 flex items-center justify-center shrink-0">
-                        <span className="text-[8px] text-emerald-400">✓</span>
+                        <span className="text-[8px] text-emerald-600">✓</span>
                       </div>
-                      <p className="text-sm text-slate-600 line-through flex-1 truncate">{task.title}</p>
-                      <button onClick={() => deleteTask(task.id)} className="text-slate-800 hover:text-red-400 transition-colors">
+                      <p className="text-sm text-gray-400 line-through flex-1 truncate">{task.title}</p>
+                      <button onClick={() => deleteTask(task.id)} className="text-gray-400 hover:text-red-400 transition-colors">
                         <Trash2 size={11} />
                       </button>
                     </div>
@@ -510,10 +510,10 @@ export default function TasksPage() {
                 </div>
               )}
               {filteredTasks.filter(t => t.status !== 'done').length === 0 && taskFilter === 'all' && (
-                <div className="text-center py-14 text-slate-600">
+                <div className="text-center py-14 text-gray-400">
                   <CheckSquare size={32} className="mx-auto mb-2 opacity-30" />
                   <p className="text-sm">¡Sin tareas pendientes!</p>
-                  <button onClick={() => setAddModal(true)} className="text-xs text-cyan-400 mt-2 hover:text-cyan-300 transition-colors">
+                  <button onClick={() => setAddModal(true)} className="text-xs text-cyan-600 mt-2 hover:text-cyan-700 transition-colors">
                     + Agregar tarea
                   </button>
                 </div>
@@ -533,17 +533,17 @@ export default function TasksPage() {
             onChange={e => setNewTask(t => ({ ...t, title: e.target.value }))}
           />
           <div>
-            <label className="text-xs text-slate-400 mb-1.5 block">Descripción (opcional)</label>
+            <label className="text-xs text-gray-500 mb-1.5 block">Descripción (opcional)</label>
             <textarea
               value={newTask.description}
               onChange={e => setNewTask(t => ({ ...t, description: e.target.value }))}
               placeholder="Detalla lo que necesitas hacer..."
               rows={2}
-              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-cyan-500/50 resize-none transition-colors"
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 outline-none focus:border-cyan-500/50 resize-none transition-colors"
             />
           </div>
           <div>
-            <label className="text-sm text-slate-400 font-medium block mb-1.5">Prioridad</label>
+            <label className="text-sm text-gray-500 font-medium block mb-1.5">Prioridad</label>
             <div className="grid grid-cols-4 gap-2">
               {(['p0', 'p1', 'p2', 'p3'] as TaskPriority[]).map(p => {
                 const pm = PRIORITY_META[p]
@@ -551,7 +551,7 @@ export default function TasksPage() {
                   <button
                     key={p}
                     onClick={() => setNewTask(t => ({ ...t, priority: p }))}
-                    className={cn('px-2 py-2 rounded-xl text-xs font-medium transition-all border', newTask.priority === p ? 'text-white border-opacity-40' : 'border-white/[0.06] text-slate-500 hover:text-slate-300')}
+                    className={cn('px-2 py-2 rounded-xl text-xs font-medium transition-all border', newTask.priority === p ? 'text-gray-900 border-opacity-40' : 'border-gray-100 text-gray-500 hover:text-gray-700')}
                     style={newTask.priority === p ? { background: `${pm.color}20`, borderColor: `${pm.color}50`, color: pm.color } : undefined}
                   >
                     {pm.label}
@@ -562,11 +562,11 @@ export default function TasksPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm text-slate-400 font-medium block mb-1.5">Proyecto</label>
+              <label className="text-sm text-gray-500 font-medium block mb-1.5">Proyecto</label>
               <select
                 value={newTask.projectId}
                 onChange={e => setNewTask(t => ({ ...t, projectId: e.target.value }))}
-                className="w-full h-10 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white px-3 focus:outline-none focus:border-cyan-500/50"
+                className="w-full h-10 rounded-xl bg-gray-100 border border-gray-200 text-sm text-gray-800 px-3 focus:outline-none focus:border-cyan-500/50"
               >
                 <option value="">Sin proyecto</option>
                 {projects.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
@@ -580,12 +580,12 @@ export default function TasksPage() {
             />
           </div>
           <div>
-            <label className="text-xs text-slate-400 mb-1.5 block">Tags (separados por coma)</label>
+            <label className="text-xs text-gray-500 mb-1.5 block">Tags (separados por coma)</label>
             <input
               value={newTask.tags}
               onChange={e => setNewTask(t => ({ ...t, tags: e.target.value }))}
               placeholder="diseño, backend, urgente"
-              className="w-full h-9 bg-white/[0.04] border border-white/10 rounded-xl px-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-cyan-500/50"
+              className="w-full h-9 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm text-gray-800 placeholder:text-gray-400 outline-none focus:border-cyan-500/50"
             />
           </div>
           <div className="flex gap-3 justify-end">
