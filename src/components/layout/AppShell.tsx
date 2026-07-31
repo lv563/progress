@@ -20,7 +20,11 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const { sidebarOpen, setCommandPaletteOpen, user } = useAppStore()
+  const { sidebarOpen, setCommandPaletteOpen, user, theme } = useAppStore()
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
   const { habits, getTodayLogs } = useHabitsStore()
   const { getTodaySessions } = usePomodoroStore()
   const { tasks } = useTasksStore()

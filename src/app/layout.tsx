@@ -21,6 +21,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className={`${inter.variable} h-full`} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
+        {/* Prevent flash of wrong theme on load */}
+        <script dangerouslySetInnerHTML={{ __html: `try{var s=JSON.parse(localStorage.getItem('kingdom-app')||'{}');if(s?.state?.theme==='dark')document.documentElement.classList.add('dark')}catch(e){}` }} />
       </head>
       <body className="min-h-full bg-[#F7F8FA] text-gray-900 antialiased">
         {children}

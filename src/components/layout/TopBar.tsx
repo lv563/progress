@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Settings, Zap, Flame, Crown, Cloud, CloudOff, Loader2, CloudCheck } from 'lucide-react'
+import { Search, Settings, Zap, Flame, Crown, Cloud, CloudOff, Loader2, CloudCheck, Sun, Moon } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Link from 'next/link'
@@ -21,7 +21,7 @@ const SYNC_UI: Record<SyncStatus, { icon: any; color: string; title: string }> =
 }
 
 export function TopBar() {
-  const { user, commandPaletteOpen, setCommandPaletteOpen } = useAppStore()
+  const { user, commandPaletteOpen, setCommandPaletteOpen, theme, setTheme } = useAppStore()
   const { status: syncStatus, lastSync } = useSyncStore()
   const syncUi = SYNC_UI[syncStatus]
   const SyncIcon = syncUi.icon
@@ -111,6 +111,14 @@ export function TopBar() {
           >
             <SyncIcon size={15} className={cn(syncUi.color, syncStatus === 'syncing' && 'animate-spin')} />
           </div>
+
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            title={theme === 'dark' ? 'Cambiar a claro' : 'Cambiar a oscuro'}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+          >
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
 
           <Link href="/dashboard/settings">
             <button className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
