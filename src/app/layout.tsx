@@ -22,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta charSet="utf-8" />
       </head>
-      <body className="min-h-full bg-[#0A0A0F] text-white antialiased">
+      <body className="min-h-full bg-[#F7F8FA] text-gray-900 antialiased">
         {children}
       </body>
     </html>
