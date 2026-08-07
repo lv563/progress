@@ -20,6 +20,13 @@ const modeDur = (mode: PomodoroMode, cfg: PomodoroConfig) =>
   : mode === 'short-break' ? cfg.shortBreak
   : cfg.longBreak
 
+export interface StudyGoal {
+  name: string
+  totalHours: number
+  dailyHours: number
+  startDate: string
+}
+
 interface PomodoroStore {
   config: PomodoroConfig
   sessions: PomodoroSession[]
@@ -30,6 +37,7 @@ interface PomodoroStore {
   sessionCount: number
   currentTaskTitle: string
   timerEndAt: number | null  // ms timestamp — keeps timer accurate in background tabs
+  studyGoal: StudyGoal | null
 
   setConfig: (config: Partial<PomodoroConfig>) => void
   startTimer: (mode?: PomodoroMode) => void
@@ -39,6 +47,7 @@ interface PomodoroStore {
   tickTimer: () => void
   completeSession: () => void
   setCurrentTask: (title: string) => void
+  setStudyGoal: (goal: StudyGoal | null) => void
   getTodaySessions: () => PomodoroSession[]
   getWeekMinutes: () => number
   _reset: () => void
@@ -56,6 +65,7 @@ export const usePomodoroStore = create<PomodoroStore>()(
       sessionCount: 0,
       currentTaskTitle: '',
       timerEndAt: null,
+      studyGoal: null,
 
       setConfig: (config) => set(s => ({ config: { ...s.config, ...config } })),
 
@@ -138,6 +148,7 @@ export const usePomodoroStore = create<PomodoroStore>()(
       },
 
       setCurrentTask: (title) => set({ currentTaskTitle: title }),
+      setStudyGoal: (goal) => set({ studyGoal: goal }),
 
       _reset: () => set({
         sessions: [], sessionCount: 0, isRunning: false, isPaused: false,
@@ -162,6 +173,6 @@ export const usePomodoroStore = create<PomodoroStore>()(
           .reduce((acc, s) => acc + s.duration, 0)
       },
     }),
-    { name: 'kingdom-pomodoro', storage: userStorage, partialize: s => ({ config: s.config, sessions: s.sessions }) }
+    { name: 'kingdom-pomodoro', storage: userStorage, partialize: s => ({ config: s.config, sessions: s.sessions, studyGoal: s.studyGoal }) }
   )
 )
