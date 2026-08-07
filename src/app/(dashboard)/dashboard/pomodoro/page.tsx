@@ -3,17 +3,19 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { stagger, fadeUp } from '@/lib/utils/motion'
-import { Play, Pause, Square, SkipForward, Timer, Maximize2, Minimize2, Settings2, Flame, Zap, Coffee, Leaf, History, BookOpen, Pencil, X, Minus, Plus, Check } from 'lucide-react'
+import { Play, Pause, Square, SkipForward, Timer, Maximize2, Minimize2, Settings2, Flame, Zap, Coffee, Leaf, History } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Button } from '@/components/ui/Button'
 import { ProgressRing } from '@/components/ui/ProgressRing'
 import { Modal } from '@/components/ui/Modal'
-import { usePomodoroStore, type StudyGoal } from '@/stores/pomodoro.store'
+import { usePomodoroStore } from '@/stores/pomodoro.store'
+import { useStudyStore } from '@/stores/study.store'
+import { StudySection } from './StudySection'
 import { useAppStore } from '@/stores/app.store'
 import { formatTime } from '@/lib/utils/format'
 import { cn } from '@/lib/utils/cn'
-import type { PomodoroMode, PomodoroSession } from '@/types'
+import type { PomodoroMode } from '@/types'
 
 const MODE_META: Record<PomodoroMode, { label: string; icon: React.ReactNode; color: string; bg: string; tip: string }> = {
   'focus':       { label: 'Foco',           icon: <Zap size={14}/>,    color: '#00D4B8', bg: 'rgba(6,182,212,0.08)',   tip: 'Modo de máxima concentración' },
@@ -134,270 +136,6 @@ function HistoryModal({ open, onClose }: { open: boolean; onClose: () => void })
   )
 }
 
-/* ── Study Mode Card ──────────────────────────────────────── */
-function StudyModeCard({ sessions }: { sessions: PomodoroSession[] }) {
-  const { studyGoal, setStudyGoal } = usePomodoroStore()
-  const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState<Pick<StudyGoal, 'name' | 'totalHours' | 'dailyHours'>>({
-    name: 'Maestría', totalHours: 10000, dailyHours: 2,
-  })
-  const [previewDaily, setPreviewDaily] = useState<number | null>(null)
-
-  // Total hours logged from all focus / deep-work sessions
-  const totalLogged = useMemo(
-    () => sessions
-      .filter(s => s.completed && (s.mode === 'focus' || s.mode === 'deep-work'))
-      .reduce((acc, s) => acc + s.duration, 0) / 60,
-    [sessions]
-  )
-
-  const projection = (totalHours: number, daily: number) => {
-    if (daily <= 0 || totalHours <= 0) return null
-    const remaining = Math.max(0, totalHours - totalLogged)
-    const daysLeft  = remaining / daily
-    const date      = new Date()
-    date.setDate(date.getDate() + Math.ceil(daysLeft))
-    const y = Math.floor(daysLeft / 365)
-    const m = Math.floor((daysLeft % 365) / 30.44)
-    const d = Math.ceil(daysLeft % 30.44)
-    return { daysLeft, y, m, d, date }
-  }
-
-  const openSetup = (goal?: StudyGoal) => {
-    setForm(goal ? { name: goal.name, totalHours: goal.totalHours, dailyHours: goal.dailyHours } : { name: 'Maestría', totalHours: 10000, dailyHours: 2 })
-    setEditing(true)
-  }
-  const saveGoal = () => {
-    setStudyGoal({ ...form, startDate: studyGoal?.startDate ?? new Date().toISOString() })
-    setEditing(false)
-    setPreviewDaily(null)
-  }
-
-  /* ── Setup / Edit form ── */
-  if (!studyGoal || editing) {
-    const p = projection(form.totalHours, form.dailyHours)
-    return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <BookOpen size={16} className="text-indigo-500 shrink-0" />
-          <h3 className="text-sm font-bold text-gray-900 flex-1">Modo Estudio · 10,000 horas</h3>
-          {editing && (
-            <button onClick={() => setEditing(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors">
-              <X size={14} />
-            </button>
-          )}
-        </div>
-
-        {!editing && (
-          <p className="text-xs text-gray-400 italic mb-4">
-            "Se necesitan 10,000 horas de práctica deliberada para dominar cualquier habilidad." — Gladwell
-          </p>
-        )}
-
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs font-medium text-gray-500 block mb-1.5">Nombre de la meta</label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              placeholder="Ej: Maestría en Piano, Desarrollo de software..."
-              className="w-full h-9 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-800 px-3 focus:outline-none focus:border-indigo-400 transition-colors"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">Meta total (horas)</label>
-              <input
-                type="number"
-                min={1}
-                value={form.totalHours}
-                onChange={e => setForm(f => ({ ...f, totalHours: Math.max(1, Number(e.target.value)) }))}
-                className="w-full h-9 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-800 px-3 focus:outline-none focus:border-indigo-400 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">Horas diarias</label>
-              <input
-                type="number"
-                min={0.5}
-                max={24}
-                step={0.5}
-                value={form.dailyHours}
-                onChange={e => setForm(f => ({ ...f, dailyHours: Math.min(24, Math.max(0.5, Number(e.target.value))) }))}
-                className="w-full h-9 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-800 px-3 focus:outline-none focus:border-indigo-400 transition-colors"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Live projection preview */}
-        {p && (
-          <motion.div
-            key={`${form.totalHours}-${form.dailyHours}`}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-4 p-3.5 rounded-xl bg-indigo-50 border border-indigo-100 text-center"
-          >
-            <p className="text-xs text-indigo-500 mb-1">Con {form.dailyHours}h/día, terminarías el</p>
-            <p className="text-sm font-black text-indigo-700">
-              {p.date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </p>
-            <p className="text-[11px] text-indigo-400 mt-1">
-              {p.y > 0 && `${p.y} año${p.y > 1 ? 's' : ''} · `}
-              {p.m > 0 && `${p.m} mes${p.m > 1 ? 'es' : ''} · `}
-              {p.d > 0 && `${p.d} día${p.d !== 1 ? 's' : ''}`}
-            </p>
-          </motion.div>
-        )}
-
-        <button
-          onClick={saveGoal}
-          disabled={!form.name.trim() || form.totalHours < 1 || form.dailyHours < 0.5}
-          className="mt-4 w-full py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-        >
-          <Check size={14} /> {editing ? 'Guardar cambios' : 'Comenzar seguimiento'}
-        </button>
-      </div>
-    )
-  }
-
-  /* ── Tracking view ── */
-  const pct     = Math.min(100, (totalLogged / studyGoal.totalHours) * 100)
-  const daily   = previewDaily ?? studyGoal.dailyHours
-  const p       = projection(studyGoal.totalHours, daily)
-  const isDirty = previewDaily !== null && previewDaily !== studyGoal.dailyHours
-
-  const weekH = useMemo(() => sessions.filter(s => {
-    const now = new Date(); const w = new Date(now); w.setDate(w.getDate() - 7)
-    return s.completed && (s.mode === 'focus' || s.mode === 'deep-work') && new Date(s.startedAt) >= w
-  }).reduce((a, s) => a + s.duration, 0) / 60, [sessions])
-
-  const monthH = useMemo(() => sessions.filter(s => {
-    const d = new Date(s.startedAt); const now = new Date()
-    return s.completed && (s.mode === 'focus' || s.mode === 'deep-work') && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-  }).reduce((a, s) => a + s.duration, 0) / 60, [sessions])
-
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <BookOpen size={16} className="text-indigo-500 shrink-0" />
-        <p className="text-sm font-bold text-gray-900 flex-1 truncate">{studyGoal.name}</p>
-        <button
-          onClick={() => openSetup(studyGoal)}
-          className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
-          title="Editar meta"
-        >
-          <Pencil size={12} />
-        </button>
-      </div>
-
-      {/* Progress bar */}
-      <div className="mb-4">
-        <div className="flex items-baseline justify-between mb-1.5">
-          <span className="text-xs text-gray-500">
-            <span className="text-base font-black text-gray-900 tabular-nums">{totalLogged.toFixed(1)}</span>
-            <span className="text-gray-400"> / {studyGoal.totalHours.toLocaleString()}h</span>
-          </span>
-          <span className="text-sm font-black tabular-nums" style={{ color: pct >= 100 ? '#10B981' : '#4F46E5' }}>
-            {pct.toFixed(2)}%
-          </span>
-        </div>
-        <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-          <motion.div
-            className="h-full rounded-full"
-            style={{ background: 'linear-gradient(90deg, #4F46E5 0%, #06B6D4 100%)' }}
-            initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
-            transition={{ duration: 1.2, ease: 'easeOut' }}
-          />
-        </div>
-        {pct >= 100 && (
-          <p className="text-xs font-bold text-emerald-600 text-center mt-2">🎉 ¡Meta alcanzada! ¡Eres un maestro!</p>
-        )}
-      </div>
-
-      {/* Daily hours adjuster + projection */}
-      <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <span className="text-xs text-gray-500">Dedicando</span>
-          {/* − / + stepper */}
-          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-            <button
-              onClick={() => setPreviewDaily(v => Math.max(0.5, Math.round(((v ?? studyGoal.dailyHours) - 0.5) * 10) / 10))}
-              className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-            >
-              <Minus size={12} />
-            </button>
-            <input
-              type="number"
-              min={0.5}
-              max={24}
-              step={0.5}
-              value={daily}
-              onChange={e => setPreviewDaily(Math.min(24, Math.max(0.5, Number(e.target.value))))}
-              className="w-12 text-center text-sm font-black text-gray-900 bg-transparent border-none focus:outline-none tabular-nums"
-            />
-            <button
-              onClick={() => setPreviewDaily(v => Math.min(24, Math.round(((v ?? studyGoal.dailyHours) + 0.5) * 10) / 10))}
-              className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-            >
-              <Plus size={12} />
-            </button>
-          </div>
-          <span className="text-xs text-gray-500">h/día</span>
-          {isDirty && (
-            <button
-              onClick={() => { setStudyGoal({ ...studyGoal, dailyHours: daily }); setPreviewDaily(null) }}
-              className="ml-auto text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
-            >
-              Guardar →
-            </button>
-          )}
-        </div>
-
-        {p && pct < 100 && (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={daily}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="text-center"
-            >
-              <p className="text-xs text-gray-500 mb-0.5">Terminarías el</p>
-              <p className="text-base font-black text-gray-900">
-                {p.date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {p.y > 0 && <span>{p.y} año{p.y > 1 ? 's' : ''} · </span>}
-                {p.m > 0 && <span>{p.m} mes{p.m > 1 ? 'es' : ''} · </span>}
-                {p.d > 0 && <span>{p.d} día{p.d !== 1 ? 's' : ''}</span>}
-                {' restantes'}
-              </p>
-            </motion.div>
-          </AnimatePresence>
-        )}
-      </div>
-
-      {/* Mini stats */}
-      <div className="grid grid-cols-2 gap-2 mt-3">
-        <div className="text-center p-2.5 rounded-xl bg-gray-50 border border-gray-100">
-          <p className="text-sm font-black text-gray-900 tabular-nums">{weekH.toFixed(1)}h</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Últimos 7 días</p>
-        </div>
-        <div className="text-center p-2.5 rounded-xl bg-gray-50 border border-gray-100">
-          <p className="text-sm font-black text-gray-900 tabular-nums">{monthH.toFixed(1)}h</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Este mes</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ── Page ─────────────────────────────────────────────────── */
 export default function PomodoroPage() {
   const {
     config, currentMode, isRunning, isPaused, secondsLeft, sessionCount,
@@ -406,8 +144,6 @@ export default function PomodoroPage() {
     getTodaySessions, getWeekMinutes,
   } = usePomodoroStore()
 
-  // Needed so StudyModeCard re-renders when sessions change from within the page
-  const allSessions = sessions
   const { addXP } = useAppStore()
   const [fullscreen, setFullscreen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -442,6 +178,15 @@ export default function PomodoroPage() {
   useEffect(() => {
     if (sessionCount > prevSessionCount.current) {
       addXP(15, 'Pomodoro completado')
+      // Auto-log to study store if session was focus/deep-work and ≥ 30 min
+      const last = usePomodoroStore.getState().sessions.at(-1)
+      if (last && (last.mode === 'focus' || last.mode === 'deep-work') && last.duration >= 30) {
+        useStudyStore.getState().setPendingPomodoro({
+          durationMin: last.duration,
+          taskTitle: last.taskTitle,
+          completedAt: last.completedAt ?? new Date().toISOString(),
+        })
+      }
       prevSessionCount.current = sessionCount
       setQuoteIdx(i => (i + 1) % MOTIVATIONAL[currentMode].length)
     }
@@ -744,7 +489,7 @@ export default function PomodoroPage() {
 
         {/* Study Mode */}
         <motion.div variants={fadeUp}>
-          <StudyModeCard sessions={allSessions} />
+          <StudySection />
         </motion.div>
 
         {/* Session history */}
