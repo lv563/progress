@@ -253,7 +253,7 @@ export default function PhysicalPage() {
     setWater, setMeals, setMealGoal, updateWaterConfig,
     addWorkout, addMeasurement,
     programStartDate, setProgramStartDate,
-    getTodayWorkout, getWeekSessions, getLatestMeasurement, getGymStreak,
+    getLatestMeasurement, getGymStreak,
   } = usePhysicalStore()
   const { addXP } = useAppStore()
 
@@ -270,8 +270,17 @@ export default function PhysicalPage() {
   const today        = format(new Date(), 'yyyy-MM-dd')
   const dayOfWeek    = new Date().getDay()
   const todayRoutine = ROUTINE[dayOfWeek]
-  const todayWorkout = getTodayWorkout()
-  const weekSessions = getWeekSessions()
+
+  // Derived reactively from workoutSessions so the button updates instantly on complete
+  const todayWorkout = useMemo(
+    () => workoutSessions.find(w => w.date === today && w.completed),
+    [workoutSessions, today]
+  )
+  const weekSessions = useMemo(() => {
+    const wa = Date.now() - 7 * 86400000
+    return workoutSessions.filter(w => new Date(`${w.date}T12:00:00`).getTime() > wa && w.completed)
+  }, [workoutSessions])
+
   const latestMeas   = getLatestMeasurement()
   const gymStreak    = getGymStreak()
 
