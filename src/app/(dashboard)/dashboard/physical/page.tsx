@@ -1,13 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { stagger, fadeUp } from '@/lib/utils/motion'
-import { format, subDays, eachDayOfInterval } from 'date-fns'
+import { format, addDays, startOfWeek, isBefore, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
-  Dumbbell, Droplets, Plus, Scale, Trash2, Check, Flame, Utensils,
-  ChevronDown, ChevronUp, TrendingUp, Settings2, Pencil,
+  Dumbbell, Droplets, Plus, Scale, Check, Flame, TrendingUp, Settings2,
 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { Button } from '@/components/ui/Button'
@@ -18,80 +17,143 @@ import { useAppStore } from '@/stores/app.store'
 import { cn } from '@/lib/utils/cn'
 import type { WorkoutType } from '@/types'
 
-const WORKOUT_TYPES = [
-  { type: 'push',      name: 'Push',      desc: 'Pecho · Hombros · Tríceps', icon: '💪', color: '#7C3AED' },
-  { type: 'pull',      name: 'Pull',      desc: 'Espalda · Bíceps',          icon: '🔄', color: '#06B6D4' },
-  { type: 'legs',      name: 'Legs',      desc: 'Piernas',                   icon: '🦵', color: '#10B981' },
-  { type: 'cardio',    name: 'Cardio',    desc: 'Cardiovascular',            icon: '🏃', color: '#F59E0B' },
-  { type: 'full-body', name: 'Full Body', desc: 'Cuerpo completo',           icon: '🏋️', color: '#EC4899' },
-  { type: 'upper',     name: 'Upper',     desc: 'Tren superior',             icon: '👐', color: '#F97316' },
-  { type: 'lower',     name: 'Lower',     desc: 'Tren inferior',             icon: '🦿', color: '#84CC16' },
-  { type: 'hiit',      name: 'HIIT',      desc: 'Alta intensidad',           icon: '⚡', color: '#EF4444' },
-  { type: 'rest',      name: 'Descanso',  desc: 'Día de recuperación',       icon: '😴', color: '#475569' },
-  { type: 'custom',    name: 'Otro',      desc: 'Descripción libre',         icon: '✏️', color: '#8B5CF6' },
-] as const
+// ── Weekly routine ────────────────────────────────────────────────
+interface DayRoutine {
+  day: number
+  name: string
+  emoji: string
+  color: string
+  type: WorkoutType
+  muscles: string[]
+  cardio: string | null
+  notes: string | null
+  isRest: boolean
+}
 
-const DAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const ROUTINE: DayRoutine[] = [
+  {
+    day: 0, name: 'Descanso', emoji: '😴', color: '#94A3B8', type: 'custom',
+    muscles: [], cardio: null, notes: 'Recuperación · el cuerpo crece en reposo', isRest: true,
+  },
+  {
+    day: 1, name: 'Piernas A', emoji: '🦵', color: '#10B981', type: 'legs',
+    muscles: ['Femoral (isquiotibiales)', 'Pantorrilla', 'Glúteos', 'Abdominales'],
+    cardio: null, notes: null, isRest: false,
+  },
+  {
+    day: 2, name: 'Pecho + Bíceps', emoji: '💪', color: '#7C3AED', type: 'push',
+    muscles: ['Pecho inclinado', 'Pecho plano', 'Bíceps'],
+    cardio: 'Cardio al finalizar', notes: 'Combinar press inclinado y plano en la misma sesión', isRest: false,
+  },
+  {
+    day: 3, name: 'Espalda + Tríceps', emoji: '🔙', color: '#06B6D4', type: 'pull',
+    muscles: ['Espalda completa (todos los músculos)', 'Tríceps'],
+    cardio: 'Caminadora inclinada · velocidad 3.0', notes: null, isRest: false,
+  },
+  {
+    day: 4, name: 'Piernas B + Cardio', emoji: '🦿', color: '#F59E0B', type: 'lower',
+    muscles: ['Abductores', 'Cuádriceps', 'Pantorrillas'],
+    cardio: 'Escalera 15 min + Bicicleta ó Escalera 15 min (2 máquinas)', notes: null, isRest: false,
+  },
+  {
+    day: 5, name: 'Hombros + Trapecio', emoji: '🏋️', color: '#EC4899', type: 'upper',
+    muscles: ['Hombro delantero', 'Hombro medio', 'Hombro posterior', 'Trapecio'],
+    cardio: null, notes: '3 ejercicios por zona · Sets de 8–10 repeticiones', isRest: false,
+  },
+  {
+    day: 6, name: 'Pecho + Antebrazo', emoji: '⚡', color: '#F97316', type: 'push',
+    muscles: ['Pecho inclinado', 'Antebrazo', 'Hombros (4 ejercicios)'],
+    cardio: 'Escalera 10 min · Bicicleta 10 min · Elíptica 10 min', notes: null, isRest: false,
+  },
+]
 
-type Tab = 'hoy' | 'semana' | 'progreso'
+const DAY_LABELS_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const PROGRAM_WEEKS = 17
+type Tab = 'hoy' | 'rutina' | 'programa' | 'progreso'
 
 export default function PhysicalPage() {
   const {
     workoutSessions, measurements,
     waterLogs, mealCountLogs, mealGoal, waterConfig,
     setWater, setMeals, setMealGoal, updateWaterConfig,
-    addWorkout, deleteWorkout,
-    addMeasurement,
-    weeklyPlan, setDayPlan, clearDayPlan,
-    getWeekSessions, getTodayWorkout, getLatestMeasurement, getGymStreak,
+    addWorkout, addMeasurement,
+    programStartDate, setProgramStartDate,
+    getTodayWorkout, getWeekSessions, getLatestMeasurement, getGymStreak,
   } = usePhysicalStore()
   const { addXP } = useAppStore()
 
   const [tab, setTab]               = useState<Tab>('hoy')
-  const [workoutModal, setWorkoutModal] = useState(false)
   const [weightModal, setWeightModal]   = useState(false)
-  const [selectedType, setSelectedType] = useState<string>('push')
-  const [workoutNotes, setWorkoutNotes] = useState('')
   const [newWeight, setNewWeight]       = useState('')
-  const [expandedSession, setExpandedSession] = useState<string | null>(null)
-  const [routineDay, setRoutineDay] = useState<number | null>(null)
-  const [routineType, setRoutineType] = useState<string>('push')
-  const [logDate, setLogDate] = useState<string>('')
   const [waterConfigModal, setWaterConfigModal] = useState(false)
+  const [wcGoal, setWcGoal] = useState('')
+  const [wcMl, setWcMl]     = useState('')
   const [mealGoalEdit, setMealGoalEdit] = useState(false)
-  const [wcGoal, setWcGoal]   = useState('')
-  const [wcMl, setWcMl]       = useState('')
-  const [mealGoalVal, setMealGoalVal] = useState('')
+  const [mealGoalVal, setMealGoalVal]   = useState('')
 
-  const today          = format(new Date(), 'yyyy-MM-dd')
-  const todayWorkout   = getTodayWorkout()
-  const weekSessions   = getWeekSessions()
-  const latestMeas     = getLatestMeasurement()
-  const gymStreak      = getGymStreak()
+  const today        = format(new Date(), 'yyyy-MM-dd')
+  const dayOfWeek    = new Date().getDay()
+  const todayRoutine = ROUTINE[dayOfWeek]
+  const todayWorkout = getTodayWorkout()
+  const weekSessions = getWeekSessions()
+  const latestMeas   = getLatestMeasurement()
+  const gymStreak    = getGymStreak()
 
-  const waterToday      = waterLogs[today] ?? 0
-  const mealsToday      = mealCountLogs[today] ?? 0
-  const numContainers   = Math.max(1, Math.ceil(waterConfig.goalLiters / (waterConfig.containerMl / 1000)))
-  const litersToday     = Math.round(waterToday * waterConfig.containerMl) / 1000
-  const waterPct        = Math.min(100, waterConfig.goalLiters > 0 ? (litersToday / waterConfig.goalLiters) * 100 : 0)
+  const waterToday    = waterLogs[today] ?? 0
+  const mealsToday    = mealCountLogs[today] ?? 0
+  const numContainers = Math.max(1, Math.ceil(waterConfig.goalLiters / (waterConfig.containerMl / 1000)))
+  const litersToday   = Math.round(waterToday * waterConfig.containerMl) / 1000
+  const waterPct      = Math.min(100, waterConfig.goalLiters > 0 ? (litersToday / waterConfig.goalLiters) * 100 : 0)
 
-  const handleLogWorkout = () => {
-    const wt = WORKOUT_TYPES.find(w => w.type === selectedType) ?? WORKOUT_TYPES[0]
+  // Program calendar — snapped to Monday
+  const programStart = useMemo(() => {
+    const base = programStartDate ? parseISO(programStartDate) : new Date()
+    return startOfWeek(base, { weekStartsOn: 1 })
+  }, [programStartDate])
+
+  const programWeeks = useMemo(() =>
+    Array.from({ length: PROGRAM_WEEKS }, (_, wi) => ({
+      weekNum: wi + 1,
+      days: Array.from({ length: 7 }, (_, di) => {
+        const date = addDays(programStart, wi * 7 + di)
+        const dateStr = format(date, 'yyyy-MM-dd')
+        const dow = date.getDay()
+        const routine = ROUTINE[dow]
+        const isToday = dateStr === today
+        const isPast = isBefore(date, new Date()) && !isToday
+        const isLogged = workoutSessions.some(s => s.date === dateStr && s.completed)
+        return { date, dateStr, isToday, isPast, isLogged, routine }
+      }),
+    }))
+  , [programStart, today, workoutSessions])
+
+  const completedDaysCount = useMemo(() =>
+    programWeeks.flatMap(w => w.days).filter(d => !d.routine.isRest && d.isPast && d.isLogged).length
+  , [programWeeks])
+
+  const totalTrainingDays = useMemo(() =>
+    programWeeks.flatMap(w => w.days).filter(d => !d.routine.isRest).length
+  , [programWeeks])
+
+  const currentWeekNum = useMemo(() =>
+    (programWeeks.findIndex(w => w.days.some(d => d.isToday)) + 1) || 1
+  , [programWeeks])
+
+  const handleCompleteToday = () => {
+    if (todayWorkout || todayRoutine.isRest) return
+    if (!programStartDate) setProgramStartDate(today)
     addWorkout({
-      date: logDate || today,
-      type: selectedType as WorkoutType,
-      name: wt.name,
+      date: today,
+      type: todayRoutine.type,
+      name: todayRoutine.name,
       exercises: [],
       duration: 0,
       volume: 0,
-      notes: workoutNotes || undefined,
+      notes: undefined,
       mood: 3,
       completed: true,
     })
-    addXP(30, `Entrenamiento: ${wt.name}`)
-    setWorkoutModal(false)
-    setWorkoutNotes('')
-    setSelectedType('push')
+    addXP(30, `Entrenamiento: ${todayRoutine.name}`)
   }
 
   const handleLogWeight = () => {
@@ -108,42 +170,40 @@ export default function PhysicalPage() {
     .reverse()
     .map(m => ({ date: format(new Date(m.date), 'd/MM'), weight: m.weight }))
 
-  const last7 = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() })
-
-  const tooltipStyle = {
-    contentStyle: { background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '10px', fontSize: '12px', color: '#111827' },
-  }
+  // Mon → Sun order for routine tab
+  const routineOrdered = [...ROUTINE.slice(1), ROUTINE[0]]
 
   return (
-    <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-5">
+    <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-5 max-w-2xl mx-auto">
 
-      {/* Header */}
+      {/* ── Header ── */}
       <motion.div variants={fadeUp} className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
             <Dumbbell size={24} className="text-emerald-600" /> Físico
           </h1>
-          <p className="text-gray-500 text-sm mt-0.5 flex items-center gap-2">
+          <p className="text-gray-500 text-sm mt-0.5">
             {weekSessions.length} entrenos esta semana
             {latestMeas?.weight ? ` · ${latestMeas.weight} kg` : ''}
             {gymStreak > 0 && (
-              <span className="flex items-center gap-0.5 text-orange-500 font-semibold">
-                · <Flame size={12} className="inline" /> {gymStreak}d racha
-              </span>
+              <span className="text-orange-500 font-semibold"> · 🔥 {gymStreak}d racha</span>
             )}
           </p>
         </div>
-        <Button onClick={() => setWorkoutModal(true)} variant="glow" size="sm">
-          <Plus size={14} /> Entrenar
-        </Button>
+        {gymStreak >= 3 && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 border border-orange-200">
+            <Flame size={14} className="text-orange-500" />
+            <span className="text-xs font-bold text-orange-600">{gymStreak} días</span>
+          </div>
+        )}
       </motion.div>
 
-      {/* Tabs */}
+      {/* ── Tabs ── */}
       <motion.div variants={fadeUp} className="flex gap-1 p-1 rounded-xl bg-gray-100 border border-gray-200 w-fit">
-        {([['hoy', 'Hoy'], ['semana', 'Semana'], ['progreso', 'Progreso']] as [Tab, string][]).map(([id, label]) => (
+        {([['hoy', 'Hoy'], ['rutina', 'Rutina'], ['programa', 'Programa'], ['progreso', 'Progreso']] as [Tab, string][]).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)}
             className={cn(
-              'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              'px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all',
               tab === id ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             )}>
             {label}
@@ -153,39 +213,88 @@ export default function PhysicalPage() {
 
       <AnimatePresence mode="wait">
 
-        {/* ══ HOY ══ */}
+        {/* ══════════ HOY ══════════ */}
         {tab === 'hoy' && (
           <motion.div key="hoy" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
 
-            {/* Today's workout */}
-            {todayWorkout ? (
-              <div className="p-5 rounded-2xl border border-emerald-200 bg-emerald-50">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-2xl">
-                    {WORKOUT_TYPES.find(w => w.type === todayWorkout.type)?.icon ?? '💪'}
+            {/* Today's workout card */}
+            <div
+              className="rounded-2xl border p-5"
+              style={{ background: `${todayRoutine.color}0D`, borderColor: `${todayRoutine.color}30` }}
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0"
+                  style={{ background: `${todayRoutine.color}20` }}
+                >
+                  {todayRoutine.emoji}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: todayRoutine.color }}>
+                      {DAY_LABELS_SHORT[dayOfWeek]}
+                    </span>
+                    {todayWorkout && (
+                      <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        <Check size={10} /> Completado
+                      </span>
+                    )}
                   </div>
-                  <div>
-                    <p className="font-bold text-gray-900">{todayWorkout.name}</p>
-                    <p className="text-xs text-emerald-600">✓ Completado hoy</p>
-                    {todayWorkout.notes && <p className="text-xs text-gray-400 mt-0.5">{todayWorkout.notes}</p>}
-                  </div>
+                  <h2 className="text-xl font-black text-gray-900">{todayRoutine.name}</h2>
+
+                  {!todayRoutine.isRest ? (
+                    <>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {todayRoutine.muscles.map(m => (
+                          <span
+                            key={m}
+                            className="text-xs px-2.5 py-0.5 rounded-full font-medium"
+                            style={{ background: `${todayRoutine.color}18`, color: todayRoutine.color }}
+                          >
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                      {todayRoutine.cardio && (
+                        <div className="mt-2.5 flex items-start gap-1.5">
+                          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mt-px shrink-0">Cardio:</span>
+                          <span className="text-[11px] text-gray-600">{todayRoutine.cardio}</span>
+                        </div>
+                      )}
+                      {todayRoutine.notes && (
+                        <p className="mt-1.5 text-xs text-gray-400 italic">{todayRoutine.notes}</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-500 mt-1">Descansa. El cuerpo crece en reposo.</p>
+                  )}
                 </div>
               </div>
-            ) : (
-              <button onClick={() => { setLogDate(today); setWorkoutModal(true) }}
-                className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50 hover:bg-emerald-50 hover:border-emerald-200 transition-all flex items-center gap-4 group">
-                <div className="w-6 h-6 rounded-full border-2 border-gray-200 group-hover:border-emerald-400 transition-all shrink-0 flex items-center justify-center">
-                  <Check size={12} className="text-transparent group-hover:text-emerald-400 transition-all" />
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-medium text-gray-500 group-hover:text-gray-700 transition-colors">¿Entrenaste hoy?</p>
-                  <p className="text-xs text-gray-400 group-hover:text-gray-500 transition-colors mt-0.5">Toca para registrar tu sesión</p>
-                </div>
-                <span className="ml-auto text-xl opacity-40 group-hover:opacity-70 transition-opacity">💪</span>
-              </button>
-            )}
 
-            {/* Water tracker */}
+              {!todayRoutine.isRest && (
+                <motion.button
+                  onClick={handleCompleteToday}
+                  whileHover={!todayWorkout ? { scale: 1.01 } : undefined}
+                  whileTap={!todayWorkout ? { scale: 0.98 } : undefined}
+                  disabled={!!todayWorkout}
+                  className={cn(
+                    'mt-4 w-full py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2',
+                    todayWorkout
+                      ? 'bg-emerald-50 border border-emerald-200 text-emerald-600 cursor-default'
+                      : 'text-white shadow-lg'
+                  )}
+                  style={!todayWorkout ? {
+                    background: `linear-gradient(135deg, ${todayRoutine.color} 0%, ${todayRoutine.color}CC 100%)`,
+                    boxShadow: `0 4px 20px ${todayRoutine.color}40`,
+                  } : undefined}
+                >
+                  <Check size={15} />
+                  {todayWorkout ? '¡Sesión registrada! · +30 XP' : 'Marcar como completado · +30 XP'}
+                </motion.button>
+              )}
+            </div>
+
+            {/* Water */}
             <div className="p-4 rounded-2xl border border-cyan-200 bg-cyan-50">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -196,8 +305,10 @@ export default function PhysicalPage() {
                   <span className="text-xs font-bold text-cyan-700 tabular-nums">
                     {litersToday.toFixed(1)}L / {waterConfig.goalLiters}L
                   </span>
-                  <button onClick={() => { setWcGoal(String(waterConfig.goalLiters)); setWcMl(String(waterConfig.containerMl)); setWaterConfigModal(true) }}
-                    className="text-gray-400 hover:text-gray-600 transition-colors p-0.5">
+                  <button
+                    onClick={() => { setWcGoal(String(waterConfig.goalLiters)); setWcMl(String(waterConfig.containerMl)); setWaterConfigModal(true) }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-0.5"
+                  >
                     <Settings2 size={13} />
                   </button>
                 </div>
@@ -208,11 +319,11 @@ export default function PhysicalPage() {
                     key={i}
                     onClick={() => setWater(i < waterToday ? i : i + 1)}
                     className={cn(
-                      'flex-1 min-w-[32px] h-12 rounded-xl transition-all flex items-center justify-center',
+                      'flex-1 min-w-[32px] h-11 rounded-xl transition-all flex items-center justify-center',
                       i < waterToday ? 'bg-cyan-300 hover:bg-cyan-200' : 'bg-white hover:bg-cyan-50 border border-gray-100'
                     )}
                   >
-                    <Droplets size={14} className={cn(i < waterToday ? 'text-cyan-700' : 'text-gray-300')} />
+                    <Droplets size={14} className={i < waterToday ? 'text-cyan-700' : 'text-gray-300'} />
                   </button>
                 ))}
               </div>
@@ -220,226 +331,273 @@ export default function PhysicalPage() {
                 <motion.div className="h-full rounded-full bg-cyan-500"
                   initial={{ width: 0 }} animate={{ width: `${waterPct}%` }} transition={{ duration: 0.5 }} />
               </div>
-              <p className="text-[10px] text-gray-400 mt-1.5">{waterConfig.containerMl}ml por pote · {numContainers} potes para la meta</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">{waterConfig.containerMl}ml por pote</p>
             </div>
 
-            {/* Meal counter */}
-            <div className="p-4 rounded-2xl border border-orange-200 bg-orange-50">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Utensils size={16} className="text-orange-500" />
-                  <span className="text-sm font-semibold text-gray-900">Comidas</span>
-                </div>
-                <div className="flex items-center gap-2">
+            {/* Meals + Weight */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-4 rounded-2xl border border-orange-200 bg-orange-50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-gray-900">🍽️ Comidas</span>
                   {mealGoalEdit ? (
-                    <input autoFocus type="number" min={1} max={10}
-                      value={mealGoalVal}
+                    <input
+                      autoFocus type="number" min={1} max={10} value={mealGoalVal}
                       onChange={e => setMealGoalVal(e.target.value)}
                       onBlur={() => { const n = Number(mealGoalVal); if (n >= 1) setMealGoal(n); setMealGoalEdit(false) }}
                       onKeyDown={e => { if (e.key === 'Enter') { const n = Number(mealGoalVal); if (n >= 1) setMealGoal(n); setMealGoalEdit(false) } }}
-                      className="w-10 bg-transparent text-xs font-bold text-orange-600 focus:outline-none text-right tabular-nums" />
+                      className="w-10 bg-transparent text-xs font-bold text-orange-600 focus:outline-none text-right"
+                    />
                   ) : (
-                    <span className="text-xs font-bold text-orange-600">{mealsToday}/{mealGoal} hoy</span>
+                    <button onClick={() => { setMealGoalVal(String(mealGoal)); setMealGoalEdit(true) }}
+                      className="text-xs font-bold text-orange-600">{mealsToday}/{mealGoal}
+                    </button>
                   )}
-                  <button onClick={() => { setMealGoalVal(String(mealGoal)); setMealGoalEdit(true) }}
-                    className="text-gray-400 hover:text-gray-600 transition-colors p-0.5">
-                    <Pencil size={12} />
-                  </button>
+                </div>
+                <div className="flex gap-1.5">
+                  {Array.from({ length: mealGoal }, (_, i) => (
+                    <button key={i} onClick={() => setMeals(i < mealsToday ? i : i + 1)}
+                      className={cn(
+                        'flex-1 h-8 rounded-lg transition-all',
+                        i < mealsToday ? 'bg-orange-300' : 'bg-white border border-gray-100'
+                      )} />
+                  ))}
                 </div>
               </div>
-              <div className="flex gap-2 mb-3">
-                {Array.from({ length: mealGoal }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setMeals(i < mealsToday ? i : i + 1)}
-                    className={cn(
-                      'flex-1 h-12 rounded-xl transition-all flex items-center justify-center',
-                      i < mealsToday ? 'bg-orange-300 hover:bg-orange-200' : 'bg-white hover:bg-orange-50 border border-gray-100'
-                    )}
-                  >
-                    <Utensils size={14} className={i < mealsToday ? 'text-orange-700' : 'text-gray-300'} />
-                  </button>
-                ))}
-              </div>
-              <div className="h-1.5 rounded-full bg-orange-100 overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full bg-orange-500"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${mealGoal > 0 ? (mealsToday / mealGoal) * 100 : 0}%` }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
-            </div>
 
-            {/* Weight quick add */}
-            <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Scale size={16} className="text-amber-500" />
-                  <span className="text-sm font-semibold text-gray-900">Peso corporal</span>
+              <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-gray-900">⚖️ Peso</span>
+                  <button onClick={() => setWeightModal(true)}
+                    className="text-xs text-amber-700 px-2 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 transition-all flex items-center gap-1">
+                    <Plus size={10} /> Reg.
+                  </button>
                 </div>
-                <button onClick={() => setWeightModal(true)}
-                  className="flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-800 px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 transition-all">
-                  <Plus size={11} /> Registrar
-                </button>
-              </div>
-              {latestMeas?.weight ? (
-                <div className="mt-3 flex items-end gap-2">
-                  <p className="text-3xl font-black text-amber-600 tabular-nums">{latestMeas.weight}</p>
-                  <p className="text-sm text-gray-500 mb-1">kg</p>
-                  <p className="text-xs text-gray-400 mb-1 ml-1">
-                    {format(new Date(latestMeas.date), "d 'de' MMM", { locale: es })}
+                {latestMeas?.weight ? (
+                  <p className="text-2xl font-black text-amber-600 tabular-nums">
+                    {latestMeas.weight}
+                    <span className="text-sm font-normal text-gray-400"> kg</span>
                   </p>
-                </div>
-              ) : (
-                <p className="text-xs text-gray-400 mt-2">Sin registros aún</p>
-              )}
+                ) : (
+                  <p className="text-xs text-gray-400 mt-2">Sin registros aún</p>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
 
-        {/* ══ SEMANA ══ */}
-        {tab === 'semana' && (
-          <motion.div key="semana" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
+        {/* ══════════ RUTINA ══════════ */}
+        {tab === 'rutina' && (
+          <motion.div key="rutina" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-3">
+            <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
+              Rutina semanal · Programa 4 meses
+            </p>
 
-            {/* Weekly routine builder */}
-            <div className="p-4 rounded-2xl border border-violet-100 bg-violet-50">
-              <p className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-3">Mi Rutina Semanal</p>
-              <div className="grid grid-cols-7 gap-1">
-                {DAY_LABELS.map((label, dayIdx) => {
-                  const plan = weeklyPlan[dayIdx]
-                  const wt = plan ? WORKOUT_TYPES.find(w => w.type === plan.type) : null
-                  return (
-                    <button
-                      key={dayIdx}
-                      onClick={() => { setRoutineDay(dayIdx); setRoutineType(plan?.type ?? 'push') }}
-                      className={cn(
-                        'flex flex-col items-center gap-1 p-1.5 rounded-xl border transition-all group',
-                        plan ? 'border-transparent' : 'border-dashed border-gray-200 hover:border-gray-300'
+            {routineOrdered.map(r => (
+              <div
+                key={r.day}
+                className="rounded-2xl border p-4 transition-all"
+                style={{
+                  background: r.isRest ? '#F8FAFC' : `${r.color}0A`,
+                  borderColor: r.day === dayOfWeek ? r.color : r.isRest ? '#E2E8F0' : `${r.color}25`,
+                  borderWidth: r.day === dayOfWeek ? 2 : 1,
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
+                    style={{ background: r.isRest ? '#E2E8F0' : `${r.color}18` }}
+                  >
+                    {r.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                        {DAY_LABELS_SHORT[r.day]}
+                      </span>
+                      <span className="text-sm font-black text-gray-900">{r.name}</span>
+                      {r.day === dayOfWeek && (
+                        <span
+                          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white"
+                          style={{ background: r.color }}
+                        >
+                          HOY
+                        </span>
                       )}
-                      style={plan && wt ? { background: `${wt.color}18`, borderColor: `${wt.color}40` } : undefined}
-                    >
-                      <span className="text-[9px] text-gray-400">{label}</span>
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
-                        style={{ background: wt ? `${wt.color}22` : 'rgba(0,0,0,0.04)' }}>
-                        {wt ? wt.icon : <span className="text-gray-300 text-base leading-none">+</span>}
+                    </div>
+
+                    {!r.isRest ? (
+                      <>
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {r.muscles.map(m => (
+                            <span
+                              key={m}
+                              className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                              style={{ background: `${r.color}15`, color: r.color }}
+                            >
+                              {m}
+                            </span>
+                          ))}
+                        </div>
+                        {r.cardio && (
+                          <p className="mt-1.5 text-[11px] text-gray-500">
+                            <span className="font-semibold">Cardio:</span> {r.cardio}
+                          </p>
+                        )}
+                        {r.notes && (
+                          <p className="mt-1 text-[11px] text-gray-400 italic">{r.notes}</p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-xs text-gray-400 mt-0.5">{r.notes}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </motion.div>
+        )}
+
+        {/* ══════════ PROGRAMA ══════════ */}
+        {tab === 'programa' && (
+          <motion.div key="programa" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
+
+            {/* Header */}
+            <div className="p-5 rounded-2xl border border-emerald-200 bg-emerald-50">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="text-xs text-emerald-600 font-bold uppercase tracking-wider">Programa 4 Meses</p>
+                  <p className="text-3xl font-black text-gray-900 mt-1 tabular-nums">
+                    Semana {currentWeekNum}
+                    <span className="text-lg font-medium text-gray-400"> / {PROGRAM_WEEKS}</span>
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-black text-emerald-600 tabular-nums">{completedDaysCount}</p>
+                  <p className="text-xs text-gray-500">días completados</p>
+                </div>
+              </div>
+              <div className="h-3 rounded-full bg-emerald-100 overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-emerald-500"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(completedDaysCount / Math.max(1, totalTrainingDays)) * 100}%` }}
+                  transition={{ duration: 1, ease: 'easeOut' }}
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                {completedDaysCount} / {totalTrainingDays} días de entreno
+                {' · '}
+                {format(programStart, "d 'de' MMM yyyy", { locale: es })}
+                {' → '}
+                {format(addDays(programStart, PROGRAM_WEEKS * 7 - 1), "d 'de' MMM yyyy", { locale: es })}
+              </p>
+            </div>
+
+            {/* Calendar grid */}
+            <div className="rounded-2xl border border-gray-100 bg-white p-4">
+              {/* Column headers */}
+              <div className="grid grid-cols-8 gap-1 mb-2">
+                <div />
+                {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => (
+                  <div key={d} className="text-[10px] text-gray-400 font-medium text-center">{d}</div>
+                ))}
+              </div>
+
+              <div className="space-y-1">
+                {programWeeks.map(week => {
+                  const monthLabel = week.days[0]
+                    ? format(week.days[0].date, 'MMM', { locale: es })
+                    : ''
+                  const isFirstOfMonth = week.weekNum === 1 || (
+                    week.days[0] && week.weekNum > 1 &&
+                    format(week.days[0].date, 'M') !== format(addDays(week.days[0].date, -7), 'M')
+                  )
+
+                  return (
+                    <div key={week.weekNum}>
+                      {isFirstOfMonth && (
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-2 mb-1 ml-7 capitalize">
+                          {monthLabel}
+                        </p>
+                      )}
+                      <div className="grid grid-cols-8 gap-1">
+                        <div className="text-[10px] text-gray-200 flex items-center font-mono justify-end pr-1">
+                          {week.weekNum}
+                        </div>
+                        {week.days.map(d => {
+                          const r = d.routine
+                          let cellBg = ''
+                          let cellBorder = ''
+                          let icon: React.ReactNode = null
+
+                          if (d.isToday) {
+                            cellBg = r.isRest ? '#94A3B8' : r.color
+                            cellBorder = 'transparent'
+                            icon = <div className="w-2 h-2 rounded-full bg-white opacity-90" />
+                          } else if (r.isRest) {
+                            cellBg = '#F1F5F9'
+                            cellBorder = '#E2E8F0'
+                            icon = <div className="w-1 h-1 rounded-full bg-slate-300" />
+                          } else if (d.isPast && d.isLogged) {
+                            cellBg = '#10B981'
+                            cellBorder = '#059669'
+                            icon = <Check size={7} className="text-white" strokeWidth={3} />
+                          } else if (d.isPast && !d.isLogged) {
+                            cellBg = '#FEF2F2'
+                            cellBorder = '#FECACA'
+                            icon = <div className="w-1.5 h-1.5 rounded-full bg-red-300" />
+                          } else {
+                            cellBg = '#F9FAFB'
+                            cellBorder = '#E5E7EB'
+                            icon = <div className="w-1.5 h-1.5 rounded-full" style={{ background: `${r.color}50` }} />
+                          }
+
+                          return (
+                            <div
+                              key={d.dateStr}
+                              title={`${format(d.date, "EEEE d 'de' MMM", { locale: es })} — ${r.name}`}
+                              className="aspect-square rounded-lg flex items-center justify-center border transition-all cursor-default"
+                              style={{ background: cellBg, borderColor: cellBorder }}
+                            >
+                              {icon}
+                            </div>
+                          )
+                        })}
                       </div>
-                      {wt && <p className="text-[8px] text-gray-500 text-center leading-tight truncate w-full">{wt.name}</p>}
-                    </button>
+                    </div>
                   )
                 })}
               </div>
-            </div>
 
-            {/* 7-day view */}
-            <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-2">Esta semana</p>
-              <div className="grid grid-cols-7 gap-1.5">
-                {last7.map(day => {
-                const key     = format(day, 'yyyy-MM-dd')
-                const isToday = key === today
-                const session = workoutSessions.find(s => s.date === key)
-                const wt      = session ? WORKOUT_TYPES.find(w => w.type === session.type) : null
-                const planned = weeklyPlan[day.getDay()]
-                const planWt  = planned ? WORKOUT_TYPES.find(w => w.type === planned.type) : null
-                const matched = session && planned && session.type === planned.type
-
-                return (
-                  <div key={key} className={cn(
-                    'flex flex-col items-center gap-1.5 p-2 rounded-xl border transition-all relative',
-                    isToday ? 'border-emerald-200 bg-emerald-50' : 'border-gray-100 bg-gray-50'
-                  )}>
-                    {matched && (
-                      <div className="absolute top-1 right-1 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
-                        <Check size={7} className="text-white" />
-                      </div>
-                    )}
-                    <span className="text-[10px] text-gray-400">{DAY_LABELS[day.getDay()]}</span>
-                    <span className={cn('text-xs font-bold', isToday ? 'text-emerald-600' : 'text-gray-400')}>
-                      {format(day, 'd')}
-                    </span>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
-                      style={{ background: wt ? `${wt.color}22` : planWt ? `${planWt.color}0F` : 'rgba(0,0,0,0.04)' }}>
-                      {wt ? wt.icon : planWt ? <span className="opacity-30">{planWt.icon}</span> : <span className="text-gray-300 text-xs">—</span>}
-                    </div>
-                    {wt && <p className="text-[9px] text-gray-400 text-center leading-tight">{wt.name}</p>}
-                    {!wt && planWt && <p className="text-[8px] text-gray-300 text-center leading-tight">{planWt.name}</p>}
+              {/* Legend */}
+              <div className="flex gap-4 mt-4 pt-3 border-t border-gray-50 flex-wrap">
+                {[
+                  { style: { background: '#10B981', border: '1px solid #059669' }, label: 'Completado' },
+                  { style: { background: '#FEF2F2', border: '1px solid #FECACA' }, label: 'Faltó' },
+                  { style: { background: '#F9FAFB', border: '1px solid #E5E7EB' }, label: 'Próximo' },
+                  { style: { background: '#F1F5F9', border: '1px solid #E2E8F0' }, label: 'Descanso' },
+                ].map(({ style, label }) => (
+                  <div key={label} className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded" style={style} />
+                    <span className="text-[10px] text-gray-400">{label}</span>
                   </div>
-                )
-              })}
+                ))}
               </div>
-            </div>
-
-            {/* Recent sessions list */}
-            <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Historial reciente</p>
-              {workoutSessions.length === 0 ? (
-                <div className="text-center py-10">
-                  <Dumbbell size={28} className="mx-auto text-gray-300 mb-2" />
-                  <p className="text-gray-400 text-sm">Sin sesiones registradas</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {workoutSessions.slice(0, 20).map(session => {
-                    const wt       = WORKOUT_TYPES.find(w => w.type === session.type)
-                    const expanded = expandedSession === session.id
-                    return (
-                      <div key={session.id}
-                        className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
-                        <div className="flex items-center gap-3 p-3">
-                          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
-                            style={{ background: wt ? `${wt.color}18` : undefined }}>
-                            {wt?.icon ?? '💪'}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900">{session.name}</p>
-                            <p className="text-xs text-gray-400">
-                              {format(new Date(session.date), "d 'de' MMM", { locale: es })}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {session.notes && (
-                              <button onClick={() => setExpandedSession(expanded ? null : session.id)}
-                                className="text-gray-400 hover:text-gray-600 transition-colors">
-                                {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                              </button>
-                            )}
-                            <button onClick={() => deleteWorkout(session.id)}
-                              className="text-gray-300 hover:text-red-500 transition-colors ml-1">
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        </div>
-                        <AnimatePresence>
-                          {expanded && session.notes && (
-                            <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
-                              className="overflow-hidden">
-                              <p className="px-4 pb-3 text-xs text-gray-500">{session.notes}</p>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
             </div>
           </motion.div>
         )}
 
-        {/* ══ PROGRESO ══ */}
+        {/* ══════════ PROGRESO ══════════ */}
         {tab === 'progreso' && (
           <motion.div key="progreso" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
 
-            {/* Gym streak banner */}
+            {/* Streak banner */}
             <div className={cn(
               'p-4 rounded-2xl border flex items-center gap-4',
               gymStreak >= 3 ? 'border-orange-200 bg-orange-50' : 'border-gray-100 bg-gray-50'
             )}>
-              <div className={cn(
-                'w-14 h-14 rounded-2xl flex items-center justify-center shrink-0',
-                gymStreak >= 3 ? 'bg-orange-100' : 'bg-gray-100'
-              )}>
+              <div className={cn('w-14 h-14 rounded-2xl flex items-center justify-center shrink-0',
+                gymStreak >= 3 ? 'bg-orange-100' : 'bg-gray-100')}>
                 <Flame size={28} className={gymStreak >= 3 ? 'text-orange-500' : 'text-gray-300'} />
               </div>
               <div>
@@ -448,20 +606,18 @@ export default function PhysicalPage() {
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">Racha consecutiva en el gym</p>
               </div>
-              {gymStreak >= 7 && (
-                <div className="ml-auto text-2xl">🏆</div>
-              )}
+              {gymStreak >= 7 && <div className="ml-auto text-2xl">🏆</div>}
             </div>
 
-            {/* Stats */}
+            {/* Stats grid */}
             <div className="grid grid-cols-3 gap-3">
               <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 text-center">
                 <p className="text-2xl font-black text-emerald-600">{weekSessions.length}</p>
                 <p className="text-xs text-gray-500 mt-1">Esta semana</p>
               </div>
               <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 text-center">
-                <p className="text-2xl font-black text-violet-600">{workoutSessions.length}</p>
-                <p className="text-xs text-gray-500 mt-1">Total entrenos</p>
+                <p className="text-2xl font-black text-violet-600">{completedDaysCount}</p>
+                <p className="text-xs text-gray-500 mt-1">Días totales</p>
               </div>
               <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 text-center">
                 <p className="text-2xl font-black text-amber-600">{latestMeas?.weight ?? '—'}</p>
@@ -477,7 +633,7 @@ export default function PhysicalPage() {
                     <TrendingUp size={14} className="text-amber-500" /> Evolución del peso
                   </p>
                   <button onClick={() => setWeightModal(true)}
-                    className="text-xs text-amber-700 hover:text-amber-800 flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 transition-all">
+                    className="text-xs text-amber-700 flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 transition-all">
                     <Plus size={10} /> Agregar
                   </button>
                 </div>
@@ -485,7 +641,10 @@ export default function PhysicalPage() {
                   <LineChart data={weightChartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                     <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} domain={['auto', 'auto']} />
-                    <Tooltip {...tooltipStyle} formatter={(v) => [`${v} kg`, 'Peso']} />
+                    <Tooltip
+                      contentStyle={{ background: '#FFF', border: '1px solid #E5E7EB', borderRadius: '10px', fontSize: '12px', color: '#111827' }}
+                      formatter={(v) => [`${v} kg`, 'Peso']}
+                    />
                     <Line type="monotone" dataKey="weight" stroke="#F59E0B" strokeWidth={2.5} dot={{ fill: '#F59E0B', r: 3 }} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -503,9 +662,9 @@ export default function PhysicalPage() {
             {/* Weight history */}
             {measurements.length > 0 && (
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Historial de peso</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-2">Historial de peso</p>
                 <div className="space-y-1.5">
-                  {measurements.filter(m => m.weight).slice(0, 10).map(m => (
+                  {measurements.filter(m => m.weight).slice(0, 8).map(m => (
                     <div key={m.id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
                       <Scale size={14} className="text-amber-500 shrink-0" />
                       <span className="text-sm font-bold text-gray-900 tabular-nums">{m.weight} kg</span>
@@ -521,87 +680,8 @@ export default function PhysicalPage() {
         )}
       </AnimatePresence>
 
-      {/* ════ MODALS ════ */}
+      {/* ── Modals ── */}
 
-      {/* Registrar entrenamiento */}
-      <Modal open={workoutModal} onClose={() => setWorkoutModal(false)} title="Registrar Entrenamiento">
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
-            {WORKOUT_TYPES.map(wt => (
-              <button key={wt.type} onClick={() => setSelectedType(wt.type)}
-                className={cn(
-                  'flex items-center gap-3 p-3 rounded-xl border text-left transition-all',
-                  selectedType === wt.type ? 'border-transparent' : 'bg-gray-50 border-gray-200 hover:border-gray-300'
-                )}
-                style={selectedType === wt.type ? { background: `${wt.color}18`, borderColor: `${wt.color}50` } : undefined}>
-                <span className="text-xl shrink-0">{wt.icon}</span>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 leading-tight">{wt.name}</p>
-                  <p className="text-[10px] text-gray-400 leading-tight truncate">{wt.desc}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-          <div>
-            <label className="text-sm text-gray-700 font-medium block mb-1.5">Notas (opcional)</label>
-            <textarea value={workoutNotes} onChange={e => setWorkoutNotes(e.target.value)}
-              rows={2} placeholder="PR en press banca, 3x12 sentadilla..."
-              className="w-full rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 px-3 py-2.5 focus:outline-none focus:border-emerald-400 resize-none" />
-          </div>
-          <div className="flex gap-3 justify-end">
-            <Button variant="ghost" onClick={() => setWorkoutModal(false)}>Cancelar</Button>
-            <Button variant="glow" onClick={handleLogWorkout}>
-              <Check size={14} /> Guardar +30 XP
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Routine day editor */}
-      <Modal
-        open={routineDay !== null}
-        onClose={() => setRoutineDay(null)}
-        title={routineDay !== null ? `Rutina — ${DAY_LABELS[routineDay]}` : 'Rutina'}
-      >
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
-            {WORKOUT_TYPES.map(wt => (
-              <button key={wt.type} onClick={() => setRoutineType(wt.type)}
-                className={cn(
-                  'flex items-center gap-3 p-3 rounded-xl border text-left transition-all',
-                  routineType === wt.type ? 'border-transparent' : 'bg-gray-50 border-gray-200 hover:border-gray-300'
-                )}
-                style={routineType === wt.type ? { background: `${wt.color}18`, borderColor: `${wt.color}50` } : undefined}>
-                <span className="text-xl shrink-0">{wt.icon}</span>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 leading-tight">{wt.name}</p>
-                  <p className="text-[10px] text-gray-400 leading-tight truncate">{wt.desc}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-3 justify-between">
-            {routineDay !== null && weeklyPlan[routineDay] && (
-              <Button variant="ghost" onClick={() => { clearDayPlan(routineDay!); setRoutineDay(null) }}>
-                <Trash2 size={14} /> Quitar
-              </Button>
-            )}
-            <div className="flex gap-3 ml-auto">
-              <Button variant="ghost" onClick={() => setRoutineDay(null)}>Cancelar</Button>
-              <Button variant="glow" onClick={() => {
-                if (routineDay === null) return
-                const wt = WORKOUT_TYPES.find(w => w.type === routineType) ?? WORKOUT_TYPES[0]
-                setDayPlan(routineDay, { type: routineType, name: wt.name, icon: wt.icon })
-                setRoutineDay(null)
-              }}>
-                <Check size={14} /> Guardar
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Registrar peso */}
       <Modal open={weightModal} onClose={() => setWeightModal(false)} title="Registrar Peso">
         <div className="space-y-4">
           <Input label="Peso (kg)" type="number" min={30} max={300} step={0.1} placeholder="75.5"
@@ -616,24 +696,12 @@ export default function PhysicalPage() {
         </div>
       </Modal>
 
-      {/* Water config */}
       <Modal open={waterConfigModal} onClose={() => setWaterConfigModal(false)} title="Configurar Agua">
         <div className="space-y-4">
-          <p className="text-xs text-gray-500">El tamaño del pote se aplica igual a todos los registros.</p>
-          <Input
-            label="Meta diaria (litros)"
-            type="number" min={0.5} max={10} step={0.1} placeholder="2.5"
-            value={wcGoal}
-            onChange={e => setWcGoal(e.target.value)}
-            icon={<Droplets size={14} />}
-          />
-          <Input
-            label="Tamaño de mi pote (ml)"
-            type="number" min={50} max={2000} step={50} placeholder="500"
-            value={wcMl}
-            onChange={e => setWcMl(e.target.value)}
-            icon={<Droplets size={14} />}
-          />
+          <Input label="Meta diaria (litros)" type="number" min={0.5} max={10} step={0.1} placeholder="2.5"
+            value={wcGoal} onChange={e => setWcGoal(e.target.value)} icon={<Droplets size={14} />} />
+          <Input label="Tamaño de mi pote (ml)" type="number" min={50} max={2000} step={50} placeholder="500"
+            value={wcMl} onChange={e => setWcMl(e.target.value)} icon={<Droplets size={14} />} />
           {wcGoal && wcMl && (
             <p className="text-xs text-cyan-600">
               → {Math.ceil(Number(wcGoal) / (Number(wcMl) / 1000))} potes para alcanzar la meta
@@ -641,12 +709,8 @@ export default function PhysicalPage() {
           )}
           <div className="flex gap-3 justify-end">
             <Button variant="ghost" onClick={() => setWaterConfigModal(false)}>Cancelar</Button>
-            <Button variant="glow"
-              disabled={!wcGoal || !wcMl}
-              onClick={() => {
-                updateWaterConfig({ goalLiters: Number(wcGoal), containerMl: Number(wcMl) })
-                setWaterConfigModal(false)
-              }}>
+            <Button variant="glow" disabled={!wcGoal || !wcMl}
+              onClick={() => { updateWaterConfig({ goalLiters: Number(wcGoal), containerMl: Number(wcMl) }); setWaterConfigModal(false) }}>
               <Check size={14} /> Guardar
             </Button>
           </div>

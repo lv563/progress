@@ -173,8 +173,10 @@ interface PhysicalStore {
   waterConfig: WaterConfig
   challenges: Challenge[]
   challengeLogs: ChallengeEntry[]
+  programStartDate: string
 
   updateUserProfile: (u: Partial<UserProfile>) => void
+  setProgramStartDate: (date: string) => void
   addWorkout: (s: Omit<WorkoutSession, 'id'>) => void
   updateWorkout: (id: string, u: Partial<WorkoutSession>) => void
   deleteWorkout: (id: string) => void
@@ -226,10 +228,12 @@ export const usePhysicalStore = create<PhysicalStore>()(
       waterConfig: { goalLiters: 2.5, containerMl: 500 },
       challenges: [],
       challengeLogs: [],
+      programStartDate: '',
 
-      _reset: () => set({ exercises: DEFAULT_EXERCISES, workoutSessions: [], measurements: [], completedDates: [], weeklyPlan: {}, userProfile: DEFAULT_PROFILE, mealLogs: [], waterLogs: {}, mealCountLogs: {}, mealGoal: 5, waterConfig: { goalLiters: 2.5, containerMl: 500 }, challenges: [], challengeLogs: [] }),
+      _reset: () => set({ exercises: DEFAULT_EXERCISES, workoutSessions: [], measurements: [], completedDates: [], weeklyPlan: {}, userProfile: DEFAULT_PROFILE, mealLogs: [], waterLogs: {}, mealCountLogs: {}, mealGoal: 5, waterConfig: { goalLiters: 2.5, containerMl: 500 }, challenges: [], challengeLogs: [], programStartDate: '' }),
 
       updateUserProfile: (u) => set(s => ({ userProfile: { ...s.userProfile, ...u } })),
+      setProgramStartDate: (date) => set({ programStartDate: date }),
 
       addWorkout: (s) => set(st => ({ workoutSessions: [...st.workoutSessions, { ...s, id: genId() }] })),
       updateWorkout: (id, u) => set(s => ({ workoutSessions: s.workoutSessions.map(w => w.id === id ? { ...w, ...u } : w) })),
