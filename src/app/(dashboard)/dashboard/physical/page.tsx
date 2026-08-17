@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { stagger, fadeUp } from '@/lib/utils/motion'
 import { format, addDays, startOfWeek, isBefore, parseISO } from 'date-fns'
@@ -251,7 +251,7 @@ export default function PhysicalPage() {
     workoutSessions, measurements,
     waterLogs, mealCountLogs, mealGoal, waterConfig,
     setWater, setMeals, setMealGoal, updateWaterConfig,
-    addWorkout, addMeasurement,
+    addWorkout, deleteWorkout, addMeasurement,
     programStartDate, setProgramStartDate,
     getLatestMeasurement, getGymStreak,
   } = usePhysicalStore()
@@ -322,8 +322,20 @@ export default function PhysicalPage() {
     (programWeeks.findIndex(w => w.days.some(d => d.isToday)) + 1) || 1
   , [programWeeks])
 
+  // Remove duplicate today sessions on mount (keeps the first one)
+  useEffect(() => {
+    const dups = usePhysicalStore.getState().workoutSessions
+      .filter(w => w.date === today && w.completed)
+    if (dups.length > 1) dups.slice(1).forEach(w => deleteWorkout(w.id))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleCompleteToday = () => {
-    if (todayWorkout || todayRoutine.isRest) return
+    if (todayRoutine.isRest) return
+    // Read directly from store (always fresh — prevents multi-click race before re-render)
+    const alreadyDone = usePhysicalStore.getState().workoutSessions
+      .some(w => w.date === today && w.completed)
+    if (alreadyDone) return
     if (!programStartDate) setProgramStartDate(today)
     addWorkout({
       date: today, type: todayRoutine.type, name: todayRoutine.name,
