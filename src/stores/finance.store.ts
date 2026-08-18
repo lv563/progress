@@ -67,11 +67,12 @@ export interface Debt {
 
 export interface FixedCharge {
   id: string
-  creditCardId: string
+  creditCardId?: string
   name: string
   amount: number
   icon: string
   billingDay?: number
+  paymentMethod?: 'cash' | 'credit'
 }
 
 export interface FinancialConfig {
@@ -238,14 +239,17 @@ export const useFinanceStore = create<FinanceStore>()(
         if (!charge) return
         const key = `${currentMonth()}:${id}`
         if (get().transactions.some(t => t.fixedChargeKey === key)) return
+        const isCash = charge.paymentMethod === 'cash'
         set(s => ({
           transactions: [{
             id: genId(), type: 'expense', category: 'Fijo',
             amount: charge.amount, description: `${charge.icon} ${charge.name}`,
-            date: today(), icon: charge.icon, paymentMethod: 'credit',
-            creditCardId: charge.creditCardId, fixedChargeKey: key,
+            date: today(), icon: charge.icon,
+            paymentMethod: isCash ? 'cash' : 'credit',
+            ...(isCash ? {} : { creditCardId: charge.creditCardId }),
+            fixedChargeKey: key,
           }, ...s.transactions],
-          creditCards: s.creditCards.map(c =>
+          creditCards: isCash ? s.creditCards : s.creditCards.map(c =>
             c.id === charge.creditCardId ? { ...c, balance: c.balance + charge.amount } : c
           ),
         }))
