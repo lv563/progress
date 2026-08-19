@@ -87,7 +87,7 @@ export default function FinancePage() {
   } = useFinanceStore()
 
   const [tab, setTab] = useState<Tab>('resumen')
-  const [incomeEdit, setIncomeEdit] = useState(false)
+  const [incomeModal, setIncomeModal] = useState(false)
   const [incomeVal, setIncomeVal] = useState(String(config.monthlyIncome || ''))
 
   // Budget
@@ -117,7 +117,7 @@ export default function FinancePage() {
   const [newGoal, setNewGoal] = useState({ name: '', target: '', icon: '🎯', color: '#10B981' })
 
   // Credit limit
-  const [creditLimitEdit, setCreditLimitEdit] = useState(false)
+  const [creditLimitModal, setCreditLimitModal] = useState(false)
   const [creditLimitVal, setCreditLimitVal] = useState(String(config.creditCardLimit || ''))
 
   // Period: resets on day 29
@@ -177,7 +177,7 @@ export default function FinancePage() {
   const handleSaveIncome = () => {
     const val = Number(incomeVal)
     if (val >= 0) updateConfig({ monthlyIncome: val })
-    setIncomeEdit(false)
+    setIncomeModal(false)
   }
 
   const handleSaveBudget = () => {
@@ -249,7 +249,7 @@ export default function FinancePage() {
 
   const saveCreditLimit = () => {
     updateConfig({ creditCardLimit: Number(creditLimitVal) || 0 })
-    setCreditLimitEdit(false)
+    setCreditLimitModal(false)
   }
 
   const handlePayDebt = (id: string) => {
@@ -286,20 +286,14 @@ export default function FinancePage() {
 
       {/* Top 3 cards */}
       <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3">
-        <button onClick={() => { setIncomeEdit(true); setIncomeVal(String(income || '')) }}
+        <button onClick={() => { setIncomeVal(String(income || '')); setIncomeModal(true) }}
           className="p-4 rounded-2xl border border-emerald-200 bg-emerald-50 text-left hover:bg-emerald-100 transition-all group">
           <div className="flex items-center gap-1 mb-1">
             <ArrowUpRight size={11} className="text-emerald-600" />
             <p className="text-[10px] text-gray-500">Ingreso</p>
             <Pencil size={9} className="text-gray-300 group-hover:text-gray-500 ml-auto" />
           </div>
-          {incomeEdit ? (
-            <input autoFocus type="number" value={incomeVal} onChange={e => setIncomeVal(e.target.value)}
-              onBlur={handleSaveIncome} onKeyDown={e => e.key === 'Enter' && handleSaveIncome()}
-              className="w-full bg-transparent text-sm font-black text-emerald-700 focus:outline-none" />
-          ) : (
-            <p className="text-sm font-black text-emerald-700 tabular-nums leading-tight truncate">{fmt(income)}</p>
-          )}
+          <p className="text-sm font-black text-emerald-700 tabular-nums leading-tight truncate">{fmt(income)}</p>
         </button>
 
         <div className="p-4 rounded-2xl border border-red-200 bg-red-50">
@@ -435,17 +429,9 @@ export default function FinancePage() {
             <div className="p-4 rounded-2xl border border-emerald-100 bg-emerald-50 flex items-center gap-4">
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-400 mb-0.5">Ingreso mensual</p>
-                {incomeEdit ? (
-                  <input autoFocus type="number" value={incomeVal}
-                    onChange={e => setIncomeVal(e.target.value)}
-                    onBlur={handleSaveIncome}
-                    onKeyDown={e => e.key === 'Enter' && handleSaveIncome()}
-                    className="text-2xl font-black text-emerald-700 bg-transparent focus:outline-none w-full" />
-                ) : (
-                  <p className="text-2xl font-black text-emerald-700 tabular-nums">{income > 0 ? fmt(income) : 'Sin configurar'}</p>
-                )}
+                <p className="text-2xl font-black text-emerald-700 tabular-nums">{income > 0 ? fmt(income) : 'Sin configurar'}</p>
               </div>
-              <button onClick={() => { setIncomeEdit(true); setIncomeVal(String(income || '')) }}
+              <button onClick={() => { setIncomeVal(String(income || '')); setIncomeModal(true) }}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-bold transition-all shrink-0">
                 <Pencil size={12} /> Cambiar
               </button>
@@ -666,28 +652,17 @@ export default function FinancePage() {
           <motion.div key="card" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
 
             {/* Monthly limit */}
-            <div className="p-4 rounded-2xl border border-violet-100 bg-violet-50">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-bold text-gray-900">Límite mensual de tarjeta</p>
-                <button onClick={() => { setCreditLimitEdit(e => !e); setCreditLimitVal(String(creditLimit || '')) }}
-                  className="p-1.5 rounded-lg hover:bg-violet-200 text-violet-400 hover:text-violet-700 transition-all">
-                  <Pencil size={13} />
-                </button>
-              </div>
-              {creditLimitEdit ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500 text-sm">RD$</span>
-                  <input autoFocus type="number" value={creditLimitVal}
-                    onChange={e => setCreditLimitVal(e.target.value)}
-                    onBlur={saveCreditLimit}
-                    onKeyDown={e => e.key === 'Enter' && saveCreditLimit()}
-                    className="flex-1 h-11 rounded-xl bg-white border border-violet-200 text-2xl font-black text-violet-700 px-3 focus:outline-none" />
-                </div>
-              ) : (
-                <p className="text-3xl font-black text-violet-700 tabular-nums">
-                  {creditLimit > 0 ? fmt(creditLimit) : <span className="text-base text-gray-400">Toca el lápiz para configurar</span>}
+            <div className="p-4 rounded-2xl border border-violet-100 bg-violet-50 flex items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-400 mb-0.5">Límite mensual de tarjeta</p>
+                <p className="text-2xl font-black text-violet-700 tabular-nums">
+                  {creditLimit > 0 ? fmt(creditLimit) : <span className="text-base text-gray-400">Sin configurar</span>}
                 </p>
-              )}
+              </div>
+              <button onClick={() => { setCreditLimitVal(String(creditLimit || '')); setCreditLimitModal(true) }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-100 hover:bg-violet-200 text-violet-700 text-xs font-bold transition-all shrink-0">
+                <Pencil size={12} /> Cambiar
+              </button>
             </div>
 
             {/* Usage this period */}
@@ -1006,6 +981,37 @@ export default function FinancePage() {
             <Button variant="ghost" onClick={() => setGoalModal(false)}>Cancelar</Button>
             <Button variant="glow" disabled={!newGoal.name || !newGoal.target} onClick={handleAddGoal}>
               <Target size={14} /> Crear meta
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Cambiar ingreso */}
+      <Modal open={incomeModal} onClose={() => setIncomeModal(false)} title="Ingreso mensual">
+        <div className="space-y-4">
+          <Input label="Ingreso mensual (RD$)" type="number" placeholder="0" icon={<DollarSign size={14} />}
+            value={incomeVal} onChange={e => setIncomeVal(e.target.value)}
+            onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && handleSaveIncome()} />
+          <div className="flex gap-3 justify-end">
+            <Button variant="ghost" onClick={() => setIncomeModal(false)}>Cancelar</Button>
+            <Button variant="glow" disabled={!incomeVal} onClick={handleSaveIncome}>
+              <Check size={14} /> Guardar
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Límite tarjeta */}
+      <Modal open={creditLimitModal} onClose={() => setCreditLimitModal(false)} title="Límite de tarjeta">
+        <div className="space-y-4">
+          <Input label="Límite mensual (RD$)" type="number" placeholder="0" icon={<DollarSign size={14} />}
+            value={creditLimitVal} onChange={e => setCreditLimitVal(e.target.value)}
+            onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && saveCreditLimit()} />
+          <p className="text-xs text-gray-400">Cuánto quieres gastar máximo en tu tarjeta de crédito cada mes</p>
+          <div className="flex gap-3 justify-end">
+            <Button variant="ghost" onClick={() => setCreditLimitModal(false)}>Cancelar</Button>
+            <Button variant="glow" onClick={saveCreditLimit}>
+              <Check size={14} /> Guardar
             </Button>
           </div>
         </div>
