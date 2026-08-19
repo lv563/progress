@@ -80,6 +80,7 @@ export interface FinancialConfig {
   fixedExpenses: number
   autoSavings: number
   safetyZone: number
+  creditCardLimit: number
 }
 
 const DEFAULT_CONFIG: FinancialConfig = {
@@ -87,6 +88,7 @@ const DEFAULT_CONFIG: FinancialConfig = {
   fixedExpenses: 0,
   autoSavings: 0,
   safetyZone: 5000,
+  creditCardLimit: 0,
 }
 
 const DEFAULT_BUDGETS: Budget[] = [
