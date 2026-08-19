@@ -77,11 +77,12 @@ function BarChart({ data, limit }: { data: { label: string; amount: number }[]; 
 
 export default function FinancePage() {
   const {
-    transactions, budgets, savingsGoals, config, debts,
+    transactions, budgets, savingsGoals, config, debts, fixedCharges,
     addTransaction, removeTransaction,
     addBudget, removeBudget, updateBudget,
     updateConfig,
-    addDebt, updateDebt, removeDebt,
+    addDebt, updateDebt, removeDebt, payDebt,
+    addFixedCharge, removeFixedCharge, isFixedChargePaid, payFixedCharge, unpayFixedCharge,
     addSavingsGoal, removeSavingsGoal, addSavingsTransaction,
   } = useFinanceStore()
 
@@ -98,6 +99,12 @@ export default function FinancePage() {
   const [debtModal, setDebtModal] = useState(false)
   const [editDebtId, setEditDebtId] = useState<string | null>(null)
   const [newDebt, setNewDebt] = useState({ name: '', icon: '💳', totalOriginal: '', remaining: '', minPayment: '', color: '#EF4444' })
+  const [payDebtModal, setPayDebtModal] = useState<string | null>(null)
+  const [payDebtAmount, setPayDebtAmount] = useState('')
+
+  // Fixed charges (credit card)
+  const [addChargeOpen, setAddChargeOpen] = useState(false)
+  const [newCharge, setNewCharge] = useState({ name: '', icon: '🔒', amount: '' })
 
   // Expenses
   const [expenseModal, setExpenseModal] = useState(false)
@@ -244,6 +251,22 @@ export default function FinancePage() {
     updateConfig({ creditCardLimit: Number(creditLimitVal) || 0 })
     setCreditLimitEdit(false)
   }
+
+  const handlePayDebt = (id: string) => {
+    if (!payDebtAmount) return
+    payDebt(id, Number(payDebtAmount))
+    setPayDebtModal(null)
+    setPayDebtAmount('')
+  }
+
+  const handleAddCharge = () => {
+    if (!newCharge.name || !newCharge.amount) return
+    addFixedCharge({ name: newCharge.name, icon: newCharge.icon, amount: Number(newCharge.amount), paymentMethod: 'credit' })
+    setAddChargeOpen(false)
+    setNewCharge({ name: '', icon: '🔒', amount: '' })
+  }
+
+  const currentMonth = format(new Date(), 'yyyy-MM')
 
   return (
     <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-5 max-w-2xl mx-auto pb-8">
@@ -408,26 +431,28 @@ export default function FinancePage() {
         {tab === 'presupuesto' && (
           <motion.div key="bud" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-3">
 
-            {/* Period header */}
-            <div className="flex items-center justify-between px-1">
-              <div>
-                <p className="text-sm font-bold text-gray-900">Período actual</p>
-                <p className="text-xs text-gray-400">{periodLabel} · se reinicia el día {RESET_DAY}</p>
+            {/* Income — editable card */}
+            <div className="p-4 rounded-2xl border border-emerald-100 bg-emerald-50 flex items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-400 mb-0.5">Ingreso mensual</p>
+                {incomeEdit ? (
+                  <input autoFocus type="number" value={incomeVal}
+                    onChange={e => setIncomeVal(e.target.value)}
+                    onBlur={handleSaveIncome}
+                    onKeyDown={e => e.key === 'Enter' && handleSaveIncome()}
+                    className="text-2xl font-black text-emerald-700 bg-transparent focus:outline-none w-full" />
+                ) : (
+                  <p className="text-2xl font-black text-emerald-700 tabular-nums">{income > 0 ? fmt(income) : 'Sin configurar'}</p>
+                )}
               </div>
               <button onClick={() => { setIncomeEdit(true); setIncomeVal(String(income || '')) }}
-                className="text-right group">
-                <p className="text-[10px] text-gray-400">Ingreso mensual</p>
-                {incomeEdit ? (
-                  <input autoFocus type="number" value={incomeVal} onChange={e => setIncomeVal(e.target.value)}
-                    onBlur={handleSaveIncome} onKeyDown={e => e.key === 'Enter' && handleSaveIncome()}
-                    className="w-24 bg-transparent text-sm font-black text-emerald-700 focus:outline-none text-right" />
-                ) : (
-                  <p className="text-sm font-black text-emerald-700 flex items-center gap-1 justify-end">
-                    {fmt(income)} <Pencil size={9} className="text-gray-300 group-hover:text-gray-500" />
-                  </p>
-                )}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-bold transition-all shrink-0">
+                <Pencil size={12} /> Cambiar
               </button>
             </div>
+
+            {/* Period info */}
+            <p className="text-xs text-gray-400 px-1">Período: {periodLabel} · se reinicia el día {RESET_DAY}</p>
 
             {/* Budget item cards */}
             <div className="space-y-2">
@@ -618,6 +643,11 @@ export default function FinancePage() {
                         <span className="text-gray-400">{Math.round(pct)}% pagado · {fmt(paid)} pagado</span>
                         {debt.minPayment > 0 && <span className="text-gray-500 font-medium">Mínimo: {fmt(debt.minPayment)}/mes</span>}
                       </div>
+                      <button
+                        onClick={() => { setPayDebtModal(debt.id); setPayDebtAmount('') }}
+                        className="mt-3 w-full py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-600 text-xs font-bold border border-orange-200 transition-all flex items-center justify-center gap-1.5">
+                        <Plus size={12} /> Registrar pago
+                      </button>
                     </div>
                   )
                 })}
@@ -715,6 +745,75 @@ export default function FinancePage() {
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* Fixed charges on credit card */}
+            <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 space-y-2">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Gastos fijos de tarjeta</p>
+                <p className="text-[10px] text-gray-400">Se cuentan en el uso del período</p>
+              </div>
+
+              {fixedCharges.length === 0 && !addChargeOpen && (
+                <p className="text-xs text-gray-400 py-2 text-center">Sin gastos fijos registrados</p>
+              )}
+
+              {fixedCharges.map(fc => {
+                const paid = isFixedChargePaid(fc.id, currentMonth)
+                return (
+                  <div key={fc.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-white">
+                    <span className="text-xl shrink-0">{fc.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{fc.name}</p>
+                      <p className="text-xs text-gray-400 tabular-nums">{fmt(fc.amount)}/mes</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => paid ? unpayFixedCharge(fc.id) : payFixedCharge(fc.id)}
+                        className={cn('px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
+                          paid ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-500 hover:bg-violet-50 hover:text-violet-700'
+                        )}>
+                        {paid ? '✓ Pagado' : 'Marcar pagado'}
+                      </button>
+                      <button onClick={() => removeFixedCharge(fc.id)} className="p-1.5 text-gray-300 hover:text-red-400 transition-all">
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+
+              {addChargeOpen ? (
+                <div className="p-3 rounded-xl border border-violet-200 bg-violet-50 space-y-2 mt-1">
+                  <div className="flex gap-2">
+                    {['🔒', '📱', '🎬', '🏋️', '🎵', '☁️', '📦', '🌐'].map(e => (
+                      <button key={e} onClick={() => setNewCharge(c => ({ ...c, icon: e }))}
+                        className={cn('w-8 h-8 rounded-lg text-lg', newCharge.icon === e ? 'bg-violet-200 ring-1 ring-violet-400' : 'bg-white')}>
+                        {e}
+                      </button>
+                    ))}
+                  </div>
+                  <input className="w-full h-9 rounded-xl bg-white border border-violet-200 text-sm text-gray-900 px-3 focus:outline-none"
+                    placeholder="Nombre (Netflix, Spotify, Gym...)" value={newCharge.name}
+                    onChange={e => setNewCharge(c => ({ ...c, name: e.target.value }))} />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500 shrink-0">RD$</span>
+                    <input type="number" className="flex-1 h-9 rounded-xl bg-white border border-violet-200 text-sm text-gray-900 px-3 focus:outline-none font-bold"
+                      placeholder="Monto mensual" value={newCharge.amount}
+                      onChange={e => setNewCharge(c => ({ ...c, amount: e.target.value }))} />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <button onClick={() => setAddChargeOpen(false)} className="px-3 py-1.5 rounded-lg bg-gray-100 text-xs text-gray-500">Cancelar</button>
+                    <button onClick={handleAddCharge} disabled={!newCharge.name || !newCharge.amount}
+                      className="px-3 py-1.5 rounded-lg bg-violet-600 text-xs text-white font-bold disabled:opacity-40">Agregar</button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={() => setAddChargeOpen(true)}
+                  className="w-full py-2.5 rounded-xl border border-dashed border-gray-200 text-gray-400 hover:text-violet-600 hover:border-violet-300 hover:bg-violet-50 transition-all text-xs flex items-center justify-center gap-1.5">
+                  <Plus size={13} /> Agregar gasto fijo de tarjeta
+                </button>
+              )}
             </div>
 
             {/* 6-month chart */}
@@ -910,6 +1009,34 @@ export default function FinancePage() {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Pagar deuda */}
+      <Modal open={!!payDebtModal} onClose={() => setPayDebtModal(null)} title="Registrar pago">
+        {payDebtModal && (() => {
+          const debt = debts.find(d => d.id === payDebtModal)
+          return (
+            <div className="space-y-4">
+              {debt && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-orange-50 border border-orange-100">
+                  <span className="text-2xl">{debt.icon}</span>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{debt.name}</p>
+                    <p className="text-xs text-gray-400">Restante: {fmt(debt.remaining)}</p>
+                  </div>
+                </div>
+              )}
+              <Input label="Monto pagado (RD$)" type="number" placeholder="0" icon={<DollarSign size={14} />}
+                value={payDebtAmount} onChange={e => setPayDebtAmount(e.target.value)} />
+              <div className="flex gap-3 justify-end">
+                <Button variant="ghost" onClick={() => setPayDebtModal(null)}>Cancelar</Button>
+                <Button variant="glow" disabled={!payDebtAmount} onClick={() => payDebtModal && handlePayDebt(payDebtModal)}>
+                  <Check size={14} /> Registrar pago
+                </Button>
+              </div>
+            </div>
+          )
+        })()}
       </Modal>
 
       {/* Depositar a meta */}
