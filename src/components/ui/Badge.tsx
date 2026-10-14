@@ -10,13 +10,13 @@ interface BadgeProps {
 
 const variants = {
   default: 'bg-white/10 text-slate-300',
-  violet:  'bg-violet-500/20 text-violet-300 border border-violet-500/30',
-  cyan:    'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30',
-  amber:   'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-  green:   'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  violet:  'bg-[#EF4444]/15 text-red-300 border border-[#EF4444]/25',
+  cyan:    'bg-white/8 text-gray-400 border border-white/12',
+  amber:   'bg-white/8 text-gray-300 border border-white/12',
+  green:   'bg-white/10 text-white border border-white/18',
   red:     'bg-red-500/20 text-red-300 border border-red-500/30',
-  orange:  'bg-orange-500/20 text-orange-300 border border-orange-500/30',
-  pink:    'bg-pink-500/20 text-pink-300 border border-pink-500/30',
+  orange:  'bg-[#EF4444]/15 text-red-300 border border-[#EF4444]/25',
+  pink:    'bg-white/6 text-gray-400 border border-white/10',
   outline: 'border border-white/20 text-slate-300',
 }
 

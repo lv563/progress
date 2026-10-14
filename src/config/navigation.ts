@@ -1,25 +1,26 @@
 import {
   LayoutDashboard, Target, Timer, CheckSquare, Calendar,
-  Dumbbell, Church, FolderLock, BarChart3, Wallet, Ban, NotebookPen, Trophy, Crown, Heart, Brain
+  Dumbbell, Church, FolderLock, BarChart3, Wallet, Ban, NotebookPen, Trophy, Crown, Heart, Brain, Snowflake
 } from 'lucide-react'
 
 export const NAV_ITEMS = [
-  { id: 'dashboard',  label: 'Dashboard',    href: '/dashboard',           icon: LayoutDashboard, shortcut: 'G D' },
-  { id: 'goals',      label: 'Metas',        href: '/dashboard/goals',     icon: Trophy,          shortcut: 'G G' },
-  { id: 'habits',     label: 'Hábitos',      href: '/dashboard/habits',    icon: Target,          shortcut: 'G H' },
-  { id: 'pomodoro',   label: 'Pomodoro',     href: '/dashboard/pomodoro',  icon: Timer,           shortcut: 'G P' },
-  { id: 'tasks',      label: 'Tareas',       href: '/dashboard/tasks',     icon: CheckSquare,     shortcut: 'G T' },
-  { id: 'notes',      label: 'Notas',        href: '/dashboard/notes',     icon: NotebookPen,     shortcut: 'G N' },
-  { id: 'routine',    label: 'Rutina',       href: '/dashboard/routine',   icon: Calendar,        shortcut: 'G R' },
-  { id: 'physical',   label: 'Físico',       href: '/dashboard/physical',  icon: Dumbbell,        shortcut: 'G F' },
-  { id: 'detox',      label: 'Detox',        href: '/dashboard/detox',     icon: Ban,             shortcut: 'G X' },
-  { id: 'ministry',   label: 'Ministerio',   href: '/dashboard/ministry',  icon: Church,          shortcut: 'G M' },
-  { id: 'finance',    label: 'Finanzas',     href: '/dashboard/finance',   icon: Wallet,          shortcut: 'G $' },
-  { id: 'vault',      label: 'Bóveda',       href: '/dashboard/vault',     icon: FolderLock,      shortcut: 'G V' },
-  { id: 'analytics',  label: 'Análisis',     href: '/dashboard/analytics', icon: BarChart3,       shortcut: 'G A' },
-  { id: 'spiritual',  label: 'Espiritual',   href: '/dashboard/spiritual', icon: Heart,           shortcut: 'G E' },
-  { id: 'mental',     label: 'Mental',       href: '/dashboard/mental',    icon: Brain,           shortcut: 'G L' },
-  { id: 'season',     label: 'Temporada',    href: '/dashboard/season',    icon: Crown,           shortcut: 'G S' },
+  { id: 'dashboard',   label: 'Dashboard',    href: '/dashboard',              icon: LayoutDashboard, shortcut: 'G D' },
+  { id: 'goals',       label: 'Metas',        href: '/dashboard/goals',        icon: Trophy,          shortcut: 'G G' },
+  { id: 'habits',      label: 'Hábitos',      href: '/dashboard/habits',       icon: Target,          shortcut: 'G H' },
+  { id: 'pomodoro',    label: 'Pomodoro',     href: '/dashboard/pomodoro',     icon: Timer,           shortcut: 'G P' },
+  { id: 'tasks',       label: 'Tareas',       href: '/dashboard/tasks',        icon: CheckSquare,     shortcut: 'G T' },
+  { id: 'notes',       label: 'Notas',        href: '/dashboard/notes',        icon: NotebookPen,     shortcut: 'G N' },
+  { id: 'routine',     label: 'Rutina',       href: '/dashboard/routine',      icon: Calendar,        shortcut: 'G R' },
+  { id: 'physical',    label: 'Físico',       href: '/dashboard/physical',     icon: Dumbbell,        shortcut: 'G F' },
+  { id: 'detox',       label: 'Detox',        href: '/dashboard/detox',        icon: Ban,             shortcut: 'G X' },
+  { id: 'ministry',    label: 'Ministerio',   href: '/dashboard/ministry',     icon: Church,          shortcut: 'G M' },
+  { id: 'finance',     label: 'Finanzas',     href: '/dashboard/finance',      icon: Wallet,          shortcut: 'G $' },
+  { id: 'vault',       label: 'Bóveda',       href: '/dashboard/vault',        icon: FolderLock,      shortcut: 'G V' },
+  { id: 'analytics',   label: 'Análisis',     href: '/dashboard/analytics',    icon: BarChart3,       shortcut: 'G A' },
+  { id: 'spiritual',   label: 'Espiritual',   href: '/dashboard/spiritual',    icon: Heart,           shortcut: 'G E' },
+  { id: 'mental',      label: 'Mental',       href: '/dashboard/mental',       icon: Brain,           shortcut: 'G L' },
+  { id: 'season',      label: 'Temporada',    href: '/dashboard/season',       icon: Crown,           shortcut: 'G S' },
+  { id: 'winter-arc',  label: 'Winter Arc',   href: '/dashboard/winter-arc',   icon: Snowflake,       shortcut: 'G W' },
 ] as const
 
 export const BOTTOM_TABS = [

@@ -1,15 +1,17 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { stagger, fadeUp } from '@/lib/utils/motion'
 import {
   Crown, Sword, BookOpen, Flame, Zap, Target, Check, X,
-  Calendar, TrendingUp, ChevronLeft,
+  Calendar, TrendingUp, ChevronLeft, Snowflake, ArrowRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { useSeasonStore, MODE_DEFAULTS, type SeasonMode } from '@/stores/season.store'
+import { useWinterArcStore } from '@/stores/winterArc.store'
 import { usePomodoroStore } from '@/stores/pomodoro.store'
 import { usePhysicalStore } from '@/stores/physical.store'
 import { useTasksStore } from '@/stores/tasks.store'
@@ -44,9 +46,11 @@ function ScoreRing({ score, color }: { score: number; color: string }) {
 
 export default function SeasonPage() {
   const { activeSeason, startSeason, endSeason, logDay, getSeasonProgress, getDayLog, getStreakCount } = useSeasonStore()
+  const { isActive: winterArcActive, getCurrentDay, config: winterConfig } = useWinterArcStore()
   const { getTodaySessions } = usePomodoroStore()
   const { getTodayWorkout, mealCountLogs } = usePhysicalStore()
   const { tasks } = useTasksStore()
+  const router = useRouter()
 
   const [selectedMode, setSelectedMode] = useState<SeasonMode>('guerra')
   const [months, setMonths] = useState(3)
@@ -93,6 +97,52 @@ export default function SeasonPage() {
             <Crown size={24} className="text-amber-600" /> Temporada
           </h1>
           <p className="text-gray-500 text-sm mt-1">Elige un modo y lanza tu temporada de transformación</p>
+        </motion.div>
+
+        {/* ── Winter Arc card ── */}
+        <motion.div variants={fadeUp}>
+          <button
+            onClick={() => router.push('/dashboard/winter-arc')}
+            className="w-full text-left p-5 rounded-2xl border border-black/80 bg-black text-white overflow-hidden relative group hover:border-red-600/50 transition-all"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-red-900/20 to-transparent pointer-events-none" />
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-600/20 border border-red-600/30 flex items-center justify-center">
+                    <Snowflake size={20} className="text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-[9px] tracking-[0.4em] text-red-500 font-bold">TEMPORADA ESPECIAL</p>
+                    <p className="text-lg font-black leading-tight">WINTER ARC</p>
+                  </div>
+                </div>
+                <ArrowRight size={16} className="text-red-500 group-hover:translate-x-1 transition-transform" />
+              </div>
+              {winterArcActive && winterConfig ? (
+                <div className="flex items-center gap-3">
+                  <div className="bg-red-600/20 border border-red-600/30 rounded-lg px-3 py-1">
+                    <p className="text-xs font-black text-red-400">DAY {getCurrentDay()} / {winterConfig.duration}</p>
+                  </div>
+                  <p className="text-[11px] text-gray-400">❄ Activo · Toca para continuar</p>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Temporada de 30, 60 o 90 días de transformación radical. Score diario, Cold Streak, XP, timeline de beneficios y más.
+                </p>
+              )}
+              {/* decorative circles */}
+              <div className="flex gap-1 mt-3 opacity-30">
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div key={i} className="w-2 h-2 rounded-full border border-white/40" />
+                ))}
+              </div>
+            </div>
+          </button>
+        </motion.div>
+
+        <motion.div variants={fadeUp}>
+          <p className="text-[10px] tracking-[0.3em] text-gray-400 font-bold uppercase mb-3">Temporadas clásicas</p>
         </motion.div>
 
         {/* Mode cards */}

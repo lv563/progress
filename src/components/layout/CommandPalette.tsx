@@ -81,7 +81,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/25 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div
@@ -89,35 +89,36 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="fixed top-[20%] left-1/2 -translate-x-1/2 z-50 w-full max-w-xl bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden"
+            className="fixed top-[20%] left-1/2 -translate-x-1/2 z-50 w-full max-w-xl bg-[#111] border border-white/10 rounded-2xl overflow-hidden"
+            style={{ boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}
           >
             {/* Search input */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
-              <Search size={18} className="text-gray-400 shrink-0" />
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-white/6">
+              <Search size={18} className="text-gray-500 shrink-0" />
               <input
                 autoFocus
                 value={query}
                 onChange={e => { setQuery(e.target.value); setSelected(0) }}
                 placeholder="Buscar o ejecutar un comando..."
-                className="flex-1 bg-transparent text-gray-900 placeholder-gray-400 outline-none text-sm"
+                className="flex-1 bg-transparent text-white placeholder-gray-600 outline-none text-sm"
               />
-              <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-400">ESC</kbd>
+              <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-white/8 text-gray-500">ESC</kbd>
             </div>
 
             {/* Results */}
             <div className="max-h-80 overflow-y-auto py-2">
               {filtered.length === 0 && (
-                <p className="text-center text-gray-400 text-sm py-8">Sin resultados para "{query}"</p>
+                <p className="text-center text-gray-600 text-sm py-8">Sin resultados para "{query}"</p>
               )}
               {['navigate', 'action'].map(cat => {
                 const items = filtered.filter(c => c.category === cat)
                 if (!items.length) return null
                 return (
                   <div key={cat}>
-                    <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                    <p className="px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">
                       {cat === 'navigate' ? 'Navegar' : 'Acciones'}
                     </p>
-                    {items.map((cmd, i) => {
+                    {items.map((cmd) => {
                       const Icon = cmd.icon
                       const idx = filtered.indexOf(cmd)
                       return (
@@ -127,22 +128,22 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                           onMouseEnter={() => setSelected(idx)}
                           className={cn(
                             'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors',
-                            idx === selected ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'
+                            idx === selected ? 'bg-[#EF4444]/10 text-white' : 'text-gray-500 hover:bg-white/[0.03]'
                           )}
                         >
                           <div className={cn(
                             'w-7 h-7 rounded-lg flex items-center justify-center transition-colors',
-                            idx === selected ? 'bg-indigo-100' : 'bg-gray-100'
+                            idx === selected ? 'bg-[#EF4444]/20' : 'bg-white/5'
                           )}>
-                            <Icon size={14} />
+                            <Icon size={14} className={idx === selected ? 'text-[#EF4444]' : ''} />
                           </div>
                           <span className="flex-1 text-sm">{cmd.label}</span>
                           {cmd.shortcut && (
-                            <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-400 font-mono">
+                            <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-white/8 text-gray-600 font-mono">
                               {cmd.shortcut}
                             </kbd>
                           )}
-                          {idx === selected && <ArrowRight size={14} className="text-indigo-500" />}
+                          {idx === selected && <ArrowRight size={14} className="text-[#EF4444]" />}
                         </button>
                       )
                     })}

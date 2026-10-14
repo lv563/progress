@@ -173,6 +173,6 @@ export const usePomodoroStore = create<PomodoroStore>()(
           .reduce((acc, s) => acc + s.duration, 0)
       },
     }),
-    { name: 'kingdom-pomodoro', storage: userStorage, partialize: s => ({ config: s.config, sessions: s.sessions, studyGoal: s.studyGoal }) }
+    { name: 'kingdom-pomodoro', storage: userStorage, partialize: s => ({ config: s.config, sessions: s.sessions, studyGoal: s.studyGoal, sessionCount: s.sessionCount }) }
   )
 )

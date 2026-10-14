@@ -1,680 +1,533 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { format, addDays, subDays, startOfWeek } from 'date-fns'
+import { format, getDaysInMonth, startOfMonth, addMonths, subMonths, isSameDay, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
-import {
-  CheckCircle2, Circle, RefreshCw, ChevronLeft, ChevronRight,
-  Plus, Trash2, Pencil, X, Check, Layers, Clock, Zap, GripVertical,
-} from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Modal } from '@/components/ui/Modal'
-import { Input } from '@/components/ui/Input'
-import { useRoutineStore } from '@/stores/routine.store'
+import { Plus, Check, Trash2, X, ChevronLeft, ChevronRight, Inbox, AlertTriangle, ArrowDownRight, Minus } from 'lucide-react'
+import { useDailyCommandStore, type TodoPriority } from '@/stores/dailyCommand.store'
+import { useHabitsStore } from '@/stores/habits.store'
 import { useAppStore } from '@/stores/app.store'
+import { useWinterArcStore } from '@/stores/winterArc.store'
 import { cn } from '@/lib/utils/cn'
-import type { RoutineBlock } from '@/types'
 
-const CATEGORY_COLORS: Record<RoutineBlock['category'], string> = {
-  spiritual: '#7C3AED',
-  work:      '#0891B2',
-  physical:  '#10B981',
-  rest:      '#64748B',
-  personal:  '#F59E0B',
-  social:    '#EC4899',
+const todayStr = () => new Date().toISOString().slice(0, 10)
+const dateStr = (d: Date) => d.toISOString().slice(0, 10)
+
+const PRIORITY_META: Record<TodoPriority, { icon: React.ReactNode; color: string; label: string }> = {
+  high:   { icon: <AlertTriangle size={10}/>, color: '#EF4444', label: 'Alta' },
+  normal: { icon: <Minus size={10}/>,        color: '#9CA3AF', label: 'Normal' },
+  low:    { icon: <ArrowDownRight size={10}/>, color: '#4B5563', label: 'Baja' },
 }
 
-const CATEGORY_LABELS: Record<RoutineBlock['category'], string> = {
-  spiritual: 'Espiritual',
-  work:      'Trabajo',
-  physical:  'Físico',
-  rest:      'Descanso',
-  personal:  'Personal',
-  social:    'Social',
-}
-
-const CATEGORY_ICONS: Record<RoutineBlock['category'], string> = {
-  spiritual: '✝️',
-  work:      '💼',
-  physical:  '💪',
-  rest:      '💤',
-  personal:  '🧠',
-  social:    '👥',
-}
-
-const BLOCK_ICONS = ['🙏','💪','🍳','🧠','☕','🍽','💼','🚀','👨‍👩‍👧','📚','📋','🎮','🏃','📖','💡','🎯','✝️','🌿','🎵','🏋️','🧘','💊','🛁','🌙']
-
-const EMPTY_FORM = {
-  title: '',
-  category: 'work' as RoutineBlock['category'],
-  startTime: '08:00',
-  endTime: '09:00',
-  icon: '🧠',
-}
-
-const getTimeSection = (time: string): 'Mañana' | 'Tarde' | 'Noche' => {
-  const h = parseInt(time.split(':')[0])
-  if (h < 12) return 'Mañana'
-  if (h < 18) return 'Tarde'
-  return 'Noche'
-}
-
-const SECTION_EMOJI: Record<string, string> = {
-  Mañana: '🌅',
-  Tarde: '☀️',
-  Noche: '🌙',
-}
-
-/* ── Block form ──────────────────────────────────────────── */
-function BlockForm({
-  value, onChange, onSave, onCancel, saveLabel,
+// ─── Month Circle Grid ─────────────────────────────────────────────────────────
+function MonthGrid({
+  month,
+  selectedDate,
+  onSelect,
+  onPrevMonth,
+  onNextMonth,
 }: {
-  value: typeof EMPTY_FORM
-  onChange: (v: Partial<typeof EMPTY_FORM>) => void
-  onSave: () => void
-  onCancel: () => void
-  saveLabel: string
+  month: Date
+  selectedDate: string
+  onSelect: (date: string) => void
+  onPrevMonth: () => void
+  onNextMonth: () => void
 }) {
-  return (
-    <div className="space-y-4">
-      <Input
-        label="Nombre del bloque"
-        placeholder="Deep Work, Gimnasio, Almuerzo..."
-        value={value.title}
-        onChange={e => onChange({ title: e.target.value })}
-      />
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs text-gray-500 font-medium block mb-1.5">Inicio</label>
-          <input
-            type="time"
-            value={value.startTime}
-            onChange={e => onChange({ startTime: e.target.value })}
-            className="w-full h-9 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-800 px-3 focus:outline-none focus:border-indigo-400"
-          />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 font-medium block mb-1.5">Fin</label>
-          <input
-            type="time"
-            value={value.endTime}
-            onChange={e => onChange({ endTime: e.target.value })}
-            className="w-full h-9 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-800 px-3 focus:outline-none focus:border-indigo-400"
-          />
-        </div>
-      </div>
+  const { getDayCompletion, getDayTodos } = useDailyCommandStore()
+  const { habits, getTodayLogs, getStreakDates } = useHabitsStore()
+  const winterArc = useWinterArcStore()
+  const today = todayStr()
 
-      <div>
-        <label className="text-xs text-gray-500 font-medium block mb-2">Categoría</label>
-        <div className="grid grid-cols-3 gap-1.5">
-          {(Object.entries(CATEGORY_LABELS) as [RoutineBlock['category'], string][]).map(([cat, label]) => (
-            <button
-              key={cat}
-              onClick={() => onChange({ category: cat })}
-              className={cn('px-2 py-2 rounded-lg text-xs font-medium transition-all border flex items-center gap-1.5', value.category === cat ? '' : 'text-gray-500 border-gray-100 hover:text-gray-700 hover:border-gray-200')}
-              style={value.category === cat ? { background: `${CATEGORY_COLORS[cat]}12`, borderColor: `${CATEGORY_COLORS[cat]}40`, color: CATEGORY_COLORS[cat] } : undefined}
-            >
-              <span>{CATEGORY_ICONS[cat]}</span> {label}
-            </button>
-          ))}
-        </div>
-      </div>
+  const daysInMonth = getDaysInMonth(month)
+  const monthStart = format(month, 'yyyy-MM')
+  const isCurrentMonth = month.getMonth() === new Date().getMonth() && month.getFullYear() === new Date().getFullYear()
 
-      <div>
-        <label className="text-xs text-gray-500 font-medium block mb-2">Ícono</label>
-        <div className="flex flex-wrap gap-1.5">
-          {BLOCK_ICONS.map(icon => (
-            <button
-              key={icon}
-              onClick={() => onChange({ icon })}
-              className={cn('w-9 h-9 rounded-lg text-base flex items-center justify-center transition-all border', value.icon === icon ? 'border-indigo-300 bg-indigo-50 scale-110' : 'bg-gray-50 border-gray-100 hover:bg-gray-100')}
-            >
-              {icon}
-            </button>
-          ))}
-        </div>
-      </div>
+  const getDayState = (dayNum: number) => {
+    const ds = `${monthStart}-${String(dayNum).padStart(2, '0')}`
+    const isToday = ds === today
+    const isFuture = ds > today
+    const isPast = ds < today
+    const isSelected = ds === selectedDate
 
-      <div className="flex gap-2 justify-end pt-1">
-        <Button variant="ghost" onClick={onCancel} size="sm">Cancelar</Button>
-        <Button variant="glow" onClick={onSave} disabled={!value.title.trim()} size="sm">
-          <Check size={13} /> {saveLabel}
-        </Button>
-      </div>
-    </div>
-  )
-}
+    // Winter Arc gives a score if active
+    const winterLog = winterArc.isActive ? winterArc.dayLogs.find(l => l.date === ds) : null
+    const winterScore = winterLog?.score ?? 0
 
-/* ── Main page ───────────────────────────────────────────── */
-export default function RoutinePage() {
-  const { templates, routines, createEmptyRoutine, applyTemplate, toggleBlock, addBlock, removeBlock, updateBlock } = useRoutineStore()
-  const { addXP } = useAppStore()
+    const { done, total, pct } = getDayCompletion(ds)
 
-  const [viewDate, setViewDate]   = useState(new Date())
-  const [now, setNow]             = useState(new Date())
-  const [addOpen, setAddOpen]     = useState(false)
-  const [addForm, setAddForm]     = useState({ ...EMPTY_FORM })
-  const [editBlock, setEditBlock] = useState<RoutineBlock | null>(null)
-  const [editForm, setEditForm]   = useState({ ...EMPTY_FORM })
-
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 60000)
-    return () => clearInterval(t)
-  }, [])
-
-  const dateStr    = format(viewDate, 'yyyy-MM-dd')
-  const isToday    = dateStr === format(new Date(), 'yyyy-MM-dd')
-  const isTomorrow = dateStr === format(addDays(new Date(), 1), 'yyyy-MM-dd')
-
-  const currentRoutine  = routines.find(r => r.date === dateStr)
-  const completedBlocks = currentRoutine?.blocks.filter(b => b.completed).length ?? 0
-  const totalBlocks     = currentRoutine?.blocks.length ?? 0
-  const currentMinutes  = now.getHours() * 60 + now.getMinutes()
-  const nowLabel        = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
-
-  const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
-
-  const totalMinutes     = currentRoutine?.blocks.reduce((a, b) => a + Math.max(0, toMin(b.endTime) - toMin(b.startTime)), 0) ?? 0
-  const completedMinutes = currentRoutine?.blocks.filter(b => b.completed).reduce((a, b) => a + Math.max(0, toMin(b.endTime) - toMin(b.startTime)), 0) ?? 0
-
-  const sorted = useMemo(() => {
-    if (!currentRoutine) return []
-    return [...currentRoutine.blocks].sort((a, b) => toMin(a.startTime) - toMin(b.startTime))
-  }, [currentRoutine]) // eslint-disable-line
-
-  const nowIdx = useMemo(() => {
-    if (!isToday) return sorted.length
-    for (let i = 0; i < sorted.length; i++) {
-      if (toMin(sorted[i].startTime) > currentMinutes) return i
+    let state: 'today' | 'completed' | 'partial' | 'pending' | 'future' | 'failed'
+    if (isToday) state = 'today'
+    else if (isFuture) state = 'future'
+    else if (winterArc.isActive && winterLog) {
+      state = winterScore >= (winterArc.config?.coldDayThreshold ?? 80) ? 'completed' : winterScore >= 40 ? 'partial' : 'pending'
+    } else if (total > 0) {
+      state = pct === 100 ? 'completed' : pct >= 50 ? 'partial' : 'pending'
+    } else {
+      state = isPast ? 'pending' : 'future'
     }
-    return sorted.length
-  }, [sorted, isToday, currentMinutes]) // eslint-disable-line
 
-  const weekDays = useMemo(() => {
-    const monday = startOfWeek(new Date(), { weekStartsOn: 1 })
-    return Array.from({ length: 7 }, (_, i) => {
-      const d  = addDays(monday, i)
-      const ds = format(d, 'yyyy-MM-dd')
-      const r  = routines.find(r => r.date === ds)
-      const total = r?.blocks.length ?? 0
-      const done  = r?.blocks.filter(b => b.completed).length ?? 0
-      return { d, ds, total, done, pct: total > 0 ? done / total : 0 }
-    })
-  }, [routines, viewDate]) // eslint-disable-line
-
-  const blockStatus = (b: RoutineBlock) => {
-    if (!isToday) return b.completed ? 'completed' : 'upcoming'
-    const s = toMin(b.startTime), e = toMin(b.endTime)
-    if (b.completed)                                 return 'completed'
-    if (currentMinutes >= s && currentMinutes < e)   return 'active'
-    if (currentMinutes >= e)                         return 'overdue'
-    return 'upcoming'
+    return { ds, isToday, isFuture, isPast, isSelected, state }
   }
 
-  const activeBlock = isToday
-    ? currentRoutine?.blocks.find(b => {
-        const s = toMin(b.startTime), e = toMin(b.endTime)
-        return !b.completed && currentMinutes >= s && currentMinutes < e
-      })
-    : null
-
-  const dayLabel = isToday
-    ? `Hoy — ${format(viewDate, "EEEE, d 'de' MMMM", { locale: es })}`
-    : isTomorrow
-    ? `Mañana — ${format(viewDate, "EEEE, d 'de' MMMM", { locale: es })}`
-    : format(viewDate, "EEEE, d 'de' MMMM yyyy", { locale: es })
-
-  const handleAddSave = () => {
-    if (!currentRoutine || !addForm.title.trim()) return
-    addBlock(currentRoutine.id, { ...addForm, color: CATEGORY_COLORS[addForm.category], completed: false })
-    setAddForm({ ...EMPTY_FORM })
-    setAddOpen(false)
+  const stateClass = (state: string, isSelected: boolean) => {
+    const base = 'w-7 h-7 rounded-full border-2 text-[11px] font-black flex items-center justify-center transition-all cursor-pointer shrink-0'
+    const sel = isSelected ? 'ring-2 ring-white/30 ring-offset-1 ring-offset-[#0A0A0A] scale-110' : ''
+    if (state === 'today') return cn(base, sel, 'bg-[#EF4444] border-[#EF4444] text-white')
+    if (state === 'completed') return cn(base, sel, 'bg-white border-white text-black')
+    if (state === 'partial') return cn(base, sel, 'bg-amber-500/60 border-amber-500 text-white')
+    if (state === 'failed') return cn(base, sel, 'border-red-500/40 bg-red-500/10 text-red-400')
+    if (state === 'future') return cn(base, 'border-white/10 text-gray-700 cursor-default')
+    return cn(base, sel, 'border-white/15 text-gray-500 hover:border-white/25')
   }
-
-  const openEdit = (b: RoutineBlock) => {
-    setEditBlock(b)
-    setEditForm({ title: b.title, category: b.category, startTime: b.startTime, endTime: b.endTime, icon: b.icon })
-  }
-
-  const handleEditSave = () => {
-    if (!currentRoutine || !editBlock || !editForm.title.trim()) return
-    updateBlock(currentRoutine.id, editBlock.id, { ...editForm, color: CATEGORY_COLORS[editForm.category] })
-    setEditBlock(null)
-  }
-
-  const NowMarker = () => (
-    <div className="flex items-center gap-3 py-1.5 -mx-3 px-3">
-      <span className="text-[10px] font-bold text-red-400 font-mono w-12 shrink-0 text-right">{nowLabel}</span>
-      <div className="w-2 h-2 rounded-full bg-red-400 shadow-[0_0_6px_rgba(239,68,68,0.55)] shrink-0" />
-      <div className="flex-1 h-px bg-red-400/35" />
-      <span className="text-[9px] font-bold text-red-400 tracking-widest uppercase">Ahora</span>
-    </div>
-  )
 
   return (
-    <div className="max-w-2xl mx-auto">
-
-      {/* ── Notion-style page header ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="mb-8"
-      >
-        <div className="text-5xl mb-4 select-none">📅</div>
-        <h1 className="text-4xl font-black text-gray-900 tracking-tight leading-none mb-3">Rutina</h1>
-        <div className="flex items-center gap-2 text-gray-400">
-          <button
-            onClick={() => setViewDate(d => subDays(d, 1))}
-            className="p-1 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <span className="text-sm capitalize font-medium text-gray-500 select-none">{dayLabel}</span>
-          <button
-            onClick={() => setViewDate(d => addDays(d, 1))}
-            className="p-1 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <ChevronRight size={16} />
-          </button>
-          {!isToday && (
-            <button
-              onClick={() => setViewDate(new Date())}
-              className="ml-2 text-xs text-indigo-600 hover:text-indigo-700 font-semibold transition-colors"
-            >
-              Hoy →
-            </button>
-          )}
+    <div className="space-y-3">
+      {/* Month header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[9px] tracking-[0.4em] text-[#EF4444] font-black uppercase mb-0.5">ROUTINES</p>
+          <h1 className="text-xl font-black text-white tracking-tight uppercase">
+            {format(month, 'MMMM yyyy', { locale: es }).toUpperCase()}
+          </h1>
         </div>
-      </motion.div>
+        <div className="flex items-center gap-3">
+          <p className="text-[10px] text-gray-600 tracking-widest hidden sm:block">YOU ARE HERE →</p>
+          <div className="flex items-center gap-1">
+            <button onClick={onPrevMonth} className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-gray-500 hover:bg-white/10 hover:text-white transition-all">
+              <ChevronLeft size={14} />
+            </button>
+            <button onClick={onNextMonth} className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-gray-500 hover:bg-white/10 hover:text-white transition-all">
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
 
-      {/* ── Week strip — floating circles ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.05 }}
-        className="flex gap-1 mb-10"
-      >
-        {weekDays.map(({ d, ds, total, done, pct }) => {
-          const isSelected   = ds === dateStr
-          const isCurrentDay = ds === format(new Date(), 'yyyy-MM-dd')
+      {/* Circle grid */}
+      <div className="flex flex-wrap gap-1.5">
+        {Array.from({ length: daysInMonth }, (_, i) => {
+          const dayNum = i + 1
+          const { ds, state, isFuture, isSelected } = getDayState(dayNum)
           return (
             <button
-              key={ds}
-              onClick={() => setViewDate(d)}
-              className="flex flex-col items-center gap-1.5 flex-1 py-1 rounded-xl hover:bg-gray-50 transition-colors"
+              key={dayNum}
+              onClick={() => !isFuture && onSelect(ds)}
+              className={stateClass(state, isSelected)}
+              title={ds}
             >
-              <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider select-none">
-                {format(d, 'EEEEE', { locale: es })}
-              </span>
-              <div className={cn(
-                'w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all',
-                isSelected
-                  ? 'bg-gray-900 text-white shadow-sm'
-                  : isCurrentDay
-                  ? 'ring-2 ring-gray-300 text-gray-900 font-black'
-                  : 'text-gray-500 hover:bg-gray-100'
-              )}>
-                {format(d, 'd')}
-              </div>
-              <div className={cn(
-                'w-1.5 h-1.5 rounded-full transition-all',
-                pct >= 1  ? 'bg-emerald-400' :
-                pct > 0   ? 'bg-indigo-400' :
-                total > 0 ? 'bg-gray-200' :
-                'opacity-0'
-              )} />
+              {dayNum}
             </button>
           )
         })}
-      </motion.div>
+      </div>
 
-      {/* ── Content ── */}
-      {!currentRoutine ? (
-        /* Empty state */
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="space-y-8"
-        >
-          <div className="text-center py-14">
-            <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">📋</span>
-            </div>
-            <p className="text-sm font-semibold text-gray-700 mb-1">Sin rutina para este día</p>
-            <p className="text-xs text-gray-400 mb-6">Crea una rutina desde cero o usa una plantilla</p>
-            <button
-              onClick={() => { createEmptyRoutine(dateStr); setTimeout(() => setAddOpen(true), 100) }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
-            >
-              <Plus size={14} /> Crear rutina
-            </button>
-          </div>
+      {/* Legend */}
+      <div className="flex items-center gap-4 text-[10px] text-gray-600">
+        {[
+          { cl: 'bg-white border-white', label: 'completado' },
+          { cl: 'bg-[#EF4444] border-[#EF4444]', label: 'hoy' },
+          { cl: 'bg-amber-500/60 border-amber-500', label: 'parcial' },
+          { cl: 'border-white/15', label: 'pendiente' },
+        ].map(({ cl, label }) => (
+          <span key={label} className="flex items-center gap-1">
+            <span className={cn('w-3 h-3 rounded-full border-2 inline-block', cl)} />
+            {label}
+          </span>
+        ))}
+        <span className="ml-auto">{daysInMonth} días</span>
+      </div>
+    </div>
+  )
+}
 
-          {templates.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1">Plantillas</p>
-              <div className="border border-gray-100 rounded-xl overflow-hidden divide-y divide-gray-100">
-                {templates.map(tpl => (
-                  <button
-                    key={tpl.id}
-                    onClick={() => applyTemplate(tpl.id, dateStr)}
-                    className="w-full flex items-center gap-3 py-3 px-4 hover:bg-gray-50 transition-colors text-left group"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                      <Layers size={15} className="text-gray-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{tpl.name}</p>
-                      <p className="text-xs text-gray-400">{tpl.blocks.length} bloques predefinidos</p>
-                    </div>
-                    <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                      Aplicar →
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </motion.div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          {/* ── Stats bar — Notion property row ── */}
-          <div className="flex items-center gap-6 pb-5 mb-2 border-b border-gray-100">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-400">Bloques</span>
-              <span className="text-sm font-semibold text-gray-900">{completedBlocks}/{totalBlocks}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Clock size={11} className="text-gray-400" />
-              <span className="text-xs text-gray-400">Planificado</span>
-              <span className="text-sm font-semibold text-gray-900">{(totalMinutes / 60).toFixed(1)}h</span>
-            </div>
-            {completedMinutes > 0 && (
-              <div className="flex items-center gap-1.5">
-                <Zap size={11} className="text-gray-400" />
-                <span className="text-xs text-gray-400">Completado</span>
-                <span className="text-sm font-semibold text-emerald-600">{(completedMinutes / 60).toFixed(1)}h</span>
-              </div>
+// ─── Todo Item ─────────────────────────────────────────────────────────────────
+function TodoItem({ todo }: { todo: ReturnType<typeof useDailyCommandStore.getState>['todos'][0] }) {
+  const { toggleTodo, deleteTodo, updateTodoPriority } = useDailyCommandStore()
+  const [showPriority, setShowPriority] = useState(false)
+  const p = PRIORITY_META[todo.priority]
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -6 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 6 }}
+      className="flex items-center gap-3 py-2 group"
+    >
+      <button
+        onClick={() => toggleTodo(todo.id)}
+        className={cn(
+          'shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all',
+          todo.completed ? 'bg-emerald-500 border-emerald-500' : 'border-white/20 hover:border-white/40 bg-transparent'
+        )}
+      >
+        {todo.completed && <Check size={11} className="text-white" strokeWidth={3} />}
+      </button>
+
+      <p className={cn('flex-1 text-[15px] leading-snug min-w-0 truncate', todo.completed ? 'text-gray-600 line-through' : 'text-gray-200')}>
+        {todo.text}
+      </p>
+
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        <button onClick={() => setShowPriority(v => !v)}
+          className="p-1 rounded hover:bg-white/8 transition-colors"
+          style={{ color: p.color }}>
+          {p.icon}
+        </button>
+
+        <button onClick={() => deleteTodo(todo.id)} className="p-1 rounded text-gray-700 hover:text-red-400 hover:bg-red-400/8 transition-colors">
+          <Trash2 size={12} />
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {showPriority && (
+          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+            className="absolute right-0 mt-8 bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden z-10 shadow-xl">
+            {(['high', 'normal', 'low'] as TodoPriority[]).map(p => (
+              <button key={p} onClick={() => { updateTodoPriority(todo.id, p); setShowPriority(false) }}
+                className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-white/5 w-full text-left"
+                style={{ color: PRIORITY_META[p].color }}>
+                {PRIORITY_META[p].icon} {PRIORITY_META[p].label}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
+// ─── Day View ──────────────────────────────────────────────────────────────────
+function DayView({ date }: { date: string }) {
+  const { getDayTodos, getDayCompletion, addTodo, getNoteText, saveNote } = useDailyCommandStore()
+  const { habits, getTodayLogs, getStreakDates, logHabit } = useHabitsStore()
+  const { addXP } = useAppStore()
+  const winterArc = useWinterArcStore()
+
+  const today = todayStr()
+  const isToday = date === today
+  const isPast = date < today
+  const dayDate = new Date(date + 'T12:00:00')
+
+  const [addText, setAddText] = useState('')
+  const [addOpen, setAddOpen] = useState(false)
+  const [noteText, setNoteText] = useState(() => getNoteText(date))
+  const noteTimer = useRef<NodeJS.Timeout | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const todos = getDayTodos(date)
+  const { done: todoDone, total: todoTotal, pct: todoPct } = getDayCompletion(date)
+
+  const todayLogs = getTodayLogs()
+  const dayHabits = habits.map(h => ({
+    ...h,
+    done: isToday ? (todayLogs[h.id]?.completed ?? false) : getStreakDates(h.id).includes(date),
+  }))
+  const habitsDone = dayHabits.filter(h => h.done).length
+  const habitsTotal = dayHabits.length
+
+  const totalDone = todoDone + habitsDone
+  const totalItems = todoTotal + habitsTotal
+  const overallPct = totalItems > 0 ? Math.round((totalDone / totalItems) * 100) : 0
+  const dayComplete = totalItems > 0 && totalDone === totalItems
+
+  const winterLog = winterArc.isActive ? winterArc.dayLogs.find(l => l.date === date) : null
+
+  useEffect(() => {
+    setNoteText(getNoteText(date))
+  }, [date])
+
+  const handleNoteChange = (text: string) => {
+    setNoteText(text)
+    if (noteTimer.current) clearTimeout(noteTimer.current)
+    noteTimer.current = setTimeout(() => saveNote(date, text), 600)
+  }
+
+  const handleAddTodo = () => {
+    if (!addText.trim()) return
+    addTodo(date, addText)
+    setAddText('')
+    inputRef.current?.focus()
+  }
+
+  const dateLabel = isToday
+    ? `HOY · ${format(dayDate, "d 'de' MMM", { locale: es }).toUpperCase()}`
+    : isPast
+    ? format(dayDate, "EEEE · d 'de' MMM", { locale: es }).toUpperCase()
+    : format(dayDate, "EEEE · d 'de' MMM", { locale: es }).toUpperCase()
+
+  return (
+    <div className="space-y-6">
+      {/* Day header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[9px] tracking-[0.4em] text-[#EF4444] font-black">{dateLabel}</p>
+          <h2 className="text-3xl font-black text-white tracking-tight mt-0.5">
+            {isToday ? 'TU DÍA' : isPast ? 'ESTE DÍA' : 'PRÓXIMO DÍA'}
+          </h2>
+        </div>
+
+        {/* Progress badge */}
+        {totalItems > 0 && (
+          <motion.div
+            animate={dayComplete ? { scale: [1, 1.05, 1] } : {}}
+            transition={{ duration: 0.4 }}
+            className={cn(
+              'text-right px-4 py-2 rounded-xl border',
+              dayComplete ? 'border-emerald-400/30 bg-emerald-400/8' : 'border-white/8 bg-white/[0.03]'
             )}
-            <div className="ml-auto">
-              <button
-                onClick={() => { setAddOpen(o => !o); setAddForm({ ...EMPTY_FORM }) }}
-                className="flex items-center gap-1 text-xs text-gray-400 hover:text-indigo-600 transition-colors font-medium"
-              >
-                <Plus size={13} /> Agregar
+          >
+            <p className={cn('text-xl font-black', dayComplete ? 'text-emerald-400' : 'text-white')}>
+              {totalDone}<span className="text-sm font-normal text-gray-600">/{totalItems}</span>
+            </p>
+            <p className={cn('text-[9px] font-black tracking-widest', dayComplete ? 'text-emerald-400' : 'text-gray-500')}>
+              {dayComplete ? 'DAY COMPLETE ✓' : `${overallPct}% DONE`}
+            </p>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      {totalItems > 0 && (
+        <div className="h-0.5 bg-white/6 rounded-full overflow-hidden">
+          <motion.div
+            className={cn('h-full rounded-full', dayComplete ? 'bg-emerald-400' : 'bg-[#EF4444]')}
+            initial={{ width: 0 }}
+            animate={{ width: `${overallPct}%` }}
+            transition={{ duration: 0.6 }}
+          />
+        </div>
+      )}
+
+      {/* Winter Arc score if active */}
+      {winterLog && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-white/[0.03] rounded-xl border border-white/6">
+          <span className="text-[9px] tracking-[0.4em] text-[#EF4444] font-black">❄ WINTER ARC</span>
+          <div className="w-px h-3 bg-white/10" />
+          <span className="text-sm font-black text-white">{winterLog.score}%</span>
+          <span className="text-xs text-gray-600">score del día</span>
+          {winterLog.score >= (winterArc.config?.coldDayThreshold ?? 80) && (
+            <span className="ml-auto text-xs text-white font-bold">COLD DAY ❄</span>
+          )}
+        </div>
+      )}
+
+      {/* TO-DO */}
+      <div>
+        <p className="text-[9px] tracking-[0.4em] text-gray-600 font-black mb-3">TO-DO</p>
+
+        <div className="space-y-0 relative">
+          <AnimatePresence initial={false}>
+            {todos.map(todo => (
+              <TodoItem key={todo.id} todo={todo} />
+            ))}
+          </AnimatePresence>
+
+          {todos.length === 0 && !addOpen && (
+            <p className="text-sm text-gray-700 py-2">Sin tareas para este día</p>
+          )}
+        </div>
+
+        {/* Quick add */}
+        <AnimatePresence>
+          {addOpen && (
+            <motion.div key="add" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+              className="flex items-center gap-3 py-2 border-t border-white/5 mt-1">
+              <div className="w-5 h-5 rounded border-2 border-white/20 shrink-0" />
+              <input
+                ref={inputRef}
+                autoFocus
+                value={addText}
+                onChange={e => setAddText(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') handleAddTodo()
+                  if (e.key === 'Escape') { setAddOpen(false); setAddText('') }
+                }}
+                placeholder="Escribe y presiona Enter..."
+                className="flex-1 bg-transparent text-[15px] text-gray-200 placeholder:text-gray-600 focus:outline-none"
+              />
+              <button onClick={() => { setAddOpen(false); setAddText('') }} className="text-gray-600 hover:text-gray-400">
+                <X size={14} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button
+          onClick={() => { setAddOpen(true); setTimeout(() => inputRef.current?.focus(), 50) }}
+          className="flex items-center gap-2 pt-2 text-sm text-gray-600 hover:text-gray-400 transition-colors group"
+        >
+          <Plus size={14} className="group-hover:text-[#EF4444] transition-colors" />
+          NUEVA TAREA
+        </button>
+      </div>
+
+      {/* HABITS */}
+      {habitsTotal > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[9px] tracking-[0.4em] text-gray-600 font-black">HABITS</p>
+            <span className="text-[10px] text-gray-600">{habitsDone}/{habitsTotal}</span>
+          </div>
+          <div className="space-y-0">
+            {dayHabits.map(h => (
+              <div key={h.id} className="flex items-center gap-3 py-2 group">
+                <button
+                  onClick={() => {
+                    if (!isToday) return
+                    const logs = getTodayLogs()
+                    const newVal = logs[h.id]?.completed ? 0 : h.target
+                    logHabit(h.id, newVal)
+                    if (newVal >= h.target) addXP(10, `Hábito: ${h.name}`)
+                  }}
+                  disabled={!isToday}
+                  className={cn(
+                    'shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all',
+                    h.done ? 'bg-emerald-500 border-emerald-500' : 'border-white/20',
+                    !isToday && 'cursor-default'
+                  )}
+                >
+                  {h.done && <Check size={11} className="text-white" strokeWidth={3} />}
+                </button>
+                <span className="text-base shrink-0">{h.icon}</span>
+                <p className={cn('flex-1 text-[15px]', h.done ? 'text-gray-600 line-through' : 'text-gray-200')}>
+                  {h.name}
+                </p>
+                {h.streak > 0 && (
+                  <span className="text-[10px] text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity">🔥 {h.streak}d</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* NOTES */}
+      <div>
+        <p className="text-[9px] tracking-[0.4em] text-gray-600 font-black mb-3">NOTAS DEL DÍA</p>
+        <p className="text-[11px] text-gray-700 mb-2">Ideas, pendientes, recordatorios o cualquier cosa que quieras sacar de tu cabeza.</p>
+        <textarea
+          value={noteText}
+          onChange={e => handleNoteChange(e.target.value)}
+          placeholder="Escribe aquí..."
+          className="w-full bg-transparent text-sm text-gray-300 placeholder:text-gray-700 focus:outline-none resize-none leading-relaxed min-h-[80px] border-b border-white/8 pb-2"
+        />
+        {noteText && (
+          <p className="text-[9px] text-gray-700 mt-1">Guardado automáticamente</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Inbox Section ─────────────────────────────────────────────────────────────
+function InboxSection({ selectedDate }: { selectedDate: string }) {
+  const { inbox, addInboxItem, assignInboxToDate, deleteInboxItem } = useDailyCommandStore()
+  const [text, setText] = useState('')
+  const [open, setOpen] = useState(false)
+
+  const handleAdd = () => {
+    addInboxItem(text)
+    setText('')
+  }
+
+  if (inbox.length === 0 && !open) {
+    return (
+      <button onClick={() => setOpen(true)}
+        className="flex items-center gap-2 text-[10px] tracking-[0.3em] text-gray-700 hover:text-gray-500 transition-colors font-black py-2">
+        <Inbox size={12} /> INBOX
+      </button>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-[9px] tracking-[0.4em] text-gray-600 font-black">INBOX</p>
+        <span className="text-[10px] text-gray-600">{inbox.length} pendientes</span>
+      </div>
+      <p className="text-[11px] text-gray-700">Captura rápida sin decidir el día. Asígnalos cuando quieras.</p>
+
+      <div className="space-y-0">
+        {inbox.map(item => (
+          <div key={item.id} className="flex items-center gap-3 py-2 group">
+            <div className="w-1.5 h-1.5 rounded-full bg-white/20 shrink-0" />
+            <p className="flex-1 text-sm text-gray-400">{item.text}</p>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={() => assignInboxToDate(item.id, selectedDate)}
+                className="text-[10px] text-[#EF4444] hover:text-red-400 font-bold px-2 py-0.5 rounded hover:bg-[#EF4444]/8 transition-all">
+                → HOY
+              </button>
+              <button onClick={() => deleteInboxItem(item.id)} className="text-gray-700 hover:text-red-400 p-1">
+                <X size={12} />
               </button>
             </div>
           </div>
+        ))}
+      </div>
 
-          {/* ── Active block banner ── */}
-          <AnimatePresence>
-            {activeBlock && (() => {
-              const color   = CATEGORY_COLORS[activeBlock.category]
-              const remaining = toMin(activeBlock.endTime) - currentMinutes
-              const total     = toMin(activeBlock.endTime) - toMin(activeBlock.startTime)
-              const pct       = Math.min(100, ((total - remaining) / total) * 100)
-              return (
-                <motion.div
-                  key="active-banner"
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="mb-4 rounded-xl border overflow-hidden"
-                  style={{ background: `${color}08`, borderColor: `${color}28` }}
-                >
-                  <div className="h-[2px] bg-gray-100">
-                    <motion.div
-                      className="h-full"
-                      style={{ width: `${pct}%`, background: color }}
-                      transition={{ duration: 60 }}
-                    />
-                  </div>
-                  <div className="flex items-center gap-3 px-4 py-3">
-                    <motion.div
-                      animate={{ opacity: [1, 0.4, 1] }}
-                      transition={{ repeat: Infinity, duration: 2 }}
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{ background: color }}
-                    />
-                    <span className="text-base shrink-0">{activeBlock.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{activeBlock.title}</p>
-                      <p className="text-xs text-gray-400">{remaining} min restantes · {activeBlock.startTime}–{activeBlock.endTime}</p>
-                    </div>
-                    <button
-                      onClick={() => { toggleBlock(currentRoutine.id, activeBlock.id); addXP(5, `Bloque: ${activeBlock.title}`) }}
-                      className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-all"
-                      style={{ background: `${color}18`, color }}
-                    >
-                      ✓ Completar
-                    </button>
-                  </div>
-                </motion.div>
-              )
-            })()}
-          </AnimatePresence>
-
-          {/* ── Timeline — Notion-style block list ── */}
-          <div className="space-y-0.5 -mx-3 px-3">
-            {sorted.length === 0 ? (
-              <div className="py-10 text-center">
-                <p className="text-sm text-gray-400">Sin bloques · Agrega uno abajo</p>
-              </div>
-            ) : (
-              sorted.map((block, i) => {
-                const status = blockStatus(block)
-                const dur    = toMin(block.endTime) - toMin(block.startTime)
-                const color  = CATEGORY_COLORS[block.category]
-                const section      = getTimeSection(block.startTime)
-                const showSection  = i === 0 || getTimeSection(sorted[i - 1].startTime) !== section
-
-                return (
-                  <div key={block.id}>
-                    {/* Now marker */}
-                    {isToday && i === nowIdx && <NowMarker />}
-
-                    {/* Section divider */}
-                    {showSection && (
-                      <div className="flex items-center gap-3 pt-5 pb-2">
-                        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider select-none">
-                          {SECTION_EMOJI[section]} {section}
-                        </span>
-                        <div className="flex-1 h-px bg-gray-100" />
-                      </div>
-                    )}
-
-                    {/* Block row */}
-                    <motion.div
-                      layout
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: status === 'overdue' ? 0.4 : 1, x: 0 }}
-                      transition={{ delay: i * 0.025 }}
-                      className={cn(
-                        'group flex items-center gap-3 py-2 rounded-lg transition-colors cursor-default',
-                        status !== 'overdue' && 'hover:bg-gray-50/80'
-                      )}
-                    >
-                      {/* Drag handle */}
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 cursor-grab">
-                        <GripVertical size={14} className="text-gray-300" />
-                      </div>
-
-                      {/* Checkbox */}
-                      <button
-                        onClick={() => { toggleBlock(currentRoutine.id, block.id); if (!block.completed) addXP(5, `Bloque: ${block.title}`) }}
-                        className="shrink-0 transition-transform hover:scale-110 active:scale-95"
-                      >
-                        {status === 'completed'
-                          ? <CheckCircle2 size={18} className="text-emerald-500" />
-                          : <Circle size={18} className="text-gray-300 group-hover:text-gray-400 transition-colors" />
-                        }
-                      </button>
-
-                      {/* Time */}
-                      <span className="text-[11px] text-gray-400 font-mono w-12 text-right shrink-0 tabular-nums">
-                        {block.startTime}
-                      </span>
-
-                      {/* Category accent */}
-                      <div
-                        className="w-0.5 h-4 rounded-full shrink-0 transition-opacity"
-                        style={{ background: color, opacity: status === 'completed' ? 0.25 : 0.55 }}
-                      />
-
-                      {/* Icon */}
-                      <span className="text-base select-none shrink-0">{block.icon}</span>
-
-                      {/* Title */}
-                      <span className={cn(
-                        'flex-1 text-sm font-medium min-w-0 truncate',
-                        status === 'completed' ? 'text-gray-400 line-through' : 'text-gray-900'
-                      )}>
-                        {block.title}
-                        {status === 'active' && (
-                          <motion.span
-                            animate={{ opacity: [1, 0.3, 1] }}
-                            transition={{ repeat: Infinity, duration: 1.6 }}
-                            className="ml-2 inline-block w-1.5 h-1.5 rounded-full align-middle"
-                            style={{ background: color }}
-                          />
-                        )}
-                      </span>
-
-                      {/* Duration */}
-                      <span className="text-xs text-gray-400 shrink-0 hidden sm:block tabular-nums">
-                        {dur}m
-                      </span>
-
-                      {/* Category pill */}
-                      <span
-                        className="text-[10px] px-2 py-0.5 rounded-full shrink-0 hidden md:block font-medium"
-                        style={{ background: `${color}10`, color }}
-                      >
-                        {CATEGORY_ICONS[block.category]} {CATEGORY_LABELS[block.category]}
-                      </span>
-
-                      {/* Actions (hover) */}
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 shrink-0">
-                        <button
-                          onClick={e => { e.stopPropagation(); openEdit(block) }}
-                          className="p-1.5 text-gray-400 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-all"
-                        >
-                          <Pencil size={11} />
-                        </button>
-                        <button
-                          onClick={e => { e.stopPropagation(); removeBlock(currentRoutine.id, block.id) }}
-                          className="p-1.5 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 transition-all"
-                        >
-                          <Trash2 size={11} />
-                        </button>
-                      </div>
-                    </motion.div>
-                  </div>
-                )
-              })
-            )}
-
-            {/* Now marker at end */}
-            {isToday && nowIdx === sorted.length && sorted.length > 0 && <NowMarker />}
-          </div>
-
-          {/* ── Add block ── */}
-          <div className="mt-3 -mx-3 px-3">
-            <AnimatePresence>
-              {addOpen ? (
-                <motion.div
-                  key="add-form"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="border border-gray-200 rounded-xl p-5 mt-2 bg-white">
-                    <div className="flex items-center justify-between mb-4">
-                      <p className="text-sm font-semibold text-gray-900">Nuevo bloque</p>
-                      <button onClick={() => setAddOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-md transition-colors">
-                        <X size={14} />
-                      </button>
-                    </div>
-                    <BlockForm
-                      value={addForm}
-                      onChange={v => setAddForm(f => ({ ...f, ...v }))}
-                      onSave={handleAddSave}
-                      onCancel={() => setAddOpen(false)}
-                      saveLabel="Agregar"
-                    />
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.button
-                  key="add-btn"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  onClick={() => setAddOpen(true)}
-                  className="w-full flex items-center gap-2.5 text-sm text-gray-400 hover:text-gray-600 py-2.5 rounded-lg hover:bg-gray-50 transition-all"
-                >
-                  <Plus size={14} />
-                  <span>Agregar bloque</span>
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-      )}
-
-      {/* ── Tomorrow CTA ── */}
-      {isToday && !routines.find(r => r.date === format(addDays(new Date(), 1), 'yyyy-MM-dd')) && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="mt-12 pt-6 border-t border-gray-100"
-        >
-          <div className="flex items-start gap-3">
-            <span className="text-xl mt-0.5 select-none">🌅</span>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900 mb-0.5">¿Cuál será tu rutina mañana?</p>
-              <p className="text-xs text-gray-400 mb-3">Planifica con anticipación para empezar el día sin fricciones.</p>
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => { createEmptyRoutine(format(addDays(new Date(), 1), 'yyyy-MM-dd')); setViewDate(addDays(new Date(), 1)) }}
-                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors font-medium"
-                >
-                  <Plus size={12} /> Desde cero
-                </button>
-                {templates[0] && (
-                  <button
-                    onClick={() => { applyTemplate(templates[0].id, format(addDays(new Date(), 1), 'yyyy-MM-dd')); setViewDate(addDays(new Date(), 1)) }}
-                    className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 transition-colors"
-                  >
-                    <RefreshCw size={12} /> Usar plantilla
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* ── Edit modal ── */}
-      <Modal open={!!editBlock} onClose={() => setEditBlock(null)} title="Editar bloque">
-        {editBlock && (
-          <BlockForm
-            value={editForm}
-            onChange={v => setEditForm(f => ({ ...f, ...v }))}
-            onSave={handleEditSave}
-            onCancel={() => setEditBlock(null)}
-            saveLabel="Guardar cambios"
-          />
+      {/* Add to inbox */}
+      <div className="flex items-center gap-2 border-t border-white/5 pt-2">
+        <input
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleAdd()}
+          placeholder="Captura rápida..."
+          className="flex-1 bg-transparent text-sm text-gray-400 placeholder:text-gray-700 focus:outline-none"
+        />
+        {text && (
+          <button onClick={handleAdd} className="text-[#EF4444] text-xs font-black">
+            GUARDAR
+          </button>
         )}
-      </Modal>
+      </div>
+    </div>
+  )
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
+export default function RoutinePage() {
+  const [selectedDate, setSelectedDate] = useState(todayStr())
+  const [currentMonth, setCurrentMonth] = useState(new Date())
+
+  const handleSelectDate = (date: string) => {
+    setSelectedDate(date)
+    const d = new Date(date + 'T12:00:00')
+    setCurrentMonth(new Date(d.getFullYear(), d.getMonth(), 1))
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-8 pb-12">
+      {/* Month grid */}
+      <div className="border-b border-white/6 pb-6">
+        <MonthGrid
+          month={currentMonth}
+          selectedDate={selectedDate}
+          onSelect={handleSelectDate}
+          onPrevMonth={() => setCurrentMonth(m => subMonths(m, 1))}
+          onNextMonth={() => setCurrentMonth(m => addMonths(m, 1))}
+        />
+      </div>
+
+      {/* Day view */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={selectedDate}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2 }}
+        >
+          <DayView date={selectedDate} />
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Inbox */}
+      <div className="border-t border-white/6 pt-6">
+        <InboxSection selectedDate={selectedDate} />
+      </div>
     </div>
   )
 }

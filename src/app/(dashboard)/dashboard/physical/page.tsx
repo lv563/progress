@@ -7,7 +7,7 @@ import { format, addDays, startOfWeek, isBefore, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   Dumbbell, Droplets, Plus, Scale, Check, Flame, TrendingUp,
-  Settings2, ChevronDown, ChevronUp,
+  Settings2, ChevronDown, ChevronUp, Utensils,
 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { Button } from '@/components/ui/Button'
@@ -344,6 +344,19 @@ export default function PhysicalPage() {
     addXP(30, `Entrenamiento: ${todayRoutine.name}`)
   }
 
+  const handleTogglePastWorkout = (dateStr: string, routine: typeof ROUTINE[0], isLogged: boolean) => {
+    if (routine.isRest) return
+    if (isLogged) {
+      const session = usePhysicalStore.getState().workoutSessions.find(w => w.date === dateStr && w.completed)
+      if (session) deleteWorkout(session.id)
+    } else {
+      addWorkout({
+        date: dateStr, type: routine.type, name: routine.name,
+        exercises: [], duration: 0, volume: 0, notes: undefined, mood: 3, completed: true,
+      })
+    }
+  }
+
   const handleLogWeight = () => {
     const w = Number(newWeight)
     if (!w || w <= 0) return
@@ -515,46 +528,82 @@ export default function PhysicalPage() {
               <p className="text-[10px] text-gray-400 mt-1.5">{waterConfig.containerMl}ml por pote</p>
             </div>
 
-            {/* Meals + Weight */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 rounded-2xl border border-orange-200 bg-orange-50">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-gray-900">🍽️ Comidas</span>
-                  {mealGoalEdit ? (
-                    <input autoFocus type="number" min={1} max={10} value={mealGoalVal}
-                      onChange={e => setMealGoalVal(e.target.value)}
-                      onBlur={() => { const n = Number(mealGoalVal); if (n >= 1) setMealGoal(n); setMealGoalEdit(false) }}
-                      onKeyDown={e => { if (e.key === 'Enter') { const n = Number(mealGoalVal); if (n >= 1) setMealGoal(n); setMealGoalEdit(false) } }}
-                      className="w-10 bg-transparent text-xs font-bold text-orange-600 focus:outline-none text-right" />
-                  ) : (
-                    <button onClick={() => { setMealGoalVal(String(mealGoal)); setMealGoalEdit(true) }}
-                      className="text-xs font-bold text-orange-600">{mealsToday}/{mealGoal}</button>
-                  )}
+            {/* Meals */}
+            <div className="p-4 rounded-2xl border border-orange-200 bg-orange-50">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Utensils size={16} className="text-orange-600" />
+                  <span className="text-sm font-semibold text-gray-900">Comidas del día</span>
                 </div>
-                <div className="flex gap-1.5">
-                  {Array.from({ length: mealGoal }, (_, i) => (
-                    <button key={i} onClick={() => setMeals(i < mealsToday ? i : i + 1)}
-                      className={cn('flex-1 h-8 rounded-lg transition-all',
-                        i < mealsToday ? 'bg-orange-300' : 'bg-white border border-gray-100')} />
-                  ))}
-                </div>
-              </div>
-              <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-gray-900">⚖️ Peso</span>
-                  <button onClick={() => setWeightModal(true)}
-                    className="text-xs text-amber-700 px-2 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 transition-all flex items-center gap-1">
-                    <Plus size={10} /> Reg.
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-orange-700 tabular-nums">
+                    {mealsToday} / {mealGoal} platos
+                  </span>
+                  <button
+                    onClick={() => { setMealGoalVal(String(mealGoal)); setMealGoalEdit(v => !v) }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-0.5"
+                  >
+                    <Settings2 size={13} />
                   </button>
                 </div>
-                {latestMeas?.weight ? (
-                  <p className="text-2xl font-black text-amber-600 tabular-nums">
-                    {latestMeas.weight}<span className="text-sm font-normal text-gray-400"> kg</span>
-                  </p>
-                ) : (
-                  <p className="text-xs text-gray-400 mt-2">Sin registros aún</p>
-                )}
               </div>
+              {mealGoalEdit && (
+                <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-white border border-orange-200">
+                  <span className="text-xs text-gray-500">Meta diaria:</span>
+                  <input
+                    autoFocus type="number" min={1} max={10} value={mealGoalVal}
+                    onChange={e => setMealGoalVal(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') { const n = Number(mealGoalVal); if (n >= 1) { setMealGoal(n); setMealGoalEdit(false) } }
+                      if (e.key === 'Escape') setMealGoalEdit(false)
+                    }}
+                    className="w-10 text-sm font-black text-orange-600 focus:outline-none text-center bg-transparent"
+                  />
+                  <span className="text-xs text-gray-400 flex-1">platos/día</span>
+                  <button
+                    onClick={() => { const n = Number(mealGoalVal); if (n >= 1) setMealGoal(n); setMealGoalEdit(false) }}
+                    className="text-xs font-bold text-orange-600 px-2 py-0.5 rounded-lg bg-orange-100 hover:bg-orange-200 transition-all"
+                  >OK</button>
+                </div>
+              )}
+              <div className="flex gap-2 mb-3 flex-wrap">
+                {Array.from({ length: mealGoal }, (_, i) => (
+                  <button key={i} onClick={() => setMeals(i < mealsToday ? i : i + 1)}
+                    className={cn(
+                      'flex-1 min-w-[32px] h-11 rounded-xl transition-all flex items-center justify-center',
+                      i < mealsToday
+                        ? 'bg-orange-300 hover:bg-orange-200'
+                        : 'bg-white hover:bg-orange-50 border border-gray-100'
+                    )}>
+                    <Utensils size={14} className={i < mealsToday ? 'text-orange-700' : 'text-gray-300'} />
+                  </button>
+                ))}
+              </div>
+              <div className="h-1.5 rounded-full bg-orange-100 overflow-hidden">
+                <motion.div className="h-full rounded-full bg-orange-500"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(100, mealGoal > 0 ? (mealsToday / mealGoal) * 100 : 0)}%` }}
+                  transition={{ duration: 0.5 }} />
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1.5">Meta: {mealGoal} comidas hoy</p>
+            </div>
+
+            {/* Weight */}
+            <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-gray-900">⚖️ Peso</span>
+                <button onClick={() => setWeightModal(true)}
+                  className="text-xs text-amber-700 px-2 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 transition-all flex items-center gap-1">
+                  <Plus size={10} /> Reg.
+                </button>
+              </div>
+              {latestMeas?.weight ? (
+                <p className="text-2xl font-black text-amber-600 tabular-nums">
+                  {latestMeas.weight}<span className="text-sm font-normal text-gray-400"> kg</span>
+                </p>
+              ) : (
+                <p className="text-xs text-gray-400 mt-2">Sin registros aún</p>
+              )}
             </div>
           </motion.div>
         )}
@@ -724,7 +773,16 @@ export default function PhysicalPage() {
                             icon = <div className="w-1.5 h-1.5 rounded-full" style={{ background: `${r.color}50` }} />
                           }
 
-                          return (
+                          const isClickable = d.isPast && !r.isRest
+                          return isClickable ? (
+                            <button key={d.dateStr}
+                              onClick={() => handleTogglePastWorkout(d.dateStr, r, d.isLogged)}
+                              title={`${format(d.date, "EEEE d 'de' MMM", { locale: es })} — ${r.name}${d.isLogged ? ' (desmarcar)' : ' (marcar como completado)'}`}
+                              className="aspect-square rounded-lg flex items-center justify-center border cursor-pointer transition-opacity hover:opacity-70 active:scale-90"
+                              style={{ background: cellBg, borderColor: cellBorder }}>
+                              {icon}
+                            </button>
+                          ) : (
                             <div key={d.dateStr}
                               title={`${format(d.date, "EEEE d 'de' MMM", { locale: es })} — ${r.name}`}
                               className="aspect-square rounded-lg flex items-center justify-center border cursor-default"

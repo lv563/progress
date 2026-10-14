@@ -12,12 +12,12 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
-  primary:   'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-200',
-  secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200',
-  ghost:     'hover:bg-gray-100 text-gray-600 hover:text-gray-900',
-  danger:    'bg-red-500 hover:bg-red-600 text-white shadow-sm',
-  glow:      'gradient-hero text-white shadow-sm hover:opacity-90',
-  outline:   'border border-gray-200 hover:bg-gray-50 text-gray-700 hover:border-gray-300',
+  primary:   'bg-[#EF4444] hover:bg-red-500 text-white',
+  secondary: 'bg-white/8 hover:bg-white/12 text-gray-300 border border-white/10',
+  ghost:     'hover:bg-white/6 text-gray-400 hover:text-white',
+  danger:    'bg-red-500 hover:bg-red-600 text-white',
+  glow:      'bg-[#EF4444] hover:bg-red-500 text-white',
+  outline:   'border border-white/10 hover:bg-white/5 text-gray-400 hover:text-gray-300 hover:border-white/15',
 }
 
 const sizes = {
@@ -34,7 +34,7 @@ export function Button({ variant = 'primary', size = 'md', loading, children, cl
       whileTap={{ scale: disabled || loading ? 1 : 0.98 }}
       transition={{ type: 'spring', stiffness: 400, damping: 20 }}
       className={cn(
-        'inline-flex items-center justify-center gap-2 font-medium transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center gap-2 font-bold transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed',
         variants[variant],
         sizes[size],
         className

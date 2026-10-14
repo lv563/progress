@@ -96,7 +96,7 @@ export function AppShell({ children }: AppShellProps) {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA]">
+    <div className="min-h-screen bg-[#0A0A0A]">
       <Sidebar />
       <TopBar />
 

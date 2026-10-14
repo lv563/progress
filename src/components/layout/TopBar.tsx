@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Settings, Zap, Flame, Crown, Cloud, CloudOff, Loader2, CloudCheck, Sun, Moon } from 'lucide-react'
+import { Search, Settings, Zap, Flame, Crown, Cloud, CloudOff, Loader2, CloudCheck } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Link from 'next/link'
@@ -13,15 +13,15 @@ import { cn } from '@/lib/utils/cn'
 import { CommandPalette } from './CommandPalette'
 
 const SYNC_UI: Record<SyncStatus, { icon: any; color: string; title: string }> = {
-  idle:    { icon: Cloud,      color: 'text-gray-400',    title: 'Sin sincronizar' },
-  syncing: { icon: Loader2,    color: 'text-indigo-500',  title: 'Sincronizando...' },
+  idle:    { icon: Cloud,      color: 'text-gray-600',    title: 'Sin sincronizar' },
+  syncing: { icon: Loader2,    color: 'text-[#EF4444]',   title: 'Sincronizando...' },
   synced:  { icon: CloudCheck, color: 'text-emerald-500', title: 'Sincronizado' },
   error:   { icon: CloudOff,   color: 'text-red-400',     title: 'Error al sincronizar' },
-  offline: { icon: CloudOff,   color: 'text-gray-400',    title: 'Sin conexión' },
+  offline: { icon: CloudOff,   color: 'text-gray-600',    title: 'Sin conexión' },
 }
 
 export function TopBar() {
-  const { user, commandPaletteOpen, setCommandPaletteOpen, theme, setTheme } = useAppStore()
+  const { user, commandPaletteOpen, setCommandPaletteOpen } = useAppStore()
   const { status: syncStatus, lastSync } = useSyncStore()
   const syncUi = SYNC_UI[syncStatus]
   const SyncIcon = syncUi.icon
@@ -31,19 +31,19 @@ export function TopBar() {
 
   return (
     <>
-      <header className="fixed top-0 right-0 left-0 h-16 z-20 flex items-center gap-3 px-4 border-b border-black/[0.06] bg-white/90 backdrop-blur-xl">
+      <header className="fixed top-0 right-0 left-0 h-16 z-20 flex items-center gap-3 px-4 border-b border-white/6 bg-[#111]/90 backdrop-blur-xl">
         {/* Mobile logo */}
         <div className="flex items-center gap-2 md:hidden">
-          <div className="w-7 h-7 rounded-lg gradient-hero flex items-center justify-center shrink-0 shadow-sm">
+          <div className="w-7 h-7 rounded-lg bg-[#EF4444] flex items-center justify-center shrink-0">
             <Crown size={13} className="text-white" />
           </div>
-          <span className="font-bold text-gray-900 text-sm tracking-tight">Kingdom OS</span>
+          <span className="font-black text-white text-sm tracking-tight">Kingdom OS</span>
         </div>
         <div className="hidden md:block w-[60px] shrink-0" />
 
         {/* Date */}
         <div className="hidden md:block">
-          <p className="text-sm text-gray-400 capitalize font-medium">{today}</p>
+          <p className="text-sm text-gray-600 capitalize font-medium">{today}</p>
         </div>
 
         <div className="flex-1" />
@@ -51,20 +51,17 @@ export function TopBar() {
         {/* Search */}
         <button
           onClick={() => setCommandPaletteOpen(true)}
-          className={cn(
-            'hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 text-sm text-gray-400 hover:text-gray-600',
-            'bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
-          )}
+          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/8 bg-white/[0.03] text-sm text-gray-500 hover:text-gray-300 hover:bg-white/6 hover:border-white/12 transition-all"
         >
           <Search size={14} />
           <span className="hidden md:inline">Buscar...</span>
-          <kbd className="hidden md:inline ml-4 text-[10px] px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-400 shadow-sm">⌘K</kbd>
+          <kbd className="hidden md:inline ml-4 text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-gray-600">⌘K</kbd>
         </button>
 
         {/* Mobile search */}
         <button
           onClick={() => setCommandPaletteOpen(true)}
-          className="sm:hidden w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+          className="sm:hidden w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:bg-white/5 hover:text-gray-300 transition-colors"
         >
           <Search size={18} />
         </button>
@@ -74,23 +71,23 @@ export function TopBar() {
           <div className="hidden lg:flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <Flame size={13} className="text-orange-400 animate-streak-fire" />
-              <span className="text-sm font-bold text-orange-500">{user.streak}</span>
+              <span className="text-sm font-bold text-orange-400">{user.streak}</span>
             </div>
-            <div className="w-px h-4 bg-gray-200" />
+            <div className="w-px h-4 bg-white/10" />
             <div className="flex items-center gap-2">
-              <Zap size={13} className="text-indigo-500" />
+              <Zap size={13} className="text-[#EF4444]" />
               <div className="flex flex-col items-end">
-                <span className="text-[11px] text-gray-400 leading-none">Lv.{user.level} · {getLevelTitle(user.level)}</span>
-                <div className="mt-1 w-20 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                <span className="text-[11px] text-gray-500 leading-none">Lv.{user.level} · {getLevelTitle(user.level)}</span>
+                <div className="mt-1 w-20 h-1 rounded-full bg-white/8 overflow-hidden">
                   <motion.div
-                    className="h-full rounded-full gradient-hero"
+                    className="h-full rounded-full bg-[#EF4444]"
                     initial={{ width: 0 }}
                     animate={{ width: `${xpPct}%` }}
                     transition={{ duration: 1, ease: 'easeOut' }}
                   />
                 </div>
               </div>
-              <span className="text-xs text-indigo-600 font-semibold tabular-nums">{formatXP(user.xp)}</span>
+              <span className="text-xs text-[#EF4444] font-bold tabular-nums">{formatXP(user.xp)}</span>
             </div>
           </div>
         )}
@@ -99,7 +96,7 @@ export function TopBar() {
         {user && (
           <div className="flex lg:hidden items-center gap-1.5">
             <Flame size={13} className="text-orange-400" />
-            <span className="text-xs font-bold text-orange-500">{user.streak}d</span>
+            <span className="text-xs font-bold text-orange-400">{user.streak}d</span>
           </div>
         )}
 
@@ -112,21 +109,13 @@ export function TopBar() {
             <SyncIcon size={15} className={cn(syncUi.color, syncStatus === 'syncing' && 'animate-spin')} />
           </div>
 
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            title={theme === 'dark' ? 'Cambiar a claro' : 'Cambiar a oscuro'}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-          >
-            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
-
           <Link href="/dashboard/settings">
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 hover:bg-white/5 hover:text-gray-300 transition-colors">
               <Settings size={16} />
             </button>
           </Link>
 
-          <div className="w-8 h-8 rounded-full gradient-hero flex items-center justify-center text-xs font-bold text-white cursor-pointer shadow-sm">
+          <div className="w-8 h-8 rounded-full bg-[#EF4444] flex items-center justify-center text-xs font-black text-white cursor-pointer">
             {user?.name?.[0] ?? 'U'}
           </div>
         </div>

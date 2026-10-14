@@ -15,9 +15,9 @@ interface StatCardProps {
   size?: 'sm' | 'md' | 'lg'
 }
 
-export function StatCard({ label, value, subValue, trend, icon, color = '#4F46E5', className, size = 'md' }: StatCardProps) {
+export function StatCard({ label, value, subValue, trend, icon, color = '#EF4444', className, size = 'md' }: StatCardProps) {
   const TrendIcon = trend === undefined ? null : trend > 0 ? TrendingUp : trend < 0 ? TrendingDown : Minus
-  const trendColor = trend === undefined ? '' : trend > 0 ? 'text-emerald-600' : trend < 0 ? 'text-red-500' : 'text-gray-400'
+  const trendColor = trend === undefined ? '' : trend > 0 ? 'text-white' : trend < 0 ? 'text-red-400' : 'text-gray-500'
 
   return (
     <motion.div
@@ -25,17 +25,16 @@ export function StatCard({ label, value, subValue, trend, icon, color = '#4F46E5
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 200, damping: 25 }}
       className={cn(
-        'bg-white border border-black/[0.07] rounded-2xl p-4 flex flex-col gap-2',
+        'bg-[#111] border border-white/8 rounded-2xl p-4 flex flex-col gap-2',
         className
       )}
-      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">{label}</p>
+          <p className="text-[10px] text-gray-600 font-bold uppercase tracking-wider">{label}</p>
           <motion.p
             className={cn(
-              'font-bold text-gray-900 mt-1.5 tracking-tight',
+              'font-black text-white mt-1.5 tracking-tight',
               size === 'sm' ? 'text-xl' : size === 'lg' ? 'text-4xl' : 'text-2xl'
             )}
             initial={{ scale: 0.85, opacity: 0 }}
@@ -44,12 +43,12 @@ export function StatCard({ label, value, subValue, trend, icon, color = '#4F46E5
           >
             {value}
           </motion.p>
-          {subValue && <p className="text-xs text-gray-400 mt-0.5">{subValue}</p>}
+          {subValue && <p className="text-xs text-gray-500 mt-0.5">{subValue}</p>}
         </div>
         {icon && (
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: `${color}14` }}
+            style={{ background: `${color}18` }}
           >
             <div style={{ color }}>{icon}</div>
           </div>

@@ -63,6 +63,8 @@ export interface Debt {
   minPayment: number
   color: string
   dueDay?: number
+  deadline?: string
+  note?: string
 }
 
 export interface FixedCharge {
@@ -92,12 +94,14 @@ const DEFAULT_CONFIG: FinancialConfig = {
 }
 
 const DEFAULT_BUDGETS: Budget[] = [
-  { category: 'Comida',          limit: 400,  icon: '🍽️', color: '#F59E0B' },
-  { category: 'Transporte',      limit: 150,  icon: '🚗',  color: '#06B6D4' },
-  { category: 'Entretenimiento', limit: 100,  icon: '🎬',  color: '#EC4899' },
-  { category: 'Salud',           limit: 200,  icon: '💊',  color: '#10B981' },
-  { category: 'Ropa',            limit: 100,  icon: '👕',  color: '#7C3AED' },
-  { category: 'Servicios',       limit: 250,  icon: '💡',  color: '#F97316' },
+  { category: 'Alimentación',    limit: 0, icon: '🍽️', color: '#F59E0B' },
+  { category: 'Transporte',      limit: 0, icon: '🚗',  color: '#06B6D4' },
+  { category: 'Vivienda',        limit: 0, icon: '🏠',  color: '#10B981' },
+  { category: 'Entretenimiento', limit: 0, icon: '🎬',  color: '#EC4899' },
+  { category: 'Educación',       limit: 0, icon: '📚',  color: '#7C3AED' },
+  { category: 'Salud',           limit: 0, icon: '💊',  color: '#EF4444' },
+  { category: 'Compras',         limit: 0, icon: '🛍️', color: '#F97316' },
+  { category: 'Otros',           limit: 0, icon: '📦',  color: '#9CA3AF' },
 ]
 
 interface FinanceStore {
@@ -121,7 +125,7 @@ interface FinanceStore {
   addDebt: (d: Omit<Debt, 'id'>) => void
   updateDebt: (id: string, updates: Partial<Debt>) => void
   removeDebt: (id: string) => void
-  payDebt: (id: string, amount: number) => void
+  payDebt: (id: string, amount: number, note?: string) => void
 
   updateConfig: (updates: Partial<FinancialConfig>) => void
 
@@ -210,14 +214,15 @@ export const useFinanceStore = create<FinanceStore>()(
         debts: s.debts.map(d => d.id === id ? { ...d, ...updates } : d),
       })),
       removeDebt: (id) => set(s => ({ debts: s.debts.filter(d => d.id !== id) })),
-      payDebt: (id, amount) => {
+      payDebt: (id, amount, note?) => {
         const debt = get().debts.find(d => d.id === id)
         if (!debt) return
         set(s => ({
           debts: s.debts.map(d => d.id === id ? { ...d, remaining: Math.max(0, d.remaining - amount) } : d),
           transactions: [{
             id: genId(), type: 'expense', category: 'Deuda', amount,
-            description: `Pago — ${debt.name}`, date: today(), icon: debt.icon,
+            description: note ? `${debt.name} — ${note}` : `Abono — ${debt.name}`,
+            date: today(), icon: '💳',
           }, ...s.transactions],
         }))
       },

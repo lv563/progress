@@ -8,8 +8,10 @@ import {
   Trophy, Plus, Flame, Star, CheckCircle2, Circle, Target,
   TrendingUp, Calendar, ChevronRight, Trash2, Edit3, X,
   Zap, Lock, Sparkles, Crown, CheckSquare, AlarmClock,
-  RotateCcw, ChevronDown, ChevronUp,
+  RotateCcw, ChevronDown, ChevronUp, Eye,
 } from 'lucide-react'
+import { useVisionStore } from '@/stores/vision.store'
+import type { VisionItem } from '@/stores/vision.store'
 import { stagger, fadeUp } from '@/lib/utils/motion'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
@@ -22,27 +24,27 @@ import type { Goal, GoalCategory, GoalType, GoalPriority, GoalStatus, GoalAchiev
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CAT_META: Record<GoalCategory, { label: string; icon: string; color: string }> = {
-  finance:       { label: 'Finanzas',    icon: '💰', color: '#10B981' },
+  finance:       { label: 'Finanzas',    icon: '💰', color: '#FFFFFF' },
   health:        { label: 'Salud',       icon: '💪', color: '#EF4444' },
-  career:        { label: 'Carrera',     icon: '💼', color: '#06B6D4' },
-  spiritual:     { label: 'Espiritual',  icon: '✝️',  color: '#A78BFA' },
-  relationships: { label: 'Relaciones',  icon: '❤️',  color: '#EC4899' },
-  education:     { label: 'Educación',   icon: '📚', color: '#F59E0B' },
-  personal:      { label: 'Personal',    icon: '⭐', color: '#00D4B8' },
+  career:        { label: 'Carrera',     icon: '💼', color: '#CCCCCC' },
+  spiritual:     { label: 'Espiritual',  icon: '✝️',  color: '#EF4444' },
+  relationships: { label: 'Relaciones',  icon: '❤️',  color: '#EF4444' },
+  education:     { label: 'Educación',   icon: '📚', color: '#CCCCCC' },
+  personal:      { label: 'Personal',    icon: '⭐', color: '#FFFFFF' },
 }
 
 const PRIORITY_META: Record<GoalPriority, { label: string; color: string }> = {
-  low:      { label: 'Baja',    color: '#475569' },
-  medium:   { label: 'Media',   color: '#06B6D4' },
-  high:     { label: 'Alta',    color: '#F59E0B' },
+  low:      { label: 'Baja',    color: '#555555' },
+  medium:   { label: 'Media',   color: '#888888' },
+  high:     { label: 'Alta',    color: '#CCCCCC' },
   critical: { label: 'Crítica', color: '#EF4444' },
 }
 
 const STATUS_META: Record<GoalStatus, { label: string; color: string }> = {
-  'not-started': { label: 'No iniciada', color: '#475569' },
-  'in-progress': { label: 'En progreso', color: '#06B6D4' },
-  'completed':   { label: 'Completada',  color: '#10B981' },
-  'paused':      { label: 'Pausada',     color: '#F59E0B' },
+  'not-started': { label: 'No iniciada', color: '#555555' },
+  'in-progress': { label: 'En progreso', color: '#EF4444' },
+  'completed':   { label: 'Completada',  color: '#FFFFFF' },
+  'paused':      { label: 'Pausada',     color: '#888888' },
 }
 
 const TYPE_LABELS: Record<GoalType, string> = {
@@ -67,7 +69,7 @@ function getLevelInfo(xp: number) {
 
 // ─── Confetti ─────────────────────────────────────────────────────────────────
 
-const CONF_COLORS = ['#00D4B8','#F59E0B','#EF4444','#10B981','#A78BFA','#EC4899','#06B6D4','#F97316']
+const CONF_COLORS = ['#EF4444','#FFFFFF','#EF4444','#CCCCCC','#EF4444','#FFFFFF','#CCCCCC','#EF4444']
 
 function Confetti({ active }: { active: boolean }) {
   const [particles, setParticles] = useState<{ id: number; x: number; color: string; delay: number; size: number; rot: number }[]>([])
@@ -119,15 +121,15 @@ function AchievementToast({ achievement, onDismiss }: { achievement: GoalAchieve
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 320, opacity: 0 }}
       className="fixed top-6 right-6 z-[300] flex items-center gap-3 px-4 py-3 rounded-2xl border"
-      style={{ background: 'rgba(255,255,255,0.97)', borderColor: 'rgba(245,158,11,0.4)', boxShadow: '0 0 40px rgba(245,158,11,0.2)' }}
+      style={{ background: '#111111', borderColor: 'rgba(239,68,68,0.4)', boxShadow: '0 0 40px rgba(239,68,68,0.2)' }}
     >
       <div className="text-3xl">{achievement.icon}</div>
       <div>
-        <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">¡Logro desbloqueado!</p>
-        <p className="text-sm font-bold text-gray-900">{achievement.title}</p>
-        <p className="text-xs text-gray-500">+{achievement.xpReward} XP</p>
+        <p className="text-[10px] text-[#EF4444] font-bold uppercase tracking-wider">¡Logro desbloqueado!</p>
+        <p className="text-sm font-bold text-white">{achievement.title}</p>
+        <p className="text-xs text-gray-400">+{achievement.xpReward} XP</p>
       </div>
-      <button onClick={onDismiss} className="ml-1 text-gray-400 hover:text-gray-700 transition-colors">
+      <button onClick={onDismiss} className="ml-1 text-gray-400 hover:text-white transition-colors">
         <X size={14} />
       </button>
     </motion.div>
@@ -138,7 +140,7 @@ function AchievementToast({ achievement, onDismiss }: { achievement: GoalAchieve
 
 function StatWidget({ label, value, Icon, color }: { label: string; value: string | number; Icon: any; color: string }) {
   return (
-    <div className="flex flex-col gap-1.5 p-4 rounded-2xl border border-gray-100 bg-gray-50">
+    <div className="flex flex-col gap-1.5 p-4 rounded-2xl border border-white/8 bg-[#111]">
       <div className="flex items-center justify-between">
         <span className="text-xs text-gray-500">{label}</span>
         <Icon size={14} style={{ color }} />
@@ -188,7 +190,7 @@ function GoalCard({
                 {sta.label}
               </span>
             </div>
-            <p className={cn('font-bold text-gray-900 leading-snug text-sm', done && 'line-through')}>{goal.title}</p>
+            <p className={cn('font-bold text-white leading-snug text-sm', done && 'line-through')}>{goal.title}</p>
             {goal.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{goal.description}</p>}
           </div>
           <button onClick={() => setExpanded(v => !v)} className="text-gray-400 hover:text-gray-500 transition-colors shrink-0 mt-1">
@@ -214,34 +216,34 @@ function GoalCard({
         <div className="flex items-center gap-3 text-[11px] text-gray-400">
           <span className="flex items-center gap-1"><Calendar size={10} />{format(new Date(goal.targetDate), 'd MMM yy', { locale: es })}</span>
           {childCount > 0 && <span className="flex items-center gap-1"><Target size={10} />{childDone}/{childCount}</span>}
-          <span className="flex items-center gap-1 ml-auto"><Star size={10} className="text-amber-500" />+{GOAL_XP[goal.type]}</span>
+          <span className="flex items-center gap-1 ml-auto"><Star size={10} className="text-[#EF4444]" />+{GOAL_XP[goal.type]}</span>
         </div>
 
         {/* Expanded */}
         <AnimatePresence>
           {expanded && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-              <div className="pt-3 mt-3 border-t border-gray-100 space-y-3">
+              <div className="pt-3 mt-3 border-t border-white/8 space-y-3">
                 {!done && (
                   <div>
                     <label className="text-xs text-gray-500 mb-1.5 block">Ajustar progreso</label>
                     <input type="range" min={0} max={100} value={goal.progress}
                       onChange={e => onProgressChange(Number(e.target.value))}
-                      className="w-full accent-cyan-500" />
+                      className="w-full accent-red-500" />
                   </div>
                 )}
                 <div className="flex gap-2">
                   {!done && (
                     <button onClick={onComplete}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-gray-900 transition-all"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-white transition-all"
                       style={{ background: `linear-gradient(135deg, ${cat.color} 0%, ${cat.color}80 100%)` }}>
                       <CheckCircle2 size={13} /> Completar +{GOAL_XP[goal.type]} XP
                     </button>
                   )}
-                  <button onClick={onEdit} className="px-3 py-2 rounded-xl text-xs text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 transition-all">
+                  <button onClick={onEdit} className="px-3 py-2 rounded-xl text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 transition-all">
                     <Edit3 size={13} />
                   </button>
-                  <button onClick={onDelete} className="px-3 py-2 rounded-xl text-xs text-red-600/60 hover:text-red-600 bg-gray-50 hover:bg-red-500/10 transition-all">
+                  <button onClick={onDelete} className="px-3 py-2 rounded-xl text-xs text-red-600/60 hover:text-red-600 bg-white/5 hover:bg-red-500/10 transition-all">
                     <Trash2 size={13} />
                   </button>
                 </div>
@@ -265,17 +267,17 @@ function TaskItem({ task, onToggle }: { task: Goal; onToggle: () => void }) {
     <motion.div layout whileTap={{ scale: 0.98 }}
       className={cn(
         'flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group',
-        isDone ? 'opacity-40 bg-gray-50 border-gray-100' : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+        isDone ? 'opacity-40 bg-white/5 border-white/8' : 'bg-[#111] border-white/8 hover:border-white/15'
       )}
       onClick={onToggle}
     >
       <button className="shrink-0 transition-transform group-hover:scale-110">
         {isDone
           ? <CheckCircle2 size={20} style={{ color: cat.color }} />
-          : <Circle size={20} className="text-gray-400 group-hover:text-gray-700" />}
+          : <Circle size={20} className="text-gray-500 group-hover:text-gray-300" />}
       </button>
       <div className="flex-1 min-w-0">
-        <p className={cn('text-sm font-medium leading-snug', isDone ? 'text-gray-400 line-through' : 'text-gray-900')}>
+        <p className={cn('text-sm font-medium leading-snug', isDone ? 'text-gray-500 line-through' : 'text-white')}>
           {task.title}
         </p>
         {task.time && <span className="text-xs text-gray-400 flex items-center gap-1 mt-0.5"><AlarmClock size={10} />{task.time}</span>}
@@ -332,11 +334,11 @@ function AddGoalModal({ open, onClose, onSave, initialType, parentGoals }: {
     <Modal open={open} onClose={onClose} title="Nueva meta">
       <div className="space-y-4">
         {/* Type pills */}
-        <div className="flex gap-1 p-1 rounded-xl bg-gray-100 border border-gray-200">
+        <div className="flex gap-1 p-1 rounded-xl bg-[#111] border border-white/8">
           {(['annual','monthly','weekly','daily'] as GoalType[]).map(t => (
             <button key={t} onClick={() => set('type', t)}
               className={cn('flex-1 py-1.5 rounded-lg text-xs font-medium transition-all',
-                form.type === t ? 'bg-white text-cyan-700 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
+                form.type === t ? 'bg-[#EF4444] text-white shadow-sm' : 'text-gray-500 hover:text-gray-300')}>
               {t === 'annual' ? 'Anual' : t === 'monthly' ? 'Mensual' : t === 'weekly' ? 'Semanal' : 'Diaria'}
             </button>
           ))}
@@ -347,24 +349,24 @@ function AddGoalModal({ open, onClose, onSave, initialType, parentGoals }: {
 
         {form.type !== 'daily' && (
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">Descripción (opcional)</label>
+            <label className="text-sm font-medium text-gray-400 block mb-1.5">Descripción (opcional)</label>
             <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={2} placeholder="¿Qué quieres lograr?"
-              className="w-full rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 px-3 py-2.5 focus:outline-none focus:border-cyan-500/50 resize-none" />
+              className="w-full rounded-xl bg-[#111] border border-white/8 text-sm text-white placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-[#EF4444]/50 resize-none" />
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">Categoría</label>
+            <label className="text-sm font-medium text-gray-400 block mb-1.5">Categoría</label>
             <select value={form.category} onChange={e => set('category', e.target.value)}
-              className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none">
+              className="w-full h-10 rounded-xl bg-[#111] border border-white/8 text-sm text-white px-3 focus:outline-none">
               {Object.entries(CAT_META).map(([v, m]) => <option key={v} value={v}>{m.icon} {m.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">Prioridad</label>
+            <label className="text-sm font-medium text-gray-400 block mb-1.5">Prioridad</label>
             <select value={form.priority} onChange={e => set('priority', e.target.value)}
-              className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none">
+              className="w-full h-10 rounded-xl bg-[#111] border border-white/8 text-sm text-white px-3 focus:outline-none">
               {Object.entries(PRIORITY_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
             </select>
           </div>
@@ -372,9 +374,9 @@ function AddGoalModal({ open, onClose, onSave, initialType, parentGoals }: {
 
         {form.type !== 'annual' && parentGoals.length > 0 && (
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">Vincular a meta (opcional)</label>
+            <label className="text-sm font-medium text-gray-400 block mb-1.5">Vincular a meta (opcional)</label>
             <select value={form.parentId} onChange={e => set('parentId', e.target.value)}
-              className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none">
+              className="w-full h-10 rounded-xl bg-[#111] border border-white/8 text-sm text-white px-3 focus:outline-none">
               <option value="">Sin vincular</option>
               {parentGoals.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
             </select>
@@ -383,24 +385,24 @@ function AddGoalModal({ open, onClose, onSave, initialType, parentGoals }: {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">Fecha objetivo</label>
+            <label className="text-sm font-medium text-gray-400 block mb-1.5">Fecha objetivo</label>
             <input type="date" value={form.targetDate} onChange={e => set('targetDate', e.target.value)}
-              className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none" />
+              className="w-full h-10 rounded-xl bg-[#111] border border-white/8 text-sm text-white px-3 focus:outline-none" />
           </div>
           {form.type === 'daily' && (
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Hora (opcional)</label>
+              <label className="text-sm font-medium text-gray-400 block mb-1.5">Hora (opcional)</label>
               <input type="time" value={form.time} onChange={e => set('time', e.target.value)}
-                className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none" />
+                className="w-full h-10 rounded-xl bg-[#111] border border-white/8 text-sm text-white px-3 focus:outline-none" />
             </div>
           )}
         </div>
 
         {form.type === 'daily' && (
-          <label className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100 cursor-pointer">
-            <input type="checkbox" checked={form.repeat} onChange={e => set('repeat', e.target.checked)} className="accent-cyan-500 w-4 h-4" />
+          <label className="flex items-center gap-3 p-3 rounded-xl bg-[#111] border border-white/8 cursor-pointer">
+            <input type="checkbox" checked={form.repeat} onChange={e => set('repeat', e.target.checked)} className="accent-red-500 w-4 h-4" />
             <div>
-              <p className="text-sm font-medium text-gray-900">Recurrente diaria</p>
+              <p className="text-sm font-medium text-white">Recurrente diaria</p>
               <p className="text-xs text-gray-500">Aparece todos los días automáticamente</p>
             </div>
           </label>
@@ -419,7 +421,127 @@ function AddGoalModal({ open, onClose, onSave, initialType, parentGoals }: {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-type Tab = 'dashboard' | 'metas' | 'hoy' | 'logros'
+// ─── Vision Section ──────────────────────────────────────────────────────────
+
+function VisionItemRow({ item, type, onToggle, onRemove }: {
+  item: VisionItem
+  type: 'short' | 'long'
+  onToggle: () => void
+  onRemove: () => void
+}) {
+  const daysLeft = Math.ceil((new Date(item.date).getTime() - Date.now()) / 86400000)
+  const overdue  = !item.done && daysLeft < 0
+  const soon     = !item.done && daysLeft >= 0 && daysLeft <= 30
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.97 }}
+      className={cn(
+        'flex items-center gap-3 p-3.5 rounded-xl border transition-all group',
+        item.done
+          ? 'bg-white/5 border-white/8 opacity-50'
+          : 'bg-[#111] border-white/8 hover:border-white/15'
+      )}
+    >
+      <button onClick={onToggle} className="shrink-0 hover:scale-110 active:scale-90 transition-transform">
+        {item.done
+          ? <CheckCircle2 size={22} className="text-white" />
+          : <Circle size={22} className="text-gray-600 group-hover:text-gray-400 transition-colors" />
+        }
+      </button>
+      <div className="flex-1 min-w-0">
+        <p className={cn('text-sm font-semibold leading-tight', item.done ? 'line-through text-gray-500' : 'text-white')}>
+          {item.title}
+        </p>
+        <p className={cn('text-xs mt-0.5', overdue ? 'text-[#EF4444]' : soon ? 'text-gray-400' : 'text-gray-500')}>
+          {overdue
+            ? `⚠ Venció hace ${Math.abs(daysLeft)}d`
+            : item.done
+            ? '✓ Completado'
+            : daysLeft === 0
+            ? '¡Hoy!'
+            : `${new Date(item.date).toLocaleDateString('es-DO', { day: 'numeric', month: 'short', year: 'numeric' })} · ${daysLeft}d`
+          }
+        </p>
+      </div>
+      <button
+        onClick={onRemove}
+        className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 text-gray-500 hover:text-red-400 shrink-0"
+      >
+        <Trash2 size={13} />
+      </button>
+    </motion.div>
+  )
+}
+
+function AddItemRow({ type, onAdd }: { type: 'short' | 'long'; onAdd: (title: string, date: string) => void }) {
+  const [open, setOpen]   = useState(false)
+  const [title, setTitle] = useState('')
+  const [date, setDate]   = useState('')
+
+  const today = new Date()
+  const defaultDate = type === 'short'
+    ? new Date(today.getFullYear(), today.getMonth() + 3, today.getDate()).toISOString().slice(0, 10)
+    : new Date(today.getFullYear() + 2, today.getMonth(), today.getDate()).toISOString().slice(0, 10)
+
+  const handleSave = () => {
+    if (!title.trim() || !date) return
+    onAdd(title.trim(), date)
+    setTitle('')
+    setDate('')
+    setOpen(false)
+  }
+
+  if (!open) return (
+    <button
+      onClick={() => { setOpen(true); setDate(defaultDate) }}
+      className={cn('w-full flex items-center gap-2 py-3 rounded-xl border-2 border-dashed text-sm font-medium transition-all',
+        'border-white/10 text-gray-500 hover:bg-white/5 hover:border-white/20 hover:text-gray-300'
+      )}
+    >
+      <Plus size={15} className="ml-3" /> Agregar objetivo
+    </button>
+  )
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="p-3 rounded-xl border border-white/12 bg-[#111] space-y-2"
+    >
+      <input
+        autoFocus
+        placeholder="¿Qué quieres lograr?"
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setOpen(false) }}
+        className="w-full h-9 rounded-lg bg-[#1A1A1A] border border-white/8 text-sm text-white px-3 focus:outline-none focus:ring-2 focus:ring-[#EF4444]/30"
+      />
+      <div className="flex items-center gap-2">
+        <input
+          type="date"
+          value={date}
+          onChange={e => setDate(e.target.value)}
+          className="flex-1 h-9 rounded-lg bg-[#1A1A1A] border border-white/8 text-sm text-white px-3 focus:outline-none"
+        />
+        <button onClick={() => setOpen(false)} className="px-3 py-2 rounded-lg bg-white/5 text-xs text-gray-500 border border-white/8 hover:bg-white/10 transition-all">
+          Cancelar
+        </button>
+        <button onClick={handleSave} disabled={!title.trim() || !date}
+          className="px-3 py-2 rounded-lg text-xs text-white font-bold disabled:opacity-40 transition-all bg-[#EF4444] hover:bg-red-500">
+          Guardar
+        </button>
+      </div>
+    </motion.div>
+  )
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+type Tab = 'vision' | 'dashboard' | 'metas' | 'hoy' | 'logros'
 
 export default function GoalsPage() {
   const {
@@ -430,7 +552,9 @@ export default function GoalsPage() {
   } = useGoalsStore()
   const { user, addXP } = useAppStore()
 
-  const [tab, setTab]               = useState<Tab>('dashboard')
+  const { visionText, shortTerm, longTerm, setText, addItem, toggleItem, removeItem } = useVisionStore()
+
+  const [tab, setTab]               = useState<Tab>('vision')
   const [goalType, setGoalType]     = useState<GoalType>('annual')
   const [addModal, setAddModal]     = useState(false)
   const [editGoal, setEditGoal]     = useState<Goal | null>(null)
@@ -492,8 +616,8 @@ export default function GoalsPage() {
         {/* ── Header ── */}
         <motion.div variants={fadeUp} className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-              <Trophy size={24} className="text-amber-600" /> Metas y Progreso
+            <h1 className="text-2xl font-black text-white flex items-center gap-2">
+              <Trophy size={24} className="text-[#EF4444]" /> Metas y Progreso
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">{completed.filter(g => g.type !== 'daily').length} metas completadas · {streak}d de racha</p>
           </div>
@@ -503,14 +627,14 @@ export default function GoalsPage() {
         </motion.div>
 
         {/* ── Tabs ── */}
-        <motion.div variants={fadeUp} className="flex gap-1 p-1 rounded-xl bg-gray-100 border border-gray-200 w-fit">
-          {([['dashboard','Resumen'],['metas','Metas'],['hoy','Hoy'],['logros','Logros']] as [Tab,string][]).map(([id, label]) => (
+        <motion.div variants={fadeUp} className="flex gap-1 p-1 rounded-xl bg-[#111] border border-white/8 w-fit flex-wrap">
+          {([['vision','🔭 Visión'],['dashboard','Resumen'],['metas','Metas'],['hoy','Hoy'],['logros','Logros']] as [Tab,string][]).map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)}
               className={cn('px-4 py-2 rounded-lg text-sm font-medium transition-all relative',
-                tab === id ? 'bg-white text-amber-700 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
+                tab === id ? 'bg-[#EF4444] text-white shadow-sm' : 'text-gray-500 hover:text-gray-300')}>
               {label}
               {id === 'logros' && unlockedCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[9px] text-black font-bold flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#EF4444] text-[9px] text-white font-bold flex items-center justify-center">
                   {unlockedCount}
                 </span>
               )}
@@ -518,59 +642,132 @@ export default function GoalsPage() {
           ))}
         </motion.div>
 
+        {/* ══ VISIÓN ══ */}
+        {tab === 'vision' && (
+          <motion.div variants={fadeUp} className="space-y-6">
+
+            {/* Vision statement */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Eye size={15} className="text-[#EF4444]" />
+                <p className="text-sm font-bold text-white">Mi visión personal</p>
+              </div>
+              <textarea
+                rows={5}
+                value={visionText}
+                onChange={e => setText(e.target.value)}
+                placeholder="¿Quién quieres ser? ¿Cuál es tu propósito? Escribe tu visión con libertad..."
+                className="w-full rounded-2xl bg-[#111] border border-white/8 text-sm text-white placeholder-gray-600 px-4 py-3 focus:outline-none focus:border-[#EF4444]/30 resize-none leading-relaxed"
+              />
+            </div>
+
+            {/* Short-term */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2 h-2 rounded-full bg-[#EF4444] shrink-0" />
+                <p className="text-sm font-bold text-white">Corto plazo</p>
+                <span className="text-xs text-gray-500">· menos de 1 año</span>
+                <span className="ml-auto text-xs text-gray-400">
+                  {shortTerm.filter(i => i.done).length}/{shortTerm.length} listos
+                </span>
+              </div>
+              <div className="space-y-2">
+                <AnimatePresence initial={false}>
+                  {shortTerm.map(item => (
+                    <VisionItemRow
+                      key={item.id}
+                      item={item}
+                      type="short"
+                      onToggle={() => toggleItem('short', item.id)}
+                      onRemove={() => removeItem('short', item.id)}
+                    />
+                  ))}
+                </AnimatePresence>
+                <AddItemRow type="short" onAdd={(t, d) => addItem('short', t, d)} />
+              </div>
+            </div>
+
+            {/* Long-term */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2 h-2 rounded-full bg-white/40 shrink-0" />
+                <p className="text-sm font-bold text-white">Largo plazo</p>
+                <span className="text-xs text-gray-500">· más de 1 año</span>
+                <span className="ml-auto text-xs text-gray-400">
+                  {longTerm.filter(i => i.done).length}/{longTerm.length} listos
+                </span>
+              </div>
+              <div className="space-y-2">
+                <AnimatePresence initial={false}>
+                  {longTerm.map(item => (
+                    <VisionItemRow
+                      key={item.id}
+                      item={item}
+                      type="long"
+                      onToggle={() => toggleItem('long', item.id)}
+                      onRemove={() => removeItem('long', item.id)}
+                    />
+                  ))}
+                </AnimatePresence>
+                <AddItemRow type="long" onAdd={(t, d) => addItem('long', t, d)} />
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* ══ DASHBOARD ══ */}
         {tab === 'dashboard' && (
           <motion.div variants={fadeUp} className="space-y-5">
             {/* XP bar */}
-            <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50">
+            <div className="p-4 rounded-2xl border border-white/10 bg-[#111]">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                  <Crown size={20} className="text-amber-600" />
+                <div className="w-11 h-11 rounded-xl bg-[#EF4444]/10 flex items-center justify-center shrink-0">
+                  <Crown size={20} className="text-[#EF4444]" />
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between mb-1">
-                    <p className="font-bold text-gray-900">Nivel {lv.level} — {lv.title}</p>
-                    <p className="text-xs text-amber-600 font-semibold tabular-nums">{lv.current.toLocaleString()} / {lv.needed.toLocaleString()} XP</p>
+                    <p className="font-bold text-white">Nivel {lv.level} — {lv.title}</p>
+                    <p className="text-xs text-[#EF4444] font-semibold tabular-nums">{lv.current.toLocaleString()} / {lv.needed.toLocaleString()} XP</p>
                   </div>
-                  <div className="h-2.5 rounded-full bg-gray-200 overflow-hidden">
+                  <div className="h-2.5 rounded-full bg-white/8 overflow-hidden">
                     <motion.div className="h-full rounded-full"
-                      style={{ background: 'linear-gradient(90deg, #F59E0B, #EF4444)' }}
+                      style={{ background: 'linear-gradient(90deg, #EF4444, #DC2626)' }}
                       initial={{ width: 0 }} animate={{ width: `${lv.pct}%` }}
                       transition={{ duration: 0.9, ease: 'easeOut' }} />
                   </div>
                 </div>
               </div>
               <p className="text-xs text-gray-500 flex items-center gap-1.5">
-                <Zap size={11} className="text-amber-600" />{xp.toLocaleString()} XP total
+                <Zap size={11} className="text-[#EF4444]" />{xp.toLocaleString()} XP total
               </p>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <StatWidget label="Completadas" value={completed.filter(g => g.type !== 'daily').length} Icon={CheckCircle2} color="#10B981" />
-              <StatWidget label="En progreso" value={goals.filter(g => g.status === 'in-progress' && g.type !== 'daily').length} Icon={TrendingUp} color="#06B6D4" />
-              <StatWidget label="Racha" value={`${streak}d`} Icon={Flame} color="#F97316" />
-              <StatWidget label="XP Total" value={xp.toLocaleString()} Icon={Star} color="#F59E0B" />
+              <StatWidget label="Completadas" value={completed.filter(g => g.type !== 'daily').length} Icon={CheckCircle2} color="#FFFFFF" />
+              <StatWidget label="En progreso" value={goals.filter(g => g.status === 'in-progress' && g.type !== 'daily').length} Icon={TrendingUp} color="#EF4444" />
+              <StatWidget label="Racha" value={`${streak}d`} Icon={Flame} color="#EF4444" />
+              <StatWidget label="XP Total" value={xp.toLocaleString()} Icon={Star} color="#CCCCCC" />
             </div>
 
             {/* Today tasks */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <CheckSquare size={15} className="text-cyan-600" /> Tareas de hoy
+                <h3 className="font-semibold text-white flex items-center gap-2">
+                  <CheckSquare size={15} className="text-[#EF4444]" /> Tareas de hoy
                 </h3>
                 <span className="text-xs text-gray-500">{todayDone.length}/{todayTasks.length}</span>
               </div>
               {todayTasks.length === 0 ? (
                 <button onClick={() => { setGoalType('daily'); setTab('hoy'); setAddModal(true) }}
-                  className="w-full py-4 text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl hover:text-gray-500 hover:border-gray-300 transition-all">
+                  className="w-full py-4 text-sm text-gray-500 border border-dashed border-white/10 rounded-xl hover:text-gray-300 hover:border-white/20 transition-all">
                   + Agregar tareas para hoy
                 </button>
               ) : (
                 <div className="space-y-2">
                   {todayTasks.slice(0, 5).map(t => <TaskItem key={t.id} task={t} onToggle={() => handleToggleTask(t.id)} />)}
                   {todayTasks.length > 5 && (
-                    <button onClick={() => setTab('hoy')} className="w-full text-xs text-gray-500 hover:text-cyan-600 py-1.5 transition-colors">
+                    <button onClick={() => setTab('hoy')} className="w-full text-xs text-gray-500 hover:text-[#EF4444] py-1.5 transition-colors">
                       +{todayTasks.length - 5} tareas más →
                     </button>
                   )}
@@ -581,7 +778,7 @@ export default function GoalsPage() {
             {/* Category progress */}
             {catProgress.length > 0 && (
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3">Progreso por categoría</h3>
+                <h3 className="font-semibold text-white mb-3">Progreso por categoría</h3>
                 <div className="space-y-2.5">
                   {catProgress.map(({ cat, pct }) => {
                     const m = CAT_META[cat]
@@ -591,7 +788,7 @@ export default function GoalsPage() {
                           <span className="text-gray-500 flex items-center gap-1.5">{m.icon} {m.label}</span>
                           <span className="font-bold" style={{ color: m.color }}>{pct}%</span>
                         </div>
-                        <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                        <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
                           <motion.div className="h-full rounded-full"
                             initial={{ width: 0 }} animate={{ width: `${pct}%` }}
                             transition={{ duration: 0.7, delay: 0.1 }}
@@ -608,8 +805,8 @@ export default function GoalsPage() {
             {getByType('annual').length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-gray-900">Metas anuales</h3>
-                  <button onClick={() => setTab('metas')} className="text-xs text-cyan-600 hover:text-cyan-700 flex items-center gap-1 transition-colors">
+                  <h3 className="font-semibold text-white">Metas anuales</h3>
+                  <button onClick={() => setTab('metas')} className="text-xs text-[#EF4444] hover:text-red-400 flex items-center gap-1 transition-colors">
                     Ver todas <ChevronRight size={12} />
                   </button>
                 </div>
@@ -617,11 +814,11 @@ export default function GoalsPage() {
                   {getByType('annual').slice(0, 4).map(g => {
                     const c = CAT_META[g.category]
                     return (
-                      <div key={g.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <div key={g.id} className="flex items-center gap-3 p-3 rounded-xl bg-[#111] border border-white/8">
                         <span className="text-base shrink-0">{c.icon}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{g.title}</p>
-                          <div className="mt-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                          <p className="text-sm font-medium text-white truncate">{g.title}</p>
+                          <div className="mt-1 h-1.5 rounded-full bg-white/8 overflow-hidden">
                             <div className="h-full rounded-full" style={{ width: `${g.progress}%`, background: c.color }} />
                           </div>
                         </div>
@@ -643,13 +840,13 @@ export default function GoalsPage() {
               {(['annual','monthly','weekly'] as GoalType[]).map(t => (
                 <button key={t} onClick={() => setGoalType(t)}
                   className={cn('px-4 py-2 rounded-xl text-sm font-medium border transition-all',
-                    goalType === t ? 'bg-cyan-100 text-cyan-600 border-cyan-200' : 'text-gray-500 border-gray-100 hover:text-gray-700')}>
+                    goalType === t ? 'bg-[#EF4444]/15 text-[#EF4444] border-[#EF4444]/25' : 'text-gray-500 border-white/8 hover:text-gray-300')}>
                   {TYPE_LABELS[t]}
                   <span className="ml-1.5 text-xs opacity-60">({getByType(t).length})</span>
                 </button>
               ))}
               <button onClick={() => setAddModal(true)}
-                className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm border border-dashed border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-200 transition-all">
+                className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm border border-dashed border-white/10 text-gray-500 hover:text-gray-300 hover:border-white/20 transition-all">
                 <Plus size={13} /> Agregar
               </button>
             </div>
@@ -659,7 +856,7 @@ export default function GoalsPage() {
               {[['all','Todas'],['not-started','Sin iniciar'],['in-progress','En progreso'],['completed','Completadas'],['paused','Pausadas']].map(([v,l]) => (
                 <button key={v} onClick={() => setStatus(v as any)}
                   className={cn('px-2.5 py-1 rounded-lg text-xs font-medium transition-all',
-                    statusFilter === v ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-500')}>
+                    statusFilter === v ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300')}>
                   {l}
                 </button>
               ))}
@@ -699,20 +896,20 @@ export default function GoalsPage() {
             {/* Date header */}
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-gray-900 text-lg capitalize">{format(new Date(), "EEEE, d 'de' MMMM", { locale: es })}</h3>
+                <h3 className="font-bold text-white text-lg capitalize">{format(new Date(), "EEEE, d 'de' MMMM", { locale: es })}</h3>
                 <p className="text-xs text-gray-500 mt-0.5">{todayDone.length} de {todayTasks.length} tareas completadas</p>
               </div>
               {/* Circular progress */}
               <div className="w-14 h-14 relative">
                 <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                  <circle cx="18" cy="18" r="15" fill="none" stroke="#E5E7EB" strokeWidth="3" />
-                  <motion.circle cx="18" cy="18" r="15" fill="none" stroke="#00D4B8" strokeWidth="3" strokeLinecap="round"
+                  <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+                  <motion.circle cx="18" cy="18" r="15" fill="none" stroke="#EF4444" strokeWidth="3" strokeLinecap="round"
                     style={{ strokeDasharray: 94 }}
                     initial={{ strokeDashoffset: 94 }}
                     animate={{ strokeDashoffset: todayTasks.length > 0 ? 94 * (1 - todayDone.length / todayTasks.length) : 94 }}
                     transition={{ duration: 0.6 }} />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-900">
+                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
                   {todayTasks.length > 0 ? Math.round((todayDone.length / todayTasks.length) * 100) : 0}%
                 </span>
               </div>
@@ -720,7 +917,7 @@ export default function GoalsPage() {
 
             {/* Add quick */}
             <button onClick={() => { setGoalType('daily'); setAddModal(true) }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-200 transition-all text-sm">
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-white/10 text-gray-500 hover:text-gray-300 hover:border-white/20 transition-all text-sm">
               <Plus size={16} /> Agregar tarea para hoy...
             </button>
 
@@ -762,28 +959,28 @@ export default function GoalsPage() {
           <motion.div variants={fadeUp} className="space-y-5">
             <div className="flex items-center justify-between">
               <p className="text-gray-500 text-sm font-medium">{unlockedCount} / {achievements.length} desbloqueados</p>
-              <div className="h-1.5 w-36 rounded-full bg-gray-200 overflow-hidden">
-                <motion.div className="h-full rounded-full bg-amber-500"
+              <div className="h-1.5 w-36 rounded-full bg-white/8 overflow-hidden">
+                <motion.div className="h-full rounded-full bg-[#EF4444]"
                   animate={{ width: `${(unlockedCount / achievements.length) * 100}%` }} />
               </div>
             </div>
 
             {unlockedCount > 0 && (
               <div>
-                <p className="text-xs text-amber-600 uppercase tracking-wider font-semibold mb-3 flex items-center gap-1.5">
+                <p className="text-xs text-[#EF4444] uppercase tracking-wider font-semibold mb-3 flex items-center gap-1.5">
                   <Sparkles size={11} /> Desbloqueados
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {achievements.filter(a => a.unlockedAt).map(a => (
                     <motion.div key={a.id} whileHover={{ scale: 1.03 }}
                       className="p-4 rounded-2xl border text-center space-y-1.5"
-                      style={{ background: 'rgba(245,158,11,0.06)', borderColor: 'rgba(245,158,11,0.28)' }}>
+                      style={{ background: 'rgba(239,68,68,0.06)', borderColor: 'rgba(239,68,68,0.28)' }}>
                       <div className="text-4xl">{a.icon}</div>
-                      <p className="font-bold text-gray-900 text-sm">{a.title}</p>
+                      <p className="font-bold text-white text-sm">{a.title}</p>
                       <p className="text-xs text-gray-500 leading-snug">{a.description}</p>
                       <div className="flex items-center justify-center gap-1 pt-0.5">
-                        <Star size={11} className="text-amber-600" />
-                        <span className="text-xs text-amber-600 font-semibold">+{a.xpReward} XP</span>
+                        <Star size={11} className="text-[#EF4444]" />
+                        <span className="text-xs text-[#EF4444] font-semibold">+{a.xpReward} XP</span>
                       </div>
                     </motion.div>
                   ))}
@@ -792,18 +989,18 @@ export default function GoalsPage() {
             )}
 
             <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-3 flex items-center gap-1.5">
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-3 flex items-center gap-1.5">
                 <Lock size={11} /> Por desbloquear
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {achievements.filter(a => !a.unlockedAt).map(a => (
-                  <div key={a.id} className="p-4 rounded-2xl border border-gray-100 bg-gray-50 text-center space-y-1.5 opacity-35">
+                  <div key={a.id} className="p-4 rounded-2xl border border-white/6 bg-white/3 text-center space-y-1.5 opacity-35">
                     <div className="text-4xl grayscale">{a.icon}</div>
-                    <p className="font-bold text-gray-500 text-sm">{a.title}</p>
-                    <p className="text-xs text-gray-400 leading-snug">{a.description}</p>
+                    <p className="font-bold text-gray-400 text-sm">{a.title}</p>
+                    <p className="text-xs text-gray-500 leading-snug">{a.description}</p>
                     <div className="flex items-center justify-center gap-1 pt-0.5">
-                      <Lock size={10} className="text-gray-400" />
-                      <span className="text-xs text-gray-400">+{a.xpReward} XP</span>
+                      <Lock size={10} className="text-gray-500" />
+                      <span className="text-xs text-gray-500">+{a.xpReward} XP</span>
                     </div>
                   </div>
                 ))}
@@ -828,18 +1025,18 @@ export default function GoalsPage() {
               <Input label="Título" value={editGoal.title}
                 onChange={e => setEditGoal(p => p ? { ...p, title: e.target.value } : p)} />
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Estado</label>
+                <label className="text-sm font-medium text-gray-400 block mb-1.5">Estado</label>
                 <select value={editGoal.status}
                   onChange={e => setEditGoal(p => p ? { ...p, status: e.target.value as GoalStatus } : p)}
-                  className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 px-3 focus:outline-none">
+                  className="w-full h-10 rounded-xl bg-[#111] border border-white/8 text-sm text-white px-3 focus:outline-none">
                   {Object.entries(STATUS_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Progreso: {editGoal.progress}%</label>
+                <label className="text-sm font-medium text-gray-400 block mb-1.5">Progreso: {editGoal.progress}%</label>
                 <input type="range" min={0} max={100} value={editGoal.progress}
                   onChange={e => setEditGoal(p => p ? { ...p, progress: Number(e.target.value) } : p)}
-                  className="w-full accent-cyan-500" />
+                  className="w-full accent-red-500" />
               </div>
               <div className="flex gap-3 justify-end">
                 <Button variant="ghost" onClick={() => setEditGoal(null)}>Cancelar</Button>

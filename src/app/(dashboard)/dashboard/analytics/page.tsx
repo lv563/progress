@@ -18,10 +18,10 @@ import { es } from 'date-fns/locale'
 import { cn } from '@/lib/utils/cn'
 
 const tooltipStyle = {
-  contentStyle: { background: 'white', border: '1px solid #E5E7EB', borderRadius: '10px', fontSize: '12px', color: '#111827' },
+  contentStyle: { background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '10px', fontSize: '12px', color: '#fff' },
 }
 
-const SCORE_COLOR = (s: number) => s >= 80 ? '#10B981' : s >= 60 ? '#F59E0B' : '#EF4444'
+const SCORE_COLOR = (s: number) => s >= 80 ? '#FFFFFF' : s >= 60 ? '#CCCCCC' : '#EF4444'
 
 export default function AnalyticsPage() {
   const { habits } = useHabitsStore()
@@ -80,8 +80,8 @@ export default function AnalyticsPage() {
   return (
     <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-5">
       <motion.div variants={fadeUp}>
-        <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-          <BarChart3 size={24} className="text-violet-600" /> Análisis
+        <h1 className="text-2xl font-black text-white flex items-center gap-2">
+          <BarChart3 size={24} className="text-[#EF4444]" /> Análisis
         </h1>
         <p className="text-gray-500 text-sm mt-0.5">Visión completa de tu progreso</p>
       </motion.div>
@@ -89,16 +89,16 @@ export default function AnalyticsPage() {
       {/* Key metrics */}
       <motion.div variants={fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { icon: <Target size={18} />, label: 'Hábitos activos', val: habits.length, sub: `Prom. semanal: ${avgScore}pts`, color: '#7C3AED' },
-          { icon: <Timer size={18} />, label: 'Horas de foco total', val: `${totalFocusHours}h`, sub: `${pomodoroSessions.filter(s => s.completed).length} sesiones`, color: '#06B6D4' },
-          { icon: <Dumbbell size={18} />, label: 'Entrenos total', val: workoutSessions.filter(w => w.completed).length, sub: 'sesiones completadas', color: '#10B981' },
-          { icon: <Zap size={18} />, label: 'XP Ganado', val: formatXP(user?.xp ?? 0), sub: `Lv.${user?.level} ${getLevelTitle(user?.level ?? 1)}`, color: '#F59E0B' },
+          { icon: <Target size={18} />, label: 'Hábitos activos', val: habits.length, sub: `Prom. semanal: ${avgScore}pts`, color: '#EF4444' },
+          { icon: <Timer size={18} />, label: 'Horas de foco total', val: `${totalFocusHours}h`, sub: `${pomodoroSessions.filter(s => s.completed).length} sesiones`, color: '#EF4444' },
+          { icon: <Dumbbell size={18} />, label: 'Entrenos total', val: workoutSessions.filter(w => w.completed).length, sub: 'sesiones completadas', color: '#CCCCCC' },
+          { icon: <Zap size={18} />, label: 'XP Ganado', val: formatXP(user?.xp ?? 0), sub: `Lv.${user?.level} ${getLevelTitle(user?.level ?? 1)}`, color: '#EF4444' },
         ].map(m => (
           <GlassCard key={m.label} className="p-4" animate={false}>
             <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style={{ background: `${m.color}20`, color: m.color }}>
               {m.icon}
             </div>
-            <p className="text-2xl font-black text-gray-900">{m.val}</p>
+            <p className="text-2xl font-black text-white">{m.val}</p>
             <p className="text-xs text-gray-500 mt-0.5">{m.label}</p>
             <p className="text-xs" style={{ color: m.color }}>{m.sub}</p>
           </GlassCard>
@@ -109,22 +109,22 @@ export default function AnalyticsPage() {
       {weekScores.length > 0 && (
         <motion.div variants={fadeUp}>
           <GlassCard className="p-5" animate={false}>
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Star size={16} className="text-amber-600" /> Puntaje diario — Esta semana
+            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+              <Star size={16} className="text-[#EF4444]" /> Puntaje diario — Esta semana
             </h3>
             <ResponsiveContainer width="100%" height={140}>
               <AreaChart data={weekScores}>
                 <defs>
                   <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#7C3AED" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#EF4444" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                 <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
                 <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
                 <Tooltip {...tooltipStyle} formatter={(v) => [`${v} pts`, 'Score']} />
-                <Area type="monotone" dataKey="score" stroke="#7C3AED" strokeWidth={2} fill="url(#scoreGrad)" dot={{ fill: '#7C3AED', r: 4, strokeWidth: 0 }} />
+                <Area type="monotone" dataKey="score" stroke="#EF4444" strokeWidth={2} fill="url(#scoreGrad)" dot={{ fill: '#EF4444', r: 4, strokeWidth: 0 }} />
               </AreaChart>
             </ResponsiveContainer>
           </GlassCard>
@@ -135,18 +135,18 @@ export default function AnalyticsPage() {
         {/* Habits per day */}
         <motion.div variants={fadeUp}>
           <GlassCard className="p-5" animate={false}>
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Target size={16} className="text-violet-600" /> Hábitos completados — Esta semana
+            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+              <Target size={16} className="text-[#EF4444]" /> Hábitos completados — Esta semana
             </h3>
             {weekHabits.length > 0 ? (
               <ResponsiveContainer width="100%" height={160}>
                 <BarChart data={weekHabits} barSize={12}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                   <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
                   <Tooltip {...tooltipStyle} formatter={(v, n) => [v, n === 'completados' ? 'Completados' : 'Total']} />
-                  <Bar dataKey="total" fill="#F3F4F6" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="completados" fill="#7C3AED" radius={[4, 4, 0, 0]} opacity={0.85} />
+                  <Bar dataKey="total" fill="rgba(255,255,255,0.06)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="completados" fill="#EF4444" radius={[4, 4, 0, 0]} opacity={0.85} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -158,17 +158,17 @@ export default function AnalyticsPage() {
         {/* Focus hours */}
         <motion.div variants={fadeUp}>
           <GlassCard className="p-5" animate={false}>
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Timer size={16} className="text-cyan-600" /> Horas de foco — Esta semana
+            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+              <Timer size={16} className="text-[#EF4444]" /> Horas de foco — Esta semana
             </h3>
             {weekFocus.length > 0 ? (
               <ResponsiveContainer width="100%" height={160}>
                 <LineChart data={weekFocus}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                   <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
                   <Tooltip {...tooltipStyle} formatter={(v) => [`${v}h`, 'Foco']} />
-                  <Line type="monotone" dataKey="horas" stroke="#06B6D4" strokeWidth={2} dot={{ fill: '#06B6D4', r: 3, strokeWidth: 0 }} />
+                  <Line type="monotone" dataKey="horas" stroke="#EF4444" strokeWidth={2} dot={{ fill: '#EF4444', r: 3, strokeWidth: 0 }} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
@@ -180,14 +180,14 @@ export default function AnalyticsPage() {
         {/* Life Radar */}
         <motion.div variants={fadeUp}>
           <GlassCard className="p-5" animate={false}>
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <TrendingUp size={16} className="text-amber-600" /> Balance de Vida
+            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+              <TrendingUp size={16} className="text-gray-400" /> Balance de Vida
             </h3>
             <ResponsiveContainer width="100%" height={200}>
               <RadarChart data={categoryScores}>
-                <PolarGrid stroke="#F3F4F6" />
+                <PolarGrid stroke="rgba(255,255,255,0.08)" />
                 <PolarAngleAxis dataKey="category" tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                <Radar dataKey="value" stroke="#7C3AED" fill="#7C3AED" fillOpacity={0.25} strokeWidth={2} />
+                <Radar dataKey="value" stroke="#EF4444" fill="#EF4444" fillOpacity={0.18} strokeWidth={2} />
               </RadarChart>
             </ResponsiveContainer>
           </GlassCard>
@@ -196,21 +196,21 @@ export default function AnalyticsPage() {
         {/* Level progress */}
         <motion.div variants={fadeUp}>
           <GlassCard className="p-5" variant="glow" animate={false}>
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Zap size={16} className="text-amber-600" /> Progreso de Nivel
+            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+              <Zap size={16} className="text-[#EF4444]" /> Progreso de Nivel
             </h3>
             <div className="flex items-center gap-6">
-              <ProgressRing value={xpPct} size={100} strokeWidth={10} color="#F59E0B" animate={false}>
+              <ProgressRing value={xpPct} size={100} strokeWidth={10} color="#EF4444" animate={false}>
                 <div className="text-center">
-                  <p className="text-2xl font-black text-gray-900">{user?.level}</p>
+                  <p className="text-2xl font-black text-white">{user?.level}</p>
                   <p className="text-[9px] text-gray-500">nivel</p>
                 </div>
               </ProgressRing>
               <div className="flex-1 space-y-3">
                 {[
-                  { label: 'XP Total', val: formatXP(user?.xp ?? 0), color: '#F59E0B' },
-                  { label: 'Racha máxima', val: `${user?.bestStreak}d`, color: '#F97316' },
-                  { label: 'Días registrados', val: `${logs.length}`, color: '#7C3AED' },
+                  { label: 'XP Total', val: formatXP(user?.xp ?? 0), color: '#EF4444' },
+                  { label: 'Racha máxima', val: `${user?.bestStreak}d`, color: '#EF4444' },
+                  { label: 'Días registrados', val: `${logs.length}`, color: '#CCCCCC' },
                 ].map(s => (
                   <div key={s.label} className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">{s.label}</span>
@@ -227,17 +227,17 @@ export default function AnalyticsPage() {
       {recentLogs.length > 0 && (
         <motion.div variants={fadeUp}>
           <GlassCard className="p-5" animate={false}>
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
               <Calendar size={16} className="text-gray-500" /> Historial Diario
             </h3>
             <div className="space-y-2">
               {recentLogs.map(log => {
                 const sc = SCORE_COLOR(log.score)
                 return (
-                  <div key={log.date} className="flex items-center gap-4 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <div key={log.date} className="flex items-center gap-4 p-3 rounded-xl bg-white/[0.03] hover:bg-white/6 transition-colors">
                     {/* Date */}
                     <div className="w-20 shrink-0">
-                      <p className="text-xs font-semibold text-gray-900 capitalize">
+                      <p className="text-xs font-semibold text-white capitalize">
                         {format(new Date(log.date + 'T12:00:00'), "EEE d MMM", { locale: es })}
                       </p>
                     </div>
@@ -251,13 +251,13 @@ export default function AnalyticsPage() {
                     {/* Mini bars */}
                     <div className="flex-1 grid grid-cols-4 gap-2 hidden sm:grid">
                       {[
-                        { pct: log.habitTotal > 0 ? log.habitsCompleted / log.habitTotal : 0, color: '#7C3AED', label: `${log.habitsCompleted}/${log.habitTotal} háb` },
-                        { pct: Math.min(log.pomodoroSessions / 6, 1), color: '#06B6D4', label: `${log.pomodoroSessions} pom` },
-                        { pct: Math.min(log.waterGlasses / 8, 1), color: '#0EA5E9', label: `${log.waterGlasses}/8 agua` },
-                        { pct: log.mealsTarget > 0 ? Math.min(log.mealsEaten / log.mealsTarget, 1) : 0, color: '#F97316', label: `${log.mealsEaten}/${log.mealsTarget} com` },
+                        { pct: log.habitTotal > 0 ? log.habitsCompleted / log.habitTotal : 0, color: '#EF4444', label: `${log.habitsCompleted}/${log.habitTotal} háb` },
+                        { pct: Math.min(log.pomodoroSessions / 6, 1), color: '#EF4444', label: `${log.pomodoroSessions} pom` },
+                        { pct: Math.min(log.waterGlasses / 8, 1), color: '#888888', label: `${log.waterGlasses}/8 agua` },
+                        { pct: log.mealsTarget > 0 ? Math.min(log.mealsEaten / log.mealsTarget, 1) : 0, color: '#EF4444', label: `${log.mealsEaten}/${log.mealsTarget} com` },
                       ].map((m, i) => (
                         <div key={i}>
-                          <div className="h-1 rounded-full bg-gray-100 overflow-hidden mb-1">
+                          <div className="h-1 rounded-full bg-white/6 overflow-hidden mb-1">
                             <div className="h-full rounded-full" style={{ width: `${m.pct * 100}%`, background: m.color }} />
                           </div>
                           <p className="text-[9px] text-gray-400 text-center">{m.label}</p>
@@ -267,7 +267,7 @@ export default function AnalyticsPage() {
 
                     {/* Score bar */}
                     <div className="w-24 shrink-0">
-                      <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                      <div className="h-1.5 rounded-full bg-white/6 overflow-hidden">
                         <div className="h-full rounded-full transition-all" style={{ width: `${log.score}%`, background: sc }} />
                       </div>
                     </div>

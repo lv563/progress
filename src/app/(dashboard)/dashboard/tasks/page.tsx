@@ -20,23 +20,23 @@ import {
 } from '@dnd-kit/core'
 
 const STATUS_COLS: { id: TaskStatus; label: string; color: string; icon: string }[] = [
-  { id: 'todo',        label: 'Por hacer',   color: '#475569', icon: '○' },
-  { id: 'in-progress', label: 'En progreso', color: '#0891B2', icon: '◐' },
-  { id: 'review',      label: 'En revisión', color: '#F59E0B', icon: '◑' },
-  { id: 'done',        label: 'Completado',  color: '#10B981', icon: '●' },
+  { id: 'todo',        label: 'Por hacer',   color: '#555555', icon: '○' },
+  { id: 'in-progress', label: 'En progreso', color: '#AAAAAA', icon: '◐' },
+  { id: 'review',      label: 'En revisión', color: '#CCCCCC', icon: '◑' },
+  { id: 'done',        label: 'Completado',  color: '#FFFFFF', icon: '●' },
 ]
 
 const PRIORITY_META: Record<TaskPriority, { label: string; color: string; dot: string }> = {
   p0: { label: 'Urgente', color: '#EF4444', dot: '#EF4444' },
-  p1: { label: 'Alta',    color: '#F97316', dot: '#F97316' },
-  p2: { label: 'Media',   color: '#00D4B8', dot: '#00D4B8' },
-  p3: { label: 'Baja',    color: '#475569', dot: '#475569' },
+  p1: { label: 'Alta',    color: '#CCCCCC', dot: '#CCCCCC' },
+  p2: { label: 'Media',   color: '#888888', dot: '#888888' },
+  p3: { label: 'Baja',    color: '#555555', dot: '#555555' },
 }
 
-const PRIORITY_BADGE: Record<TaskPriority, { label: string; variant: 'red' | 'orange' | 'cyan' | 'outline' }> = {
+const PRIORITY_BADGE: Record<TaskPriority, { label: string; variant: 'red' | 'default' | 'outline' }> = {
   p0: { label: 'Urgente', variant: 'red' },
-  p1: { label: 'Alta',    variant: 'orange' },
-  p2: { label: 'Media',   variant: 'cyan' },
+  p1: { label: 'Alta',    variant: 'default' },
+  p2: { label: 'Media',   variant: 'outline' },
   p3: { label: 'Baja',    variant: 'outline' },
 }
 
@@ -71,23 +71,23 @@ function TaskCard({ task, onDelete, onMove, isDragOverlay = false }: {
       <div
         className={cn(
           'group rounded-xl p-3 border transition-all cursor-default',
-          overdue  ? 'border-red-200 bg-red-50' :
-          dueToday ? 'border-amber-200 bg-amber-50' :
-          task.status === 'done' ? 'border-gray-100 bg-gray-50' :
-          'border-gray-100 bg-gray-50 hover:bg-gray-50',
+          overdue  ? 'border-red-500/30 bg-red-500/8' :
+          dueToday ? 'border-white/15 bg-white/[0.03]' :
+          task.status === 'done' ? 'border-white/6 bg-white/[0.02]' :
+          'border-white/8 bg-white/[0.03] hover:bg-white/5',
         )}
         style={isDragOverlay ? { boxShadow: '0 20px 60px rgba(0,0,0,0.6)' } : undefined}
       >
         <div className="flex items-start gap-2">
           <button
             {...listeners}
-            className="mt-0.5 text-gray-400 hover:text-gray-500 transition-colors cursor-grab active:cursor-grabbing shrink-0"
+            className="mt-0.5 text-gray-600 hover:text-gray-400 transition-colors cursor-grab active:cursor-grabbing shrink-0"
           >
             <GripVertical size={13} />
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-1">
-              <p className={cn('text-sm font-medium leading-snug', task.status === 'done' ? 'text-gray-400 line-through' : 'text-gray-900')}>
+              <p className={cn('text-sm font-medium leading-snug', task.status === 'done' ? 'text-gray-500 line-through' : 'text-white')}>
                 {task.title}
               </p>
               <button onClick={onDelete} className="text-gray-400 hover:text-red-400 transition-colors shrink-0 opacity-0 group-hover:opacity-100">
@@ -101,7 +101,7 @@ function TaskCard({ task, onDelete, onMove, isDragOverlay = false }: {
             {task.tags && task.tags.length > 0 && (
               <div className="flex gap-1 mt-1.5 flex-wrap">
                 {task.tags.map(tag => (
-                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/8 text-gray-400">
                     #{tag}
                   </span>
                 ))}
@@ -114,7 +114,7 @@ function TaskCard({ task, onDelete, onMove, isDragOverlay = false }: {
                 <span className="text-[10px]" style={{ color: pm.color }}>{pm.label}</span>
               </div>
               {task.dueDate && (
-                <span className={cn('text-[10px] flex items-center gap-0.5', overdue ? 'text-red-400' : dueToday ? 'text-amber-400' : 'text-gray-500')}>
+                <span className={cn('text-[10px] flex items-center gap-0.5', overdue ? 'text-red-400' : dueToday ? 'text-gray-300' : 'text-gray-500')}>
                   {overdue ? <AlertTriangle size={9} /> : <Calendar size={9} />}
                   {overdue ? 'Vencido · ' : dueToday ? 'Hoy · ' : ''}
                   {new Date(task.dueDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
@@ -125,17 +125,17 @@ function TaskCard({ task, onDelete, onMove, isDragOverlay = false }: {
             {task.status !== 'done' && (
               <div className="flex gap-2 mt-2">
                 {task.status === 'todo' && (
-                  <button onClick={() => onMove('in-progress')} className="text-[10px] text-gray-400 hover:text-cyan-600 transition-colors">
+                  <button onClick={() => onMove('in-progress')} className="text-[10px] text-gray-400 hover:text-white transition-colors">
                     → Iniciar
                   </button>
                 )}
                 {task.status === 'in-progress' && (
-                  <button onClick={() => onMove('review')} className="text-[10px] text-gray-400 hover:text-amber-600 transition-colors">
+                  <button onClick={() => onMove('review')} className="text-[10px] text-gray-400 hover:text-white transition-colors">
                     → Revisión
                   </button>
                 )}
                 {(task.status === 'in-progress' || task.status === 'review') && (
-                  <button onClick={() => onMove('done')} className="text-[10px] text-gray-400 hover:text-emerald-600 transition-colors">
+                  <button onClick={() => onMove('done')} className="text-[10px] text-gray-400 hover:text-white transition-colors">
                     ✓ Completar
                   </button>
                 )}
@@ -157,7 +157,7 @@ function DroppableColumn({ id, color, label, icon, count, children }: {
       <div className="flex items-center gap-2 mb-3 px-1">
         <span className="text-sm font-bold" style={{ color }}>{icon}</span>
         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{label}</span>
-        <span className="ml-auto text-xs font-mono px-1.5 py-0.5 rounded-md bg-gray-50 text-gray-400">{count}</span>
+        <span className="ml-auto text-xs font-mono px-1.5 py-0.5 rounded-md bg-white/5 text-gray-500">{count}</span>
       </div>
       <div
         ref={setNodeRef}
@@ -266,9 +266,9 @@ export default function TasksPage() {
 
   const FILTER_TABS: { id: TaskFilter; label: string; count: number; color: string }[] = [
     { id: 'all',     label: 'Todas',     count: stats.total,      color: '#94A3B8' },
-    { id: 'today',   label: 'Hoy',       count: stats.dueToday,   color: '#00D4B8' },
+    { id: 'today',   label: 'Hoy',       count: stats.dueToday,   color: '#EF4444' },
     { id: 'overdue', label: 'Vencidas',  count: stats.overdue,    color: '#EF4444' },
-    { id: 'done',    label: 'Completadas', count: stats.done,     color: '#10B981' },
+    { id: 'done',    label: 'Completadas', count: stats.done,     color: '#FFFFFF' },
   ]
 
   return (
@@ -276,15 +276,15 @@ export default function TasksPage() {
 
       {/* Header */}
       <motion.div variants={fadeUp} className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-          <CheckSquare size={24} className="text-cyan-600" /> Tareas
+        <h1 className="text-2xl font-black text-white flex items-center gap-2">
+          <CheckSquare size={24} className="text-[#EF4444]" /> Tareas
         </h1>
         <div className="flex items-center gap-2">
-          <div className="flex gap-1 p-1 rounded-lg bg-gray-100 border border-gray-200">
-            <button onClick={() => setView('kanban')} className={cn('p-1.5 rounded-md transition-all', view === 'kanban' ? 'bg-white text-cyan-700 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
+          <div className="flex gap-1 p-1 rounded-lg bg-white/5 border border-white/8">
+            <button onClick={() => setView('kanban')} className={cn('p-1.5 rounded-md transition-all', view === 'kanban' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300')}>
               <Kanban size={14} />
             </button>
-            <button onClick={() => setView('list')} className={cn('p-1.5 rounded-md transition-all', view === 'list' ? 'bg-white text-cyan-700 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
+            <button onClick={() => setView('list')} className={cn('p-1.5 rounded-md transition-all', view === 'list' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300')}>
               <List size={14} />
             </button>
           </div>
@@ -299,15 +299,15 @@ export default function TasksPage() {
         {[
           { label: 'Pendientes',  value: stats.total,      color: '#94A3B8', icon: <Clock size={14}/> },
           { label: 'En progreso', value: stats.inProgress, color: '#00D4B8', icon: <TrendingUp size={14}/> },
-          { label: 'Completadas', value: stats.done,       color: '#10B981', icon: <CheckSquare size={14}/> },
+          { label: 'Completadas', value: stats.done,       color: '#FFFFFF', icon: <CheckSquare size={14}/> },
           { label: 'Vencidas',    value: stats.overdue,    color: '#EF4444', icon: <AlertTriangle size={14}/> },
         ].map(s => (
-          <div key={s.label} className="rounded-xl border border-gray-100 bg-gray-50 p-3 flex items-center gap-3">
+          <div key={s.label} className="rounded-xl border border-white/8 bg-white/[0.03] p-3 flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${s.color}15`, color: s.color }}>
               {s.icon}
             </div>
             <div>
-              <p className="text-xl font-black text-gray-900 tabular-nums">{s.value}</p>
+              <p className="text-xl font-black text-white tabular-nums">{s.value}</p>
               <p className="text-[10px] text-gray-500">{s.label}</p>
             </div>
           </div>
@@ -322,7 +322,7 @@ export default function TasksPage() {
             onClick={() => setTaskFilter(f.id)}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
-              taskFilter === f.id ? 'text-gray-900 border' : 'bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-700'
+              taskFilter === f.id ? 'text-white border' : 'bg-white/5 border border-white/8 text-gray-500 hover:text-gray-300'
             )}
             style={taskFilter === f.id ? { background: `${f.color}18`, borderColor: `${f.color}40`, color: f.color } : undefined}
           >
@@ -335,11 +335,11 @@ export default function TasksPage() {
           </button>
         ))}
 
-        <div className="w-px h-5 bg-gray-200" />
+        <div className="w-px h-5 bg-white/10" />
 
         <button
           onClick={() => setSelectedProject('all')}
-          className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-all', selectedProject === 'all' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700')}
+          className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-all', selectedProject === 'all' ? 'bg-white/8 text-white' : 'text-gray-500 hover:text-gray-300')}
         >
           <Folder size={11} className="inline mr-1" /> Todos
         </button>
@@ -347,7 +347,7 @@ export default function TasksPage() {
           <button
             key={p.id}
             onClick={() => setSelectedProject(p.id)}
-            className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all', selectedProject === p.id ? 'text-gray-900 border' : 'bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-700')}
+            className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all', selectedProject === p.id ? 'text-white border' : 'bg-white/5 border border-white/8 text-gray-500 hover:text-gray-300')}
             style={selectedProject === p.id ? { background: `${p.color}20`, borderColor: `${p.color}40`, color: p.color } : undefined}
           >
             {p.icon} {p.name}
@@ -382,7 +382,7 @@ export default function TasksPage() {
                       ))}
                     </AnimatePresence>
                     {colTasks.length === 0 && (
-                      <div className="py-8 text-center text-gray-400 text-xs rounded-xl border border-dashed border-gray-100">
+                      <div className="py-8 text-center text-gray-600 text-xs rounded-xl border border-dashed border-white/10">
                         Arrastra aquí
                       </div>
                     )}
@@ -416,13 +416,13 @@ export default function TasksPage() {
                   <div key={dateStr}>
                     <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-2 px-1">
                       {date ? date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) : dateStr}
-                      <span className="ml-2 font-bold text-emerald-500/70">{doneTasks.length}</span>
+                      <span className="ml-2 font-bold text-white/50">{doneTasks.length}</span>
                     </p>
                     <div className="space-y-1.5">
                       {doneTasks.map(task => (
-                        <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
-                          <div className="w-5 h-5 rounded-full border-2 border-emerald-500/40 bg-emerald-500/10 flex items-center justify-center shrink-0">
-                            <span className="text-[8px] text-emerald-600">✓</span>
+                        <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl border border-white/8 bg-white/[0.03]">
+                          <div className="w-5 h-5 rounded-full border-2 border-white/20 bg-white/6 flex items-center justify-center shrink-0">
+                            <span className="text-[8px] text-white/60">✓</span>
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-gray-500 line-through truncate">{task.title}</p>
@@ -456,9 +456,9 @@ export default function TasksPage() {
                     key={task.id}
                     className={cn(
                       'flex items-center gap-3 p-3 rounded-xl border transition-all',
-                      overdue  ? 'border-red-200 bg-red-50' :
-                      dueToday ? 'border-amber-200 bg-amber-50' :
-                      'border-gray-100 bg-gray-50 hover:bg-gray-50'
+                      overdue  ? 'border-red-500/30 bg-red-500/8' :
+                      dueToday ? 'border-white/15 bg-white/[0.03]' :
+                      'border-white/8 bg-white/[0.03] hover:bg-white/5'
                     )}
                   >
                     <button
@@ -467,12 +467,12 @@ export default function TasksPage() {
                       style={{ borderColor: pm.color }}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900">{task.title}</p>
+                      <p className="text-sm text-white">{task.title}</p>
                       {task.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{task.description}</p>}
                       {task.tags && task.tags.length > 0 && (
                         <div className="flex gap-1 mt-1">
                           {task.tags.map(tag => (
-                            <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">#{tag}</span>
+                            <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/8 text-gray-500">#{tag}</span>
                           ))}
                         </div>
                       )}
@@ -480,7 +480,7 @@ export default function TasksPage() {
                     <div className="flex items-center gap-2 shrink-0">
                       <div className="w-1.5 h-1.5 rounded-full" style={{ background: pm.dot }} />
                       {task.dueDate && (
-                        <span className={cn('text-[10px] flex items-center gap-0.5', overdue ? 'text-red-400' : dueToday ? 'text-amber-400' : 'text-gray-500')}>
+                        <span className={cn('text-[10px] flex items-center gap-0.5', overdue ? 'text-red-400' : dueToday ? 'text-gray-300' : 'text-gray-500')}>
                           {overdue && <AlertTriangle size={9} />}
                           {new Date(task.dueDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                         </span>
@@ -497,9 +497,9 @@ export default function TasksPage() {
                 <div className="pt-2">
                   <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 px-1">Completadas</p>
                   {filteredTasks.filter(t => t.status === 'done').slice(0, 5).map(task => (
-                    <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-transparent mb-1.5">
-                      <div className="w-5 h-5 rounded-full border-2 border-emerald-500/40 bg-emerald-500/10 flex items-center justify-center shrink-0">
-                        <span className="text-[8px] text-emerald-600">✓</span>
+                    <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl border border-white/6 bg-transparent mb-1.5">
+                      <div className="w-5 h-5 rounded-full border-2 border-white/20 bg-white/6 flex items-center justify-center shrink-0">
+                        <span className="text-[8px] text-white/60">✓</span>
                       </div>
                       <p className="text-sm text-gray-400 line-through flex-1 truncate">{task.title}</p>
                       <button onClick={() => deleteTask(task.id)} className="text-gray-400 hover:text-red-400 transition-colors">
@@ -513,7 +513,7 @@ export default function TasksPage() {
                 <div className="text-center py-14 text-gray-400">
                   <CheckSquare size={32} className="mx-auto mb-2 opacity-30" />
                   <p className="text-sm">¡Sin tareas pendientes!</p>
-                  <button onClick={() => setAddModal(true)} className="text-xs text-cyan-600 mt-2 hover:text-cyan-700 transition-colors">
+                  <button onClick={() => setAddModal(true)} className="text-xs text-red-400 mt-2 hover:text-red-300 transition-colors">
                     + Agregar tarea
                   </button>
                 </div>
@@ -539,7 +539,7 @@ export default function TasksPage() {
               onChange={e => setNewTask(t => ({ ...t, description: e.target.value }))}
               placeholder="Detalla lo que necesitas hacer..."
               rows={2}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 outline-none focus:border-cyan-500/50 resize-none transition-colors"
+              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-gray-600 outline-none focus:border-white/25 resize-none transition-colors"
             />
           </div>
           <div>
@@ -551,7 +551,7 @@ export default function TasksPage() {
                   <button
                     key={p}
                     onClick={() => setNewTask(t => ({ ...t, priority: p }))}
-                    className={cn('px-2 py-2 rounded-xl text-xs font-medium transition-all border', newTask.priority === p ? 'text-gray-900 border-opacity-40' : 'border-gray-100 text-gray-500 hover:text-gray-700')}
+                    className={cn('px-2 py-2 rounded-xl text-xs font-medium transition-all border', newTask.priority === p ? 'border-opacity-40' : 'border-white/8 text-gray-500 hover:text-gray-300')}
                     style={newTask.priority === p ? { background: `${pm.color}20`, borderColor: `${pm.color}50`, color: pm.color } : undefined}
                   >
                     {pm.label}
@@ -566,7 +566,7 @@ export default function TasksPage() {
               <select
                 value={newTask.projectId}
                 onChange={e => setNewTask(t => ({ ...t, projectId: e.target.value }))}
-                className="w-full h-10 rounded-xl bg-gray-100 border border-gray-200 text-sm text-gray-800 px-3 focus:outline-none focus:border-cyan-500/50"
+                className="w-full h-10 rounded-xl bg-white/[0.04] border border-white/10 text-sm text-white px-3 focus:outline-none focus:border-white/25"
               >
                 <option value="">Sin proyecto</option>
                 {projects.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
@@ -585,7 +585,7 @@ export default function TasksPage() {
               value={newTask.tags}
               onChange={e => setNewTask(t => ({ ...t, tags: e.target.value }))}
               placeholder="diseño, backend, urgente"
-              className="w-full h-9 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm text-gray-800 placeholder:text-gray-400 outline-none focus:border-cyan-500/50"
+              className="w-full h-9 bg-white/[0.04] border border-white/10 rounded-xl px-3 text-sm text-white placeholder:text-gray-600 outline-none focus:border-white/25"
             />
           </div>
           <div className="flex gap-3 justify-end">

@@ -29,7 +29,7 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/25 backdrop-blur-[2px]"
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div
@@ -39,18 +39,18 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
             transition={{ type: 'spring', stiffness: 420, damping: 32 }}
             className={cn(
               'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50',
-              'w-full bg-white rounded-2xl',
+              'w-full bg-[#111] rounded-2xl border border-white/10',
               sizes[size],
               className
             )}
-            style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.07)' }}
+            style={{ boxShadow: '0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)' }}
           >
             {title && (
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/6">
+                <h2 className="text-base font-black text-white">{title}</h2>
                 <button
                   onClick={onClose}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white/8 hover:text-white transition-colors"
                 >
                   <X size={15} />
                 </button>

@@ -26,12 +26,11 @@ export function Sidebar() {
     <motion.aside
       animate={{ width: sidebarOpen ? 232 : 60 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="hidden md:flex flex-col fixed left-0 top-0 h-full z-30 border-r border-black/[0.06] bg-white overflow-hidden"
-      style={{ boxShadow: '1px 0 0 rgba(0,0,0,0.04)' }}
+      className="hidden md:flex flex-col fixed left-0 top-0 h-full z-30 border-r border-white/6 bg-[#111] overflow-hidden"
     >
       {/* Logo */}
-      <div className="flex items-center h-16 px-3.5 border-b border-black/[0.06] shrink-0">
-        <div className="w-8 h-8 rounded-xl gradient-hero flex items-center justify-center shrink-0 shadow-sm">
+      <div className="flex items-center h-16 px-3.5 border-b border-white/6 shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-[#EF4444] flex items-center justify-center shrink-0">
           <Crown size={15} className="text-white" />
         </div>
         <AnimatePresence>
@@ -41,7 +40,7 @@ export function Sidebar() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
               transition={{ duration: 0.18 }}
-              className="ml-3 font-bold text-gray-900 text-sm tracking-tight whitespace-nowrap"
+              className="ml-3 font-black text-white text-sm tracking-tight whitespace-nowrap"
             >
               Kingdom OS
             </motion.span>
@@ -61,15 +60,15 @@ export function Sidebar() {
                 className={cn(
                   'flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-all duration-150 group relative',
                   active
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                    ? 'bg-[#EF4444]/12 text-white'
+                    : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'
                 )}
               >
                 <div className={cn(
                   'w-7 h-7 flex items-center justify-center rounded-lg shrink-0 transition-colors',
-                  active ? 'bg-indigo-100' : 'group-hover:bg-gray-100'
+                  active ? 'bg-[#EF4444]/20' : 'group-hover:bg-white/8'
                 )}>
-                  <Icon size={15} className={active ? 'text-indigo-600' : ''} />
+                  <Icon size={15} className={active ? 'text-[#EF4444]' : ''} />
                 </div>
                 <AnimatePresence>
                   {sidebarOpen && (
@@ -84,6 +83,7 @@ export function Sidebar() {
                     </motion.span>
                   )}
                 </AnimatePresence>
+                {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[#EF4444] rounded-r" />}
               </motion.div>
             </Link>
           )
@@ -91,9 +91,9 @@ export function Sidebar() {
       </nav>
 
       {/* User mini profile */}
-      <div className="p-2 border-t border-black/[0.06] shrink-0">
+      <div className="p-2 border-t border-white/6 shrink-0">
         <div className={cn('flex items-center gap-3 px-2 py-2 rounded-xl', sidebarOpen ? '' : 'justify-center')}>
-          <div className="w-7 h-7 rounded-full gradient-hero flex items-center justify-center shrink-0 text-xs font-bold text-white">
+          <div className="w-7 h-7 rounded-full bg-[#EF4444] flex items-center justify-center shrink-0 text-xs font-black text-white">
             {user?.name?.[0] ?? 'U'}
           </div>
           <AnimatePresence>
@@ -104,12 +104,12 @@ export function Sidebar() {
                 exit={{ opacity: 0 }}
                 className="flex-1 min-w-0"
               >
-                <p className="text-xs font-semibold text-gray-800 truncate">{user?.name ?? 'Usuario'}</p>
+                <p className="text-xs font-bold text-white truncate">{user?.name ?? 'Usuario'}</p>
                 <div className="flex items-center gap-1 mt-0.5">
                   <Flame size={9} className="text-orange-400" />
-                  <span className="text-[10px] text-gray-400">{user?.streak ?? 0}d</span>
-                  <Zap size={9} className="text-indigo-400 ml-1" />
-                  <span className="text-[10px] text-gray-400">Lv.{user?.level ?? 1}</span>
+                  <span className="text-[10px] text-gray-500">{user?.streak ?? 0}d</span>
+                  <Zap size={9} className="text-[#EF4444] ml-1" />
+                  <span className="text-[10px] text-gray-500">Lv.{user?.level ?? 1}</span>
                 </div>
               </motion.div>
             )}
@@ -122,7 +122,7 @@ export function Sidebar() {
         <button
           onClick={handleLogout}
           className={cn(
-            'w-full flex items-center gap-3 px-2 py-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all',
+            'w-full flex items-center gap-3 px-2 py-2 rounded-xl text-gray-600 hover:text-red-400 hover:bg-red-400/8 transition-all',
             !sidebarOpen && 'justify-center'
           )}
         >
@@ -146,7 +146,7 @@ export function Sidebar() {
       {/* Toggle */}
       <button
         onClick={toggleSidebar}
-        className="absolute top-[70px] -right-3 w-6 h-6 rounded-full bg-white border border-black/[0.08] shadow-sm flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition-all"
+        className="absolute top-[70px] -right-3 w-6 h-6 rounded-full bg-[#111] border border-white/10 shadow-sm flex items-center justify-center text-gray-500 hover:text-white hover:border-white/20 transition-all"
       >
         {sidebarOpen ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
       </button>
