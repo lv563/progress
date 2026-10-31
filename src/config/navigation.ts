@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Target, Timer, CheckSquare, Calendar,
-  Dumbbell, Church, FolderLock, BarChart3, Wallet, Ban, NotebookPen, Trophy, Crown, Heart, Brain, Snowflake, BookOpen, Scroll
+  Dumbbell, Church, FolderLock, BarChart3, Wallet, Ban, NotebookPen, Trophy, Crown, Heart, Brain, Snowflake, BookOpen, Scroll, Flame
 } from 'lucide-react'
 
 export const NAV_ITEMS = [
@@ -23,6 +23,7 @@ export const NAV_ITEMS = [
   { id: 'winter-arc',  label: 'Winter Arc',   href: '/dashboard/winter-arc',   icon: Snowflake,       shortcut: 'G W' },
   { id: 'biblical',    label: 'Personajes',   href: '/dashboard/biblical',     icon: Scroll,          shortcut: 'G B' },
   { id: 'learning',    label: 'Aprendizaje',  href: '/dashboard/learning',     icon: BookOpen,        shortcut: 'G K' },
+  { id: 'reto40',      label: 'Reto 40',      href: '/dashboard/reto40',       icon: Flame,           shortcut: 'G 4' },
 ] as const
 
 export const BOTTOM_TABS = [
