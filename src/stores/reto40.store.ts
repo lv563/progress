@@ -95,6 +95,27 @@ export interface CodingSession {
   completed: boolean
 }
 
+export interface MicroSession {
+  id: string
+  date: string
+  topic: string
+  durationMin: number
+  insight1: string
+  insight2: string
+  insight3: string
+  question: string
+  completed: boolean
+}
+
+export interface ConsumoItem {
+  id: string
+  date: string
+  type: 'video' | 'libro' | 'artículo' | 'podcast'
+  title: string
+  keyIdea: string
+  actionToApply: string
+}
+
 export interface WeeklyReview {
   id: string
   weekNumber: number
@@ -146,6 +167,14 @@ export interface Reto40Store {
   getCodingSessions: (date: string) => CodingSession[]
   getTotalCodingHours: () => number
 
+  microSessions: MicroSession[]
+  addMicroSession: (s: Omit<MicroSession, 'id'>) => void
+  getMicroSessions: (date: string) => MicroSession[]
+
+  consumoItems: ConsumoItem[]
+  addConsumoItem: (item: Omit<ConsumoItem, 'id'>) => void
+  getConsumoItems: (date: string) => ConsumoItem[]
+
   addWeeklyReview: (review: Omit<WeeklyReview, 'id' | 'weekNumber'>) => void
   unlockAchievement: (id: string) => void
 
@@ -169,6 +198,8 @@ export const useReto40Store = create<Reto40Store>()(
       dayLogs: [],
       feLogs: [],
       codingSessions: [],
+      microSessions: [],
+      consumoItems: [],
       weeklyReviews: [],
       achievements: DEFAULT_ACHIEVEMENTS,
 
@@ -245,6 +276,22 @@ export const useReto40Store = create<Reto40Store>()(
         return Math.round((mins / 60) * 10) / 10
       },
 
+      addMicroSession: (session) => {
+        const date = session.date
+        set(s => ({ microSessions: [...s.microSessions, { ...session, id: genId() }] }))
+        get().upsertDayLog(date, { microaprendizaje: true })
+      },
+
+      getMicroSessions: (date) => get().microSessions.filter(s => s.date === date),
+
+      addConsumoItem: (item) => {
+        const date = item.date
+        set(s => ({ consumoItems: [...s.consumoItems, { ...item, id: genId() }] }))
+        get().upsertDayLog(date, { consumo: true })
+      },
+
+      getConsumoItems: (date) => get().consumoItems.filter(c => c.date === date),
+
       addWeeklyReview: (review) => set(s => ({
         weeklyReviews: [...s.weeklyReviews, {
           ...review, id: genId(), weekNumber: s.weeklyReviews.length + 1,
@@ -303,6 +350,7 @@ export const useReto40Store = create<Reto40Store>()(
       _reset: () => set({
         active: false, startDate: RETO_START_DATE,
         dayLogs: [], feLogs: [], codingSessions: [],
+        microSessions: [], consumoItems: [],
         weeklyReviews: [], achievements: DEFAULT_ACHIEVEMENTS,
       }),
     }),

@@ -6,9 +6,12 @@ import { CheckCircle2, Circle, Lock, Trophy, Plus, Minus } from 'lucide-react'
 import {
   useReto40Store, PILLAR_CONFIG, STAGES, RETO_DURATION, BONUS_XP_FULL_DAY,
   ALL_PILLAR_KEYS,
-  type PillarKey, type RetoDayLog, type CodingSession, type Reto40Store,
+  type PillarKey, type RetoDayLog, type CodingSession, type MicroSession,
+  type ConsumoItem, type Reto40Store,
 } from '@/stores/reto40.store'
 import { useAppStore } from '@/stores/app.store'
+import { usePhysicalStore } from '@/stores/physical.store'
+import { useDailyCommandStore } from '@/stores/dailyCommand.store'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -613,6 +616,242 @@ function EtapasTab({ store, dayNum }: { store: Reto40Store; dayNum: number }) {
   )
 }
 
+// ── APRENDER tab ──────────────────────────────────────────────────────────────
+
+function AprenderTab({ store, today }: { store: Reto40Store; today: string }) {
+  const cmdStore = useDailyCommandStore()
+  const todayTasks = cmdStore.getDayTodos(today)
+
+  // ── Micro form ─────────────────────────────────────────────────────────────
+  const [topic, setTopic] = useState('')
+  const [duration, setDuration] = useState(15)
+  const [insight1, setInsight1] = useState('')
+  const [insight2, setInsight2] = useState('')
+  const [insight3, setInsight3] = useState('')
+  const [question, setQuestion] = useState('')
+  const [microSaved, setMicroSaved] = useState(false)
+
+  const handleMicro = () => {
+    if (!topic.trim() || !insight1.trim()) return
+    store.addMicroSession({
+      date: today, topic: topic.trim(), durationMin: duration,
+      insight1: insight1.trim(), insight2: insight2.trim(), insight3: insight3.trim(),
+      question: question.trim(), completed: true,
+    })
+    setTopic(''); setInsight1(''); setInsight2(''); setInsight3(''); setQuestion(''); setDuration(15)
+    setMicroSaved(true)
+    setTimeout(() => setMicroSaved(false), 2000)
+  }
+
+  // ── Consumo form ────────────────────────────────────────────────────────────
+  const [cType, setCType] = useState<ConsumoItem['type']>('video')
+  const [cTitle, setCTitle] = useState('')
+  const [cIdea, setCIdea] = useState('')
+  const [cAction, setCAction] = useState('')
+  const [consumoSaved, setConsumoSaved] = useState(false)
+
+  const handleConsumo = () => {
+    if (!cTitle.trim() || !cIdea.trim()) return
+    store.addConsumoItem({
+      date: today, type: cType, title: cTitle.trim(),
+      keyIdea: cIdea.trim(), actionToApply: cAction.trim(),
+    })
+    setCTitle(''); setCIdea(''); setCAction('')
+    setConsumoSaved(true)
+    setTimeout(() => setConsumoSaved(false), 2000)
+  }
+
+  const todayMicro = store.getMicroSessions(today)
+  const todayConsumo = store.getConsumoItems(today)
+
+  return (
+    <motion.div variants={staggerParent} initial="initial" animate="animate" className="space-y-5">
+      {/* ── MICROAPRENDIZAJE ─────────────────────────────────────────────── */}
+      <motion.div variants={fadeUp}>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-lg">🧠</span>
+          <p className="text-[9px] tracking-[0.4em] font-black uppercase text-white/40">Microaprendizaje</p>
+          {store.microSessions.length > 0 && (
+            <span className="ml-auto text-[10px] text-[#EF4444] font-bold">
+              {store.microSessions.length} sesiones
+            </span>
+          )}
+        </div>
+
+        {/* Tasks from daily command as topic suggestions */}
+        {todayTasks.length > 0 && (
+          <Card className="mb-3">
+            <Label>Tareas de hoy como referencia</Label>
+            <div className="space-y-1 mt-2">
+              {todayTasks.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setTopic(t.text)}
+                  className={`w-full text-left text-xs px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                    t.completed ? 'opacity-40 line-through' : 'bg-white/4 hover:bg-white/8'
+                  }`}
+                >
+                  <span className="text-white/40">→</span>
+                  <span className="text-white/70">{t.text}</span>
+                </button>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        <Card>
+          <Label>Nueva sesión (10-15 min)</Label>
+          <input
+            value={topic}
+            onChange={e => setTopic(e.target.value)}
+            placeholder="¿Qué vas a aprender? (toca una tarea arriba o escribe)"
+            className="w-full bg-white/4 rounded-xl p-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-[#EF4444]/50 mt-2 mb-3"
+          />
+
+          <div className="flex items-center gap-3 mb-3">
+            <p className="text-xs text-white/50 flex-1">Duración</p>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setDuration(d => Math.max(5, d - 5))} className="w-7 h-7 rounded-full bg-white/8 flex items-center justify-center text-white/60 hover:text-white">
+                <Minus size={12} />
+              </button>
+              <span className="text-sm font-bold w-12 text-center">{duration} min</span>
+              <button onClick={() => setDuration(d => d + 5)} className="w-7 h-7 rounded-full bg-white/8 flex items-center justify-center text-white/60 hover:text-white">
+                <Plus size={12} />
+              </button>
+            </div>
+          </div>
+
+          <p className="text-[9px] tracking-[0.3em] font-black uppercase text-white/30 mb-2">3 cosas clave que aprendí</p>
+          {[
+            { val: insight1, set: setInsight1, ph: '1. Concepto o dato importante...' },
+            { val: insight2, set: setInsight2, ph: '2. Otra idea relevante...' },
+            { val: insight3, set: setInsight3, ph: '3. Algo que me sorprendió...' },
+          ].map(({ val, set, ph }, i) => (
+            <input
+              key={i}
+              value={val}
+              onChange={e => set(e.target.value)}
+              placeholder={ph}
+              className="w-full bg-white/4 rounded-xl p-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-[#EF4444]/50 mb-2"
+            />
+          ))}
+
+          <input
+            value={question}
+            onChange={e => setQuestion(e.target.value)}
+            placeholder="Una pregunta que me quedó pendiente..."
+            className="w-full bg-white/4 rounded-xl p-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-[#EF4444]/50 mb-3"
+          />
+
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={handleMicro}
+            disabled={!topic.trim() || !insight1.trim()}
+            className={`w-full py-3 rounded-xl font-bold text-sm transition-colors ${
+              microSaved ? 'bg-white text-black'
+                : 'bg-[#EF4444] text-white hover:bg-[#d73333] disabled:opacity-30 disabled:cursor-not-allowed'
+            }`}
+          >
+            {microSaved ? '✓ Sesión guardada — +20XP' : 'Registrar aprendizaje'}
+          </motion.button>
+        </Card>
+
+        {todayMicro.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {todayMicro.map(s => (
+              <Card key={s.id}>
+                <p className="text-sm font-semibold text-white mb-1">{s.topic}</p>
+                <p className="text-[10px] text-white/30 mb-2">🧠 {s.durationMin} min</p>
+                {[s.insight1, s.insight2, s.insight3].filter(Boolean).map((ins, i) => (
+                  <p key={i} className="text-xs text-white/50 before:content-['·_'] mb-0.5">{ins}</p>
+                ))}
+                {s.question && <p className="text-xs text-[#EF4444]/60 mt-1 italic">? {s.question}</p>}
+              </Card>
+            ))}
+          </div>
+        )}
+      </motion.div>
+
+      {/* ── CONSUMO DE CONTENIDO ──────────────────────────────────────────── */}
+      <motion.div variants={fadeUp}>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-lg">💰</span>
+          <p className="text-[9px] tracking-[0.4em] font-black uppercase text-white/40">Consumo de contenido</p>
+          {todayConsumo.length > 0 && (
+            <span className="ml-auto text-[10px] text-[#EF4444] font-bold">
+              {todayConsumo.length} hoy
+            </span>
+          )}
+        </div>
+
+        <Card>
+          <Label>Nuevo contenido consumido</Label>
+          <div className="flex gap-2 mt-2 mb-3">
+            {(['video', 'libro', 'artículo', 'podcast'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setCType(t)}
+                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${
+                  cType === t ? 'bg-[#EF4444] text-white' : 'bg-white/8 text-white/40 hover:text-white'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          <input
+            value={cTitle}
+            onChange={e => setCTitle(e.target.value)}
+            placeholder="Título / nombre del contenido..."
+            className="w-full bg-white/4 rounded-xl p-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-[#EF4444]/50 mb-3"
+          />
+          <textarea
+            value={cIdea}
+            onChange={e => setCIdea(e.target.value)}
+            placeholder="Idea principal que me llevo..."
+            className="w-full bg-white/4 rounded-xl p-3 text-sm text-white placeholder:text-white/20 resize-none focus:outline-none focus:ring-1 focus:ring-[#EF4444]/50 mb-3"
+            rows={2}
+          />
+          <input
+            value={cAction}
+            onChange={e => setCAction(e.target.value)}
+            placeholder="¿Cómo lo aplico? (opcional)"
+            className="w-full bg-white/4 rounded-xl p-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-[#EF4444]/50 mb-3"
+          />
+
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={handleConsumo}
+            disabled={!cTitle.trim() || !cIdea.trim()}
+            className={`w-full py-3 rounded-xl font-bold text-sm transition-colors ${
+              consumoSaved ? 'bg-white text-black'
+                : 'bg-[#EF4444] text-white hover:bg-[#d73333] disabled:opacity-30 disabled:cursor-not-allowed'
+            }`}
+          >
+            {consumoSaved ? '✓ Registrado — +10XP' : 'Registrar consumo'}
+          </motion.button>
+        </Card>
+
+        {todayConsumo.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {todayConsumo.map(c => (
+              <Card key={c.id}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] bg-white/10 text-white/50 px-2 py-0.5 rounded-full font-bold">{c.type}</span>
+                  <p className="text-sm font-semibold text-white truncate">{c.title}</p>
+                </div>
+                <p className="text-xs text-white/50 italic">"{c.keyIdea}"</p>
+                {c.actionToApply && <p className="text-xs text-[#EF4444]/60 mt-1">→ {c.actionToApply}</p>}
+              </Card>
+            ))}
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  )
+}
+
 // ── LOGROS tab ─────────────────────────────────────────────────────────────────
 
 function LogrosTab({ store }: { store: Reto40Store }) {
@@ -657,12 +896,13 @@ function LogrosTab({ store }: { store: Reto40Store }) {
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 
-const TABS = ['hoy', 'fe', 'código', 'etapas', 'logros'] as const
+const TABS = ['hoy', 'fe', 'código', 'aprender', 'etapas', 'logros'] as const
 type Tab = (typeof TABS)[number]
 
 export default function Reto40Page() {
   const store = useReto40Store()
   const { addXP } = useAppStore()
+  const physicalStore = usePhysicalStore()
   const [tab, setTab] = useState<Tab>('hoy')
   const today = localDateStr()
 
@@ -671,7 +911,6 @@ export default function Reto40Page() {
   }
 
   const dayNum = store.getDayNumber(today)
-  const activePillars = store.getActivePillars(dayNum)
   const dayLog = store.getDayLog(today)
   const streak = store.getStreak()
   const totalXP = store.getTotalXP()
@@ -682,6 +921,15 @@ export default function Reto40Page() {
     store.upsertDayLog(today, { [key]: !current } as Partial<RetoDayLog>)
     if (!current) addXP(PILLAR_CONFIG[key].xp, `Reto 40 — ${PILLAR_CONFIG[key].label}`)
   }
+
+  // Auto-sync gym from physical store
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    const todayWorkout = physicalStore.getTodayWorkout()
+    if (todayWorkout && todayWorkout.completed && !store.getDayLog(today)?.gym) {
+      store.upsertDayLog(today, { gym: true })
+    }
+  }, [physicalStore.workoutSessions.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Achievement checks
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -764,6 +1012,7 @@ export default function Reto40Page() {
         )}
         {tab === 'fe' && <FeTab store={store} today={today} />}
         {tab === 'código' && <CodigoTab store={store} today={today} />}
+        {tab === 'aprender' && <AprenderTab store={store} today={today} />}
         {tab === 'etapas' && <EtapasTab store={store} dayNum={dayNum} />}
         {tab === 'logros' && <LogrosTab store={store} />}
       </div>
